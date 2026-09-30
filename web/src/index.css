@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --gauge-steel: #EEF2F5;
+  --ink: #0D1B26;
+  --calibration-blue: #0F4C81;
+  --verified-green: #0B7A5A;
+  --stamp-amber: #B7791F;
+  --stamp-amber-text: #8A5A00;
+  --seal-break-red: #B3261E;
+}
