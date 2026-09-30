@@ -1,24 +1,53 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Home } from './pages/Home';
+import { Design } from './pages/Design';
+import { NotFound } from './pages/NotFound';
+import { DesktopShell } from './layouts/DesktopShell';
+import { MobileFieldShell } from './layouts/MobileFieldShell';
+
+const ProtectedRoute = ({ allowedRoles, role, children }: { allowedRoles: string[], role: string, children: React.ReactNode }) => {
+  if (!allowedRoles.includes(role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+  return <>{children}</>;
+};
 
 function App() {
-  const [health, setHealth] = useState<string>('loading...');
-
-  useEffect(() => {
-    fetch('/api/health')
-      .then(res => res.json())
-      .then(data => setHealth(data.status))
-      .catch(_err => setHealth('error'));
-  }, []);
+  const currentRole = 'BUSINESS'; 
 
   return (
-    <div className="min-h-screen bg-gauge-steel text-ink flex flex-col items-center justify-center p-4">
-      <h1 className="text-3xl font-bold mb-4">NISHCHAY Prototype</h1>
-      <p className="mb-2">This is the verification platform prototype for Legal Metrology.</p>
-      <div className="p-4 bg-white rounded shadow text-center">
-        <p className="text-sm text-gray-500 uppercase tracking-wide">API Status</p>
-        <p className="text-xl font-bold text-calibration-blue">{health}</p>
-      </div>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/design" element={<Design />} />
+        
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute allowedRoles={['BUSINESS', 'LMO', 'GATC', 'ADMIN']} role={currentRole}>
+              <DesktopShell role={currentRole} onSignOut={() => console.log('sign out')} />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<div>Dashboard content goes here</div>} />
+        </Route>
+
+        <Route 
+          path="/field" 
+          element={
+            <ProtectedRoute allowedRoles={['LMO', 'GATC']} role={currentRole}>
+              <MobileFieldShell />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<div>Field verification content goes here</div>} />
+        </Route>
+
+        <Route path="/unauthorized" element={<div className="p-8 text-center text-red-500 font-bold">Unauthorized Access</div>} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

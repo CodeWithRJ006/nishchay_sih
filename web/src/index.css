@@ -1,3 +1,11 @@
+@import '@fontsource/bricolage-grotesque/400.css';
+@import '@fontsource/bricolage-grotesque/700.css';
+@import '@fontsource/source-sans-3/400.css';
+@import '@fontsource/source-sans-3/600.css';
+@import '@fontsource/source-sans-3/700.css';
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,4 +18,18 @@
   --stamp-amber: #B7791F;
   --stamp-amber-text: #8A5A00;
   --seal-break-red: #B3261E;
+}
+
+body {
+  background-color: var(--gauge-steel);
+  color: var(--ink);
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: 'Bricolage Grotesque', sans-serif;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
 }

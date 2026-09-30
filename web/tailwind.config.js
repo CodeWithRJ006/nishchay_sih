@@ -14,6 +14,11 @@ export default {
         'stamp-amber': 'var(--stamp-amber)',
         'stamp-amber-text': 'var(--stamp-amber-text)',
         'seal-break-red': 'var(--seal-break-red)',
+      },
+      fontFamily: {
+        sans: ['"Source Sans 3"', 'sans-serif'],
+        heading: ['"Bricolage Grotesque"', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       }
     },
   },

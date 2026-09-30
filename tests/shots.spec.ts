@@ -1,21 +1,30 @@
 import { test } from '@playwright/test';
-import path from 'path';
-import fs from 'fs';
 
-const SCREENS_DIR = path.join(process.cwd(), 'docs', 'screens');
+const routes = [
+  { path: '/', name: 'home' },
+  { path: '/design', name: 'design' },
+];
 
-test('Take screenshots', async ({ page }) => {
-  if (!fs.existsSync(SCREENS_DIR)) {
-    fs.mkdirSync(SCREENS_DIR, { recursive: true });
+test.describe('Visual Screenshots Desktop', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  for (const route of routes) {
+    test(`Desktop screenshot for ${route.name}`, async ({ page }) => {
+      await page.goto(`http://localhost:4000${route.path}`);
+      await page.waitForLoadState('networkidle');
+      await page.screenshot({ path: `docs/screens/${route.name}-desktop.png`, fullPage: true });
+    });
   }
+});
 
-  // Desktop
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('http://localhost:4000');
-  await page.waitForTimeout(1000);
-  await page.screenshot({ path: path.join(SCREENS_DIR, 'home-desktop.png') });
+test.describe('Visual Screenshots Mobile', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
 
-  // Mobile
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.screenshot({ path: path.join(SCREENS_DIR, 'home-mobile.png') });
+  for (const route of routes) {
+    test(`Mobile screenshot for ${route.name}`, async ({ page }) => {
+      await page.goto(`http://localhost:4000${route.path}`);
+      await page.waitForLoadState('networkidle');
+      await page.screenshot({ path: `docs/screens/${route.name}-mobile.png`, fullPage: true });
+    });
+  }
 });
