@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const DataTable = ({ columns, data }: { columns: { key: string, header: string }[], data: any[] }) => {
+export const DataTable = ({ columns, data }: { columns: { key: string, header: string }[], data: Record<string, React.ReactNode>[] }) => {
   return (
     <div className="overflow-x-auto w-full rounded border border-gray-300 bg-white shadow-sm">
       <table className="w-full text-sm text-left text-ink border-collapse">
