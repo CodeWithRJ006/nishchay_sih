@@ -39,8 +39,8 @@ export const Home = () => {
           <div className="pt-6 border-t border-gray-200 text-sm">
             <p className="text-ink font-semibold mb-3">Official Access</p>
             <div className="flex justify-center gap-4">
-              <Button variant="outline" onClick={() => navigate('/dashboard')}>Business</Button>
-              <Button variant="outline" onClick={() => navigate('/dashboard')}>Officer</Button>
+              <Button variant="outline" onClick={() => navigate('/login')}>Business</Button>
+              <Button variant="outline" onClick={() => navigate('/login')}>Officer</Button>
             </div>
           </div>
         </div>
