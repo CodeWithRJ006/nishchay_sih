@@ -8,3 +8,4 @@
 - Node environment verified for Node 22 or 24 LTS compatibility.
 - **Block 1 Complete**: UI Design System & core components implemented, responsive shells added, Playwright axe checks passed, 100% accessible.
 - **Block 2 Complete**: Implemented core domain logic (pure TS), state machine, Zod schemas, and `canonicalJson`. Built cryptographic sealing (ECDSA P-256) for Node and browser (WebCrypto), with exhaustive Vitest coverage. Generated `RULES_TO_VERIFY.md`.
+- **Block 2 Hygiene**: Re-enabled `noUnusedLocals`, removed unused React imports cleanly, split seal module correctly, and improved test coverage.

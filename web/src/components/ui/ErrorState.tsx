@@ -1,4 +1,3 @@
-import React from 'react';
 import { Button } from './Button';
 
 export const ErrorState = ({ title, description, onRetry }: { title: string, description: string, onRetry?: () => void }) => {

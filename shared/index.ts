@@ -5,4 +5,4 @@ export * from './src/stateMachine.js';
 export * from './src/rules.js';
 export * from './src/schema.js';
 export * from './src/seal-browser.js';
-export * from './src/ping.js';
+

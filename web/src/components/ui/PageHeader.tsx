@@ -1,4 +1,3 @@
-import React from 'react';
 
 export const PageHeader = ({ title, description }: { title: string, description: string }) => {
   return (

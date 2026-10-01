@@ -1,4 +1,3 @@
-import React from 'react';
 
 type Status = 'Draft' | 'Submitted' | 'Paid' | 'Scheduled' | 'Accepted' | 'Certified' | 'Failed' | 'Valid' | 'Expired' | 'Revoked' | 'Seal broken';
 

@@ -1,4 +1,3 @@
-import React from 'react';
 
 export const Toast = ({ message, type = 'info' }: { message: string, type?: 'info' | 'error' | 'success' }) => {
   const colors = {

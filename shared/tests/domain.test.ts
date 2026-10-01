@@ -63,3 +63,25 @@ describe('computeValidTo', () => {
     expect(d.toISOString()).toBe('2026-04-30T00:00:00.000Z');
   });
 });
+import { evaluateReadings } from '../src/rules.js';
+import { generateId } from '../src/ids.js';
+
+describe('evaluateReadings', () => {
+  it('pass/fail at exactly the tolerance boundary', () => {
+    // W-1 tolerance is 5.
+    const exactlyOnBoundary = [{ applied: 100, observed: 105 }];
+    expect(evaluateReadings('W-1', exactlyOnBoundary).pass).toBe(true);
+
+    const slightlyOverBoundary = [{ applied: 100, observed: 105.1 }];
+    expect(evaluateReadings('W-1', slightlyOverBoundary).pass).toBe(false);
+  });
+});
+
+describe('id helpers', () => {
+  it('produce the right formats', () => {
+    expect(generateId.instrument(1)).toBe('NSH-I-000001');
+    expect(generateId.application(2026, 42)).toBe('NSH-A-2026-000042');
+    expect(generateId.receipt(2026, 9)).toBe('NSH-R-2026-000009');
+    expect(generateId.certificate(2026, 999999)).toBe('NSH-C-2026-999999');
+  });
+});
