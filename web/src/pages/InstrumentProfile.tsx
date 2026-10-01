@@ -3,10 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 
+interface Instrument {
+  id: string;
+  type_code: string;
+  make: string;
+  model: string;
+  capacity: string;
+  serial: string;
+  accuracy_class?: string;
+  location?: string;
+  status: string;
+  created_at: string;
+}
+
 export function InstrumentProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [instrument, setInstrument] = useState<any>(null);
+  const [instrument, setInstrument] = useState<Instrument | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,7 +33,7 @@ export function InstrumentProfile() {
   }, [id]);
 
   if (loading) return <div className="p-4">Loading...</div>;
-  if (!instrument || instrument.message) return <div className="p-4 text-red-500">Instrument not found.</div>;
+  if (!instrument || !('id' in instrument)) return <div className="p-4 text-red-500">Instrument not found.</div>;
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">

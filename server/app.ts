@@ -73,7 +73,7 @@ export function createApp() {
   app.get('/api/applications/:id', getApplication);
 
   app.post('/api/demo/login-as/:role', (req, res) => {
-    if (process.env.NODE_ENV === 'production' && process.env.DEMO_MODE !== 'true') return res.status(404).send();
+    if (process.env.DEMO_MODE !== 'true') return res.status(404).send();
     // Helper to log in directly via seed
     const role = req.params.role;
     const user = db.prepare('SELECT id, email, role, name FROM users WHERE role = ? LIMIT 1').get(role) as Record<string, unknown>;
@@ -94,8 +94,15 @@ export function createApp() {
     });
   }
 
-  app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  app.use((err: Error & { code?: string }, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const requestId = req.id;
+    if (err && err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
+      return res.status(409).json({
+        code: 'CONFLICT',
+        message: 'A duplicate record already exists.',
+        requestId
+      });
+    }
     logger.error({ err, requestId }, 'Unhandled error');
     res.status(500).json({
       code: 'INTERNAL_ERROR',

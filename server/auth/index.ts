@@ -4,14 +4,16 @@ import jwt from 'jsonwebtoken';
 import { db, transaction } from '../db/index.js';
 import { clock } from '../../shared/src/clock.js';
 
+import '../types.js';
+
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const token = req.cookies?.token;
   if (token) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as Record<string, unknown>;
-      (req as unknown as Record<string, unknown>).user = decoded;
+      const decoded = jwt.verify(token, JWT_SECRET) as Express.Request['user'];
+      req.user = decoded;
     } catch {
       // invalid token, user is PUBLIC
     }
@@ -105,5 +107,5 @@ export function logoutRoute(req: Request, res: Response) {
 }
 
 export function meRoute(req: Request, res: Response) {
-  res.json((req as unknown as Record<string, unknown>).user);
+  res.json(req.user);
 }

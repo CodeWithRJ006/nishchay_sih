@@ -53,6 +53,8 @@ export function isAssignedOfficer(_req: Request): boolean {
 }
 
 export function rbacMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (!req.path.startsWith('/api')) return next();
+
   // Extract base path, handle parameters roughly for matching
   const match = routeTable.find(r => {
     if (r.method !== req.method) return false;

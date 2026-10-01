@@ -16,7 +16,7 @@ test.describe('Visual Screenshots Desktop', () => {
 
   for (const route of publicRoutes) {
     test(`Desktop screenshot for ${route.name}`, async ({ page }) => {
-      await page.goto(`http://localhost:5173${route.path}`);
+      await page.goto(`${route.path}`);
       await page.waitForLoadState('networkidle');
       await page.screenshot({ path: `docs/screens/${route.name}-desktop.png`, fullPage: true });
     });
@@ -24,13 +24,13 @@ test.describe('Visual Screenshots Desktop', () => {
 
   test('Authenticated desktop screenshots', async ({ page }) => {
     // login via demo route
-    await page.goto('http://localhost:5173/login');
+    await page.goto('/login');
     await page.waitForLoadState('networkidle');
     await page.click('text="Business"');
     await page.waitForURL('**/dashboard');
     
     for (const route of authRoutes) {
-      await page.goto(`http://localhost:5173${route.path}`);
+      await page.goto(`${route.path}`);
       await page.waitForLoadState('networkidle');
       await page.screenshot({ path: `docs/screens/${route.name}-desktop.png`, fullPage: true });
     }
@@ -42,20 +42,20 @@ test.describe('Visual Screenshots Mobile', () => {
 
   for (const route of publicRoutes) {
     test(`Mobile screenshot for ${route.name}`, async ({ page }) => {
-      await page.goto(`http://localhost:5173${route.path}`);
+      await page.goto(`${route.path}`);
       await page.waitForLoadState('networkidle');
       await page.screenshot({ path: `docs/screens/${route.name}-mobile.png`, fullPage: true });
     });
   }
 
   test('Authenticated mobile screenshots', async ({ page }) => {
-    await page.goto('http://localhost:5173/login');
+    await page.goto('/login');
     await page.waitForLoadState('networkidle');
     await page.click('text="Business"');
     await page.waitForURL('**/dashboard');
     
     for (const route of authRoutes) {
-      await page.goto(`http://localhost:5173${route.path}`);
+      await page.goto(`${route.path}`);
       await page.waitForLoadState('networkidle');
       await page.screenshot({ path: `docs/screens/${route.name}-mobile.png`, fullPage: true });
     }

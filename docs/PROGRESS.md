@@ -12,3 +12,4 @@
 - **Block 3 Complete**: SQL Migrations, JWT Auth, RBAC, Seed Data implemented and tested.
 - **Block 4a Complete**: Access and Accounts UI/API built and tested. Added strict Zod validation, fixed Tailwind CSS configuration, and successfully generated screenshots.
 - **Block 4b Complete**: Instrument registration (with NSH-I IDs and serial collision prevention) and Application Wizard logic implemented. File upload (magic bytes verification, size limits, path traversal prevention) built and verified. Application routing rules and fee snapshotting built with UI and API coverage. All tests passed. Visual screenshots captured successfully for desktop and mobile flows.
+- **Block 4a/4b Hygiene**: Extracted API logic into services/repos, enforced strict TS typing, verified Playwright captures locally without external server, and confirmed 100% test pass.

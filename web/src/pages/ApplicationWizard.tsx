@@ -8,7 +8,7 @@ export function ApplicationWizard() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   
-  const [instruments, setInstruments] = useState<any[]>([]);
+  const [instruments, setInstruments] = useState<Array<{ id: string, type_code: string, make: string, model: string, serial: string }>>([]);
   const [selectedInstId, setSelectedInstId] = useState<string>(searchParams.get('instrumentId') || '');
   
   const [step, setStep] = useState(1);
@@ -61,7 +61,7 @@ export function ApplicationWizard() {
       } else {
         setError(data.message);
       }
-    } catch (err) {
+    } catch {
       setError('Upload failed');
     }
   };

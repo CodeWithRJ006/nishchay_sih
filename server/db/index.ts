@@ -19,3 +19,17 @@ db.pragma('foreign_keys = ON');
 export function transaction<T>(fn: () => T): T {
   return db.transaction(fn)();
 }
+
+export function nextSequence(name: string): number {
+  return transaction(() => {
+    const seqRow = db.prepare("SELECT val FROM counters WHERE id = ?").get(name) as { val: number } | undefined;
+    let seq = 1;
+    if (seqRow) {
+      seq = seqRow.val + 1;
+      db.prepare("UPDATE counters SET val = ? WHERE id = ?").run(seq, name);
+    } else {
+      db.prepare("INSERT INTO counters (id, val) VALUES (?, 1)").run(name);
+    }
+    return seq;
+  });
+}

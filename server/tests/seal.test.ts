@@ -45,7 +45,9 @@ describe('Seal Verification', () => {
     const hashHex = computeServerHashHex(record);
     const signatureHex = signHash(hashHex, privateKey);
     
-    const alteredSig = signatureHex.replace(/[0-9a-f]/g, c => c === '0' ? '1' : '0');
+    // The altered signature must be exactly the same length and valid hex, but have altered bytes.
+    // Changing the first character ensures the decoded byte changes.
+    const alteredSig = (signatureHex[0] === '0' ? '1' : '0') + signatureHex.substring(1);
     const isValid = await verifySeal(record, alteredSig, publicKeySpkiHex);
     expect(isValid).toBe(false);
   });
