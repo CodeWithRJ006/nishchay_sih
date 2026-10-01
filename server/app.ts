@@ -14,6 +14,7 @@ import { registerInstrument, listInstruments, getInstrument } from './api/instru
 import { uploadMiddleware, handleUpload, downloadDocument } from './api/uploads.js';
 import { createApplication, listApplications, getApplication } from './api/applications.js';
 import { initiatePayment, paymentCallback, listPayments, listReceipts, gateBlocks } from './api/payments.js';
+import { getSlots, schedule, accept, reject, getMyJobs, listUnassigned, assignManually, listOfficers } from './api/appointments.js';
 
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
@@ -78,6 +79,15 @@ export function createApp() {
   app.get('/api/admin/payments', listPayments);
   app.get('/api/admin/receipts', listReceipts);
   app.get('/api/admin/gate-blocks', gateBlocks);
+
+  app.get('/api/appointments/slots', getSlots);
+  app.post('/api/appointments/schedule', schedule);
+  app.post('/api/appointments/accept', accept);
+  app.post('/api/appointments/reject', reject);
+  app.get('/api/appointments/my-jobs', getMyJobs);
+  app.get('/api/admin/unassigned-jobs', listUnassigned);
+  app.post('/api/admin/assign', assignManually);
+  app.get('/api/admin/officers', listOfficers);
 
   app.post('/api/demo/login-as/:role', (req, res) => {
     if (process.env.DEMO_MODE !== 'true') return res.status(404).send();

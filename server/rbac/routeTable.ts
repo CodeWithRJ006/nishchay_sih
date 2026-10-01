@@ -37,6 +37,14 @@ export const routeTable: RouteDef[] = [
   { method: 'GET', path: '/api/admin/payments', roles: ['ADMIN'] },
   { method: 'GET', path: '/api/admin/receipts', roles: ['ADMIN'] },
   { method: 'GET', path: '/api/admin/gate-blocks', roles: ['ADMIN'] },
+  { method: 'GET', path: '/api/appointments/slots', roles: ['BUSINESS'] },
+  { method: 'POST', path: '/api/appointments/schedule', roles: ['BUSINESS'] },
+  { method: 'POST', path: '/api/appointments/accept', roles: ['LMO', 'GATC'], objectPolicy: ownsAppointment },
+  { method: 'POST', path: '/api/appointments/reject', roles: ['LMO', 'GATC'], objectPolicy: ownsAppointment },
+  { method: 'GET', path: '/api/appointments/my-jobs', roles: ['LMO', 'GATC'] },
+  { method: 'GET', path: '/api/admin/unassigned-jobs', roles: ['ADMIN'] },
+  { method: 'POST', path: '/api/admin/assign', roles: ['ADMIN'] },
+  { method: 'GET', path: '/api/admin/officers', roles: ['ADMIN'] },
 ];
 
 export function ownsBusiness(req: Request): boolean {
@@ -55,6 +63,17 @@ export function inJurisdiction(_req: Request): boolean {
 }
 export function isAssignedOfficer(_req: Request): boolean {
   return true;
+}
+
+export function ownsAppointment(req: Request): boolean {
+  const user = (req as unknown as Record<string, unknown>).user as { id: string } | undefined;
+  if (!user) return false;
+  
+  const appId = req.body.applicationId;
+  if (!appId) return false;
+  
+  const appointment = db.prepare('SELECT officer_id FROM appointments WHERE application_id = ?').get(appId) as { officer_id: string } | undefined;
+  return appointment?.officer_id === user.id;
 }
 
 export function rbacMiddleware(req: Request, res: Response, next: NextFunction) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
@@ -7,6 +7,7 @@ import { Download } from 'lucide-react';
 
 export function ReceiptPage() {
   const { applicationId } = useParams();
+  const navigate = useNavigate();
   const [receipt, setReceipt] = useState<{id: string, fee_amount: number} | null>(null);
   
   // To keep it simple, we fetch the application and if it has a receipt, we show it
@@ -47,8 +48,9 @@ export function ReceiptPage() {
           </div>
         </div>
         
-        <div className="mt-8 pt-4 border-t border-slate-200 flex justify-end">
+        <div className="mt-8 pt-4 border-t border-slate-200 flex justify-between">
           <Button onClick={() => window.print()} variant="outline"><Download className="w-4 h-4 mr-2 inline" /> Download receipt PDF</Button>
+          <Button onClick={() => navigate(`/dashboard/schedule/${applicationId}`)} variant="primary">Schedule Appointment</Button>
         </div>
       </div>
       

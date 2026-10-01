@@ -17,6 +17,9 @@ import { ApplicationWizard } from './pages/ApplicationWizard';
 import { SandboxCheckout } from './pages/SandboxCheckout';
 import { ReceiptPage } from './pages/ReceiptPage';
 import { AdminDashboard as AdminFinance } from './pages/AdminFinance';
+import { ApplicationSchedule } from './pages/ApplicationSchedule';
+import { OfficerJobs } from './pages/OfficerJobs';
+import { AdminUnassigned } from './pages/AdminUnassigned';
 
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -55,6 +58,9 @@ function AppRoutes() {
         <Route path="payment/:applicationId" element={<SandboxCheckout />} />
         <Route path="receipt/:applicationId" element={<ReceiptPage />} />
         <Route path="finance" element={<AdminFinance />} />
+        <Route path="schedule/:applicationId" element={<ApplicationSchedule />} />
+        <Route path="my-jobs" element={<OfficerJobs />} />
+        <Route path="unassigned-jobs" element={<AdminUnassigned />} />
       </Route>
 
       <Route 
