@@ -5,10 +5,16 @@ export const DesktopShell = ({ role = 'User', onSignOut }: { role?: string; onSi
   const isDemo = true;
   const location = useLocation();
 
-  const links = [
-    { to: '/dashboard', label: 'Dashboard' },
-    { to: '/design', label: 'Design System' }
-  ];
+  const getLinks = () => {
+    const base = [{ to: '/dashboard', label: 'Dashboard' }];
+    if (role === 'BUSINESS') base.push({ to: '/dashboard/business-profile', label: 'Business Profile' });
+    if (role === 'LMO' || role === 'GATC') base.push({ to: '/dashboard/officer-profile', label: 'Officer Profile' });
+    if (role === 'ADMIN') base.push({ to: '/dashboard/provision', label: 'Provision Accounts' });
+    if (isDemo) base.push({ to: '/design', label: 'Design System' });
+    return base;
+  };
+
+  const links = getLinks();
 
   return (
     <div className="min-h-screen bg-gauge-steel flex flex-col md:flex-row">

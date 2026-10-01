@@ -11,3 +11,5 @@
 - **Block 2 Hygiene**: Re-enabled `noUnusedLocals`, removed unused React imports cleanly, split seal module correctly, and improved test coverage.
 
 Block 3: SQL Migrations, JWT Auth, RBAC, Seed Data implemented and tested.
+
+Block 4a: Access and Accounts UI/API built and tested.

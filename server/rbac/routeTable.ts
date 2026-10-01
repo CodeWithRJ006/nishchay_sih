@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { db } from '../db/index.js';
 
 export type Role = 'ADMIN' | 'LMO' | 'GATC' | 'BUSINESS' | 'PUBLIC';
 
@@ -17,10 +18,22 @@ export const routeTable: RouteDef[] = [
   { method: 'POST', path: '/api/demo/login-as/:role', roles: ['PUBLIC'] },
   { method: 'GET', path: '/api/public/keys', roles: ['PUBLIC'] },
   { method: 'GET', path: '/api/health', roles: ['PUBLIC'] },
+  { method: 'POST', path: '/api/admin/provision', roles: ['ADMIN'] },
+  { method: 'GET', path: '/api/business/profile', roles: ['BUSINESS'] },
+  { method: 'PUT', path: '/api/business/profile', roles: ['BUSINESS'], objectPolicy: ownsBusiness },
+  { method: 'GET', path: '/api/officer/profile', roles: ['LMO', 'GATC'] },
 ];
 
-export function ownsBusiness(_req: Request): boolean {
-  return true; // TODO: implement object checks
+export function ownsBusiness(req: Request): boolean {
+  const user = (req as unknown as Record<string, unknown>).user as { id: string } | undefined;
+  if (!user) return false;
+  
+  const bizId = req.params.id || req.body.id || req.query.id;
+  if (bizId) {
+     const row = db.prepare('SELECT owner_id FROM businesses WHERE id = ?').get(bizId) as { owner_id: string } | undefined;
+     return row?.owner_id === user.id;
+  }
+  return true;
 }
 export function inJurisdiction(_req: Request): boolean {
   return true;

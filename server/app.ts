@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import { db } from './db/index.js';
 import { authMiddleware, csrfMiddleware, loginRoute, registerRoute, logoutRoute, meRoute } from './auth/index.js';
 import { rbacMiddleware } from './rbac/routeTable.js';
+import { getBusinessProfile, updateBusinessProfile, getOfficerProfile, provisionOfficer } from './api/profiles.js';
 
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
@@ -51,6 +52,10 @@ export function createApp() {
   app.post('/api/auth/login', loginRoute);
   app.post('/api/auth/logout', logoutRoute);
   app.get('/api/auth/me', meRoute);
+  app.get('/api/business/profile', getBusinessProfile);
+  app.put('/api/business/profile', updateBusinessProfile);
+  app.get('/api/officer/profile', getOfficerProfile);
+  app.post('/api/admin/provision', provisionOfficer);
 
   app.post('/api/demo/login-as/:role', (req, res) => {
     if (process.env.DEMO_MODE !== 'true') return res.status(404).send();
