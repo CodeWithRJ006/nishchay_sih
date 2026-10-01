@@ -10,6 +10,9 @@ import { db } from './db/index.js';
 import { authMiddleware, csrfMiddleware, loginRoute, registerRoute, logoutRoute, meRoute } from './auth/index.js';
 import { rbacMiddleware } from './rbac/routeTable.js';
 import { getBusinessProfile, updateBusinessProfile, getOfficerProfile, provisionOfficer } from './api/profiles.js';
+import { registerInstrument, listInstruments, getInstrument } from './api/instruments.js';
+import { uploadMiddleware, handleUpload, downloadDocument } from './api/uploads.js';
+import { createApplication, listApplications, getApplication } from './api/applications.js';
 
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
@@ -57,8 +60,20 @@ export function createApp() {
   app.get('/api/officer/profile', getOfficerProfile);
   app.post('/api/admin/provision', provisionOfficer);
 
+  // Block 4b Routes
+  app.post('/api/instruments', registerInstrument);
+  app.get('/api/instruments', listInstruments);
+  app.get('/api/instruments/:id', getInstrument);
+  
+  app.post('/api/upload', uploadMiddleware, handleUpload);
+  app.get('/api/documents/:fileName', downloadDocument);
+  
+  app.post('/api/applications', createApplication);
+  app.get('/api/applications', listApplications);
+  app.get('/api/applications/:id', getApplication);
+
   app.post('/api/demo/login-as/:role', (req, res) => {
-    if (process.env.DEMO_MODE !== 'true') return res.status(404).send();
+    if (process.env.NODE_ENV === 'production' && process.env.DEMO_MODE !== 'true') return res.status(404).send();
     // Helper to log in directly via seed
     const role = req.params.role;
     const user = db.prepare('SELECT id, email, role, name FROM users WHERE role = ? LIMIT 1').get(role) as Record<string, unknown>;

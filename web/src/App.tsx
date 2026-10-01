@@ -11,6 +11,10 @@ import { BusinessProfile } from './pages/BusinessProfile';
 import { AdminProvision } from './pages/AdminProvision';
 import { OfficerProfile } from './pages/OfficerProfile';
 
+import { Instruments } from './pages/Instruments';
+import { InstrumentProfile } from './pages/InstrumentProfile';
+import { ApplicationWizard } from './pages/ApplicationWizard';
+
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -42,6 +46,9 @@ function AppRoutes() {
         <Route path="business-profile" element={<BusinessProfile />} />
         <Route path="officer-profile" element={<OfficerProfile />} />
         <Route path="provision" element={<AdminProvision />} />
+        <Route path="instruments" element={<Instruments />} />
+        <Route path="instruments/:id" element={<InstrumentProfile />} />
+        <Route path="apply" element={<ApplicationWizard />} />
       </Route>
 
       <Route 

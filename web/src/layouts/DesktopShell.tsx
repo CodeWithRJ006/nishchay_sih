@@ -7,7 +7,11 @@ export const DesktopShell = ({ role = 'User', onSignOut }: { role?: string; onSi
 
   const getLinks = () => {
     const base = [{ to: '/dashboard', label: 'Dashboard' }];
-    if (role === 'BUSINESS') base.push({ to: '/dashboard/business-profile', label: 'Business Profile' });
+    if (role === 'BUSINESS') {
+      base.push({ to: '/dashboard/business-profile', label: 'Business Profile' });
+      base.push({ to: '/dashboard/instruments', label: 'Instruments' });
+      base.push({ to: '/dashboard/apply', label: 'New Application' });
+    }
     if (role === 'LMO' || role === 'GATC') base.push({ to: '/dashboard/officer-profile', label: 'Officer Profile' });
     if (role === 'ADMIN') base.push({ to: '/dashboard/provision', label: 'Provision Accounts' });
     if (isDemo) base.push({ to: '/design', label: 'Design System' });

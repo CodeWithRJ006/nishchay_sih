@@ -52,10 +52,14 @@ export function seedDemoData() {
     db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity) VALUES (?, ?, ?, ?, ?, ?)')
       .run(i1, b3, 'NAWI-III', 'WeighCorp', 'M-100', '150kg');
 
+    db.prepare("INSERT INTO counters (id, val) VALUES ('instrument', 1)").run();
+
     // Historical sealed certificate
     const app1 = generateId.application(2025, 1);
     db.prepare('INSERT INTO applications (id, business_id, instrument_id, state) VALUES (?, ?, ?, ?)')
       .run(app1, b3, i1, 'CERTIFIED');
+    
+    db.prepare("INSERT INTO counters (id, val) VALUES ('application-2025', 1)").run();
       
     const rec1 = generateId.receipt(2025, 1);
     const pay1 = 'PAY-1';

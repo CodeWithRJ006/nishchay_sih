@@ -22,6 +22,16 @@ export const routeTable: RouteDef[] = [
   { method: 'GET', path: '/api/business/profile', roles: ['BUSINESS'] },
   { method: 'PUT', path: '/api/business/profile', roles: ['BUSINESS'], objectPolicy: ownsBusiness },
   { method: 'GET', path: '/api/officer/profile', roles: ['LMO', 'GATC'] },
+
+  // Block 4b Routes
+  { method: 'POST', path: '/api/instruments', roles: ['BUSINESS'] },
+  { method: 'GET', path: '/api/instruments', roles: ['BUSINESS'] },
+  { method: 'GET', path: '/api/instruments/:id', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/upload', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'GET', path: '/api/documents/:fileName', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/applications', roles: ['BUSINESS'] },
+  { method: 'GET', path: '/api/applications', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'GET', path: '/api/applications/:id', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
 ];
 
 export function ownsBusiness(req: Request): boolean {
