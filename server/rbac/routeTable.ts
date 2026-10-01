@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { db } from '../db/index.js';
 
-export type Role = 'ADMIN' | 'LMO' | 'GATC' | 'BUSINESS' | 'PUBLIC';
+export type Role = 'ADMIN' | 'LMO' | 'GATC' | 'BUSINESS' | 'PUBLIC' | 'HMAC';
 
 export interface RouteDef {
   method: 'GET' | 'POST' | 'PUT' | 'DELETE';
@@ -32,6 +32,11 @@ export const routeTable: RouteDef[] = [
   { method: 'POST', path: '/api/applications', roles: ['BUSINESS'] },
   { method: 'GET', path: '/api/applications', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
   { method: 'GET', path: '/api/applications/:id', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/payments/initiate', roles: ['BUSINESS'] },
+  { method: 'POST', path: '/api/payments/callback', roles: ['HMAC'] },
+  { method: 'GET', path: '/api/admin/payments', roles: ['ADMIN'] },
+  { method: 'GET', path: '/api/admin/receipts', roles: ['ADMIN'] },
+  { method: 'GET', path: '/api/admin/gate-blocks', roles: ['ADMIN'] },
 ];
 
 export function ownsBusiness(req: Request): boolean {
@@ -72,7 +77,7 @@ export function rbacMiddleware(req: Request, res: Response, next: NextFunction) 
     ? ((req as unknown as Record<string, unknown>).user as Record<string, unknown>).role as Role 
     : 'PUBLIC';
   
-  if (!match.roles.includes(userRole)) {
+  if (!match.roles.includes(userRole) && !match.roles.includes('HMAC')) {
     res.status(403).json({ code: 'FORBIDDEN', message: 'Access denied' });
     return;
   }

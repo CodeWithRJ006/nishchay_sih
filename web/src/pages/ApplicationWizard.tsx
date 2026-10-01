@@ -81,7 +81,8 @@ export function ApplicationWizard() {
     });
     
     if (res.ok) {
-      navigate('/dashboard'); // Or to applications list
+      const result = await res.json();
+      navigate('/dashboard/payment/' + result.id);
     } else {
       const data = await res.json();
       setError(data.message || 'Submission failed');

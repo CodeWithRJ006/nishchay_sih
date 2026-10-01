@@ -13,6 +13,7 @@ import { getBusinessProfile, updateBusinessProfile, getOfficerProfile, provision
 import { registerInstrument, listInstruments, getInstrument } from './api/instruments.js';
 import { uploadMiddleware, handleUpload, downloadDocument } from './api/uploads.js';
 import { createApplication, listApplications, getApplication } from './api/applications.js';
+import { initiatePayment, paymentCallback, listPayments, listReceipts, gateBlocks } from './api/payments.js';
 
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
@@ -72,6 +73,12 @@ export function createApp() {
   app.get('/api/applications', listApplications);
   app.get('/api/applications/:id', getApplication);
 
+  app.post('/api/payments/initiate', initiatePayment);
+  app.post('/api/payments/callback', paymentCallback);
+  app.get('/api/admin/payments', listPayments);
+  app.get('/api/admin/receipts', listReceipts);
+  app.get('/api/admin/gate-blocks', gateBlocks);
+
   app.post('/api/demo/login-as/:role', (req, res) => {
     if (process.env.DEMO_MODE !== 'true') return res.status(404).send();
     // Helper to log in directly via seed
@@ -81,6 +88,25 @@ export function createApp() {
     const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '1d' });
     res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
     res.json(user);
+  });
+
+  app.post('/api/demo/trigger-callback', async (req, res) => {
+    if (process.env.DEMO_MODE !== 'true') return res.status(404).send();
+    const crypto = await import('node:crypto');
+    const body = req.body;
+    const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
+    hmac.update(`${body.paymentId}:${body.status}:${body.amount}:${body.timestamp}:${body.applicationId}`);
+    const signature = hmac.digest('hex');
+    
+    // forward to local callback
+    fetch(`http://127.0.0.1:${process.env.PORT || 4000}/api/payments/callback`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-hmac-signature': signature
+      },
+      body: JSON.stringify(body)
+    }).then(r => r.json()).then(data => res.json(data)).catch(e => res.status(500).json({ error: e.message }));
   });
 
   if (process.env.NODE_ENV === 'production') {

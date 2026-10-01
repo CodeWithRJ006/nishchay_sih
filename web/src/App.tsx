@@ -14,6 +14,9 @@ import { OfficerProfile } from './pages/OfficerProfile';
 import { Instruments } from './pages/Instruments';
 import { InstrumentProfile } from './pages/InstrumentProfile';
 import { ApplicationWizard } from './pages/ApplicationWizard';
+import { SandboxCheckout } from './pages/SandboxCheckout';
+import { ReceiptPage } from './pages/ReceiptPage';
+import { AdminDashboard as AdminFinance } from './pages/AdminFinance';
 
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -49,6 +52,9 @@ function AppRoutes() {
         <Route path="instruments" element={<Instruments />} />
         <Route path="instruments/:id" element={<InstrumentProfile />} />
         <Route path="apply" element={<ApplicationWizard />} />
+        <Route path="payment/:applicationId" element={<SandboxCheckout />} />
+        <Route path="receipt/:applicationId" element={<ReceiptPage />} />
+        <Route path="finance" element={<AdminFinance />} />
       </Route>
 
       <Route 

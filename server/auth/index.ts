@@ -22,7 +22,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 };
 
 export const csrfMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  if (req.method !== 'GET' && !req.path.startsWith('/api/auth/') && !req.path.startsWith('/api/demo/')) {
+  if (req.method !== 'GET' && !req.path.startsWith('/api/auth/') && !req.path.startsWith('/api/demo/') && req.path !== '/api/payments/callback') {
     const csrfHeader = req.headers['x-csrf-token'];
     if (!csrfHeader) {
       res.status(403).json({ code: 'CSRF_MISSING', message: 'CSRF token missing' });

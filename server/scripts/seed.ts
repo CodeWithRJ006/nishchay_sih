@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import { db, transaction } from '../db/index.js';
 import { generateId } from '../../shared/src/ids.js';
 import { ensureKeys, buildDetailsDigest, signHash } from '../seal/index.js';
+import crypto from 'node:crypto';
 
 export function seedDemoData() {
   const usersCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as {c: number};
@@ -50,23 +51,30 @@ export function seedDemoData() {
     // NAWI routed to GATC
     const i1 = generateId.instrument(1);
     db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(i1, b3, 'NAWI-III', 'WeighCorp', 'M-100', '150kg');
+      .run(i1, b3, 'NAWI-3', 'WeighCorp', 'M-100', '150kg');
 
     db.prepare("INSERT INTO counters (id, val) VALUES ('instrument', 1)").run();
 
     // Historical sealed certificate
     const app1 = generateId.application(2025, 1);
-    db.prepare('INSERT INTO applications (id, business_id, instrument_id, state) VALUES (?, ?, ?, ?)')
-      .run(app1, b3, i1, 'CERTIFIED');
+    db.prepare('INSERT INTO applications (id, business_id, instrument_id, state, fee_amount, routing_rule) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(app1, b3, i1, 'CERTIFIED', 500, 'Routed to GATC');
     
     db.prepare("INSERT INTO counters (id, val) VALUES ('application-2025', 1)").run();
       
     const rec1 = generateId.receipt(2025, 1);
     const pay1 = 'PAY-1';
     db.prepare('INSERT INTO payments (id, application_id, idempotency_key, amount, status) VALUES (?, ?, ?, ?, ?)')
-      .run(pay1, app1, 'idem1', 500, 'SUCCESS');
-    db.prepare('INSERT INTO receipts (id, application_id, payment_id) VALUES (?, ?, ?)')
-      .run(rec1, app1, pay1);
+      .run(pay1, app1, 'idem1', 500, 'PAID');
+      
+    const paidTime = new Date().toISOString();
+    const payload = `${rec1}:${app1}:${i1}:500:${paidTime}`;
+    const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
+    hmac.update(payload);
+    const receiptSignature = hmac.digest('hex');
+
+    db.prepare('INSERT INTO receipts (id, application_id, payment_id, amount, signature, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(rec1, app1, pay1, 500, receiptSignature, paidTime);
 
     const certId = generateId.certificate(2025, 1);
     const details = {
@@ -79,6 +87,24 @@ export function seedDemoData() {
     
     db.prepare('INSERT INTO certificates (id, application_id, receipt_id, valid_from, valid_to, seal_hash, seal_signature, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
       .run(certId, app1, rec1, '2025-01-01T00:00:00Z', '2026-01-01T00:00:00Z', sealHash, signature, 'VALID');
+
+    // Create an application at INSPECTED_PASS state ready for gate test
+    const app2 = generateId.application(2025, 2);
+    db.prepare('INSERT INTO applications (id, business_id, instrument_id, state, fee_amount, routing_rule) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(app2, b3, i1, 'INSPECTED_PASS', 500, 'Routed to GATC');
+    
+    const rec2 = generateId.receipt(2025, 2);
+    const pay2 = 'PAY-2';
+    db.prepare('INSERT INTO payments (id, application_id, idempotency_key, amount, status) VALUES (?, ?, ?, ?, ?)')
+      .run(pay2, app2, 'idem2', 500, 'PAID');
+      
+    const payload2 = `${rec2}:${app2}:${i1}:500:${paidTime}`;
+    const hmac2 = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
+    hmac2.update(payload2);
+    const receiptSignature2 = hmac2.digest('hex');
+
+    db.prepare('INSERT INTO receipts (id, application_id, payment_id, amount, signature, created_at) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(rec2, app2, pay2, 500, receiptSignature2, paidTime);
 
   });
 }
