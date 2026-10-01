@@ -13,4 +13,3 @@ const { seedDemoData } = await import('./seed.js');
 
 runMigrations();
 seedDemoData();
-console.log('Database reset and seeded.');

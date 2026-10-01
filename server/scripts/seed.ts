@@ -28,6 +28,8 @@ export function seedDemoData() {
       .run('USR-LMO2', 'lmo2@nishchay.gov.in', pwHash, 'LMO', 'LMO South', 'ZONE-2');
     db.prepare('INSERT INTO users (id, email, password_hash, role, name, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
       .run('USR-GATC1', 'gatc1@nishchay.gov.in', pwHash, 'GATC', 'GATC Central', null);
+    db.prepare('INSERT INTO users (id, email, password_hash, role, name, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
+      .run('USR-GATC2', 'gatc2@nishchay.gov.in', pwHash, 'GATC', 'GATC West', null);
 
     // 3 businesses
     const b1 = 'BIZ-1';

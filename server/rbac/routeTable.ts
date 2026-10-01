@@ -45,6 +45,9 @@ export const routeTable: RouteDef[] = [
   { method: 'GET', path: '/api/admin/unassigned-jobs', roles: ['ADMIN'] },
   { method: 'POST', path: '/api/admin/assign', roles: ['ADMIN'] },
   { method: 'GET', path: '/api/admin/officers', roles: ['ADMIN'] },
+  
+  // Block 6a Field Routes
+  { method: 'POST', path: '/api/field/jobs/:id/arrive', roles: ['LMO', 'GATC'], objectPolicy: isAssignedOfficer },
 ];
 
 export function ownsBusiness(req: Request): boolean {
@@ -58,10 +61,42 @@ export function ownsBusiness(req: Request): boolean {
   }
   return true;
 }
-export function inJurisdiction(_req: Request): boolean {
+export function inJurisdiction(req: Request): boolean {
+  const user = (req as unknown as Record<string, unknown>).user as { id: string, zone_id: string | null } | undefined;
+  if (!user) return false;
+  
+  let jobId = req.params.id || req.body.id || req.query.id;
+  if (!jobId && req.path.match(/\/jobs\/([^/]+)/)) {
+    jobId = req.path.match(/\/jobs\/([^/]+)/)![1];
+  }
+  if (!jobId && req.path.match(/\/applications\/([^/]+)/)) {
+    jobId = req.path.match(/\/applications\/([^/]+)/)![1];
+  }
+  
+  if (jobId && typeof jobId === 'string') {
+     const row = db.prepare('SELECT b.zone_id FROM applications a JOIN businesses b ON a.business_id = b.id WHERE a.id = ?').get(jobId) as { zone_id: string } | undefined;
+     if (!row) return false;
+     return user.zone_id === null || user.zone_id === row.zone_id;
+  }
   return true;
 }
-export function isAssignedOfficer(_req: Request): boolean {
+
+export function isAssignedOfficer(req: Request): boolean {
+  const user = (req as unknown as Record<string, unknown>).user as { id: string } | undefined;
+  if (!user) return false;
+  
+  let jobId = req.params.id || req.body.id || req.query.id;
+  if (!jobId && req.path.match(/\/jobs\/([^/]+)/)) {
+    jobId = req.path.match(/\/jobs\/([^/]+)/)![1];
+  }
+  if (!jobId && req.path.match(/\/applications\/([^/]+)/)) {
+    jobId = req.path.match(/\/applications\/([^/]+)/)![1];
+  }
+  
+  if (jobId && typeof jobId === 'string') {
+     const row = db.prepare('SELECT officer_id FROM appointments WHERE application_id = ?').get(jobId) as { officer_id: string } | undefined;
+     return row?.officer_id === user.id;
+  }
   return true;
 }
 

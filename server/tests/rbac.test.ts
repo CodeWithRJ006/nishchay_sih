@@ -24,7 +24,6 @@ describe('RBAC Route Table', () => {
     const app = createApp();
     const stack = app._router.stack;
     
-    // Find all explicitly mounted routes
     const mounted: { method: string, path: string }[] = [];
     for (const layer of stack) {
       if (layer.route && layer.route.path) {
@@ -45,11 +44,44 @@ describe('RBAC Route Table', () => {
     }
   });
 
-  it('object-level helpers return true as scaffolded', async () => {
+  it('object-level helpers enforce access control', async () => {
     const { ownsBusiness, inJurisdiction, isAssignedOfficer } = await import('../rbac/routeTable.js');
-    const req = { user: { id: 'USR-BIZ1' }, params: {}, body: {}, query: {} } as unknown as express.Request;
-    expect(ownsBusiness(req)).toBe(true);
-    expect(inJurisdiction(req)).toBe(true);
-    expect(isAssignedOfficer(req)).toBe(true);
+    const { db } = await import('../db/index.js');
+    const { runMigrations } = await import('../db/migrate.js');
+    const { seedDemoData } = await import('../scripts/seed.js');
+    
+    runMigrations();
+    seedDemoData();
+    
+    // Find businesses
+    const b1 = db.prepare('SELECT * FROM businesses WHERE id = ?').get('BIZ-3') as { id: string, owner_id: string, zone_id: string };
+    const b2 = db.prepare('SELECT * FROM businesses WHERE id = ?').get('BIZ-2') as { id: string, owner_id: string, zone_id: string };
+    
+    // Find applications
+    const apps = db.prepare('SELECT * FROM applications').all() as { id: string, business_id: string }[];
+    const appB1 = apps.find(a => a.business_id === b1.id)!;
+    
+    // Create an appointment for appB1 assigned to LMO1
+    const lmo1 = db.prepare("SELECT * FROM users WHERE id = 'USR-LMO1'").get() as { id: string, zone_id: string };
+    const lmo2 = db.prepare("SELECT * FROM users WHERE id = 'USR-LMO2'").get() as { id: string, zone_id: string };
+    
+    db.prepare('INSERT INTO appointments (id, application_id, officer_id, slot_date, slot_time, created_at, status) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run('APT-TEST', appB1.id, lmo1.id, '2025-01-01', 'Morning', Date.now(), 'SCHEDULED');
+
+    // business A cannot act on business B's application
+    const req1 = { user: { id: b1.owner_id }, params: { id: b1.id }, body: {}, query: {} } as unknown as express.Request;
+    const req2 = { user: { id: b2.owner_id }, params: { id: b1.id }, body: {}, query: {} } as unknown as express.Request;
+    expect(ownsBusiness(req1)).toBe(true);
+    expect(ownsBusiness(req2)).toBe(false);
+
+    // an officer outside the zone cannot see the job (assuming b1 is in ZONE-1 and lmo1 is ZONE-1)
+    const reqO1 = { user: { id: lmo1.id, zone_id: lmo1.zone_id }, params: { id: appB1.id }, body: {}, query: {} } as unknown as express.Request;
+    const reqO2 = { user: { id: lmo2.id, zone_id: lmo2.zone_id }, params: { id: appB1.id }, body: {}, query: {} } as unknown as express.Request;
+    expect(inJurisdiction(reqO1)).toBe(true);
+    expect(inJurisdiction(reqO2)).toBe(false);
+
+    // an unassigned officer cannot accept it
+    expect(isAssignedOfficer(reqO1)).toBe(true);
+    expect(isAssignedOfficer(reqO2)).toBe(false);
   });
 });

@@ -37,9 +37,8 @@ export function Instruments() {
         if (Array.isArray(data)) setInstruments(data);
         setLoading(false);
       })
-      .catch(e => {
-        console.error(e);
-        setError('Failed to load instruments');
+      .catch(() => {
+                setError('Failed to load instruments');
         setLoading(false);
       });
   }, []);

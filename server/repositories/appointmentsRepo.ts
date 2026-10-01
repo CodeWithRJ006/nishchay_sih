@@ -47,7 +47,7 @@ export function updateAppointmentStatus(applicationId: string, status: string) {
 
 export function getJobsForOfficer(officerId: string) {
   return db.prepare(`
-    SELECT a.*, app.state, app.instrument_id, biz.name as business_name, biz.address
+    SELECT a.*, app.state, app.instrument_id, biz.name as business_name, biz.address, biz.lat, biz.lng
     FROM appointments a
     JOIN applications app ON a.application_id = app.id
     JOIN businesses biz ON app.business_id = biz.id

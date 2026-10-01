@@ -17,16 +17,10 @@ export function runMigrations() {
 
   const applyMigration = db.transaction((file: string, sql: string) => {
     const row = db.prepare('SELECT version FROM schema_migrations WHERE version = ?').get(file);
-    if (!row) {
-      if (file === '003-block4b.sql') console.log('EXECUTING 003:', sql);
-      try {
+      if (!row) {
         db.exec(sql);
-      } catch (err) {
-        console.error('ERROR IN MIGRATION:', file, err);
-        throw err;
+        db.prepare('INSERT INTO schema_migrations (version) VALUES (?)').run(file);
       }
-      db.prepare('INSERT INTO schema_migrations (version) VALUES (?)').run(file);
-    }
   });
 
   for (const file of files) {

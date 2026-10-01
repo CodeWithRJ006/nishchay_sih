@@ -60,4 +60,24 @@ test.describe('Visual Screenshots Mobile', () => {
       await page.screenshot({ path: `docs/screens/${route.name}-mobile.png`, fullPage: true });
     }
   });
+
+  test('Field mobile screenshots', async ({ page }) => {
+    await page.goto('/login');
+    await page.waitForLoadState('networkidle');
+    await page.click('text="LMO"');
+    await page.waitForURL('**/dashboard');
+    
+    await page.goto('/field');
+    await page.waitForLoadState('networkidle');
+    await page.screenshot({ path: `docs/screens/field-list-mobile.png`, fullPage: true });
+
+    // Assuming LMO has at least one scheduled job, try to navigate to it.
+    // Wait for the job card to appear and click the first one
+    const jobCard = page.locator('.bg-white.p-4.rounded-lg.shadow').first();
+    if (await jobCard.count() > 0) {
+      await jobCard.click();
+      await page.waitForLoadState('networkidle');
+      await page.screenshot({ path: `docs/screens/field-detail-mobile.png`, fullPage: true });
+    }
+  });
 });

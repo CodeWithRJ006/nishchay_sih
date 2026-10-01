@@ -24,9 +24,8 @@ beforeEach(async () => {
 
   runMigrations();
   
-  const schema = db.prepare('PRAGMA table_info(businesses)').all();
-  console.log('BUSINESSES SCHEMA:', schema);
-
+  
+  
   seedDemoData();
   app = await createApp();
   

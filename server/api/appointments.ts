@@ -25,7 +25,7 @@ export function schedule(req: Request, res: Response) {
     const result = scheduleAppointment(data.applicationId, data.slotDate, data.slotTime, req.user!.id);
     res.json(result);
   } catch (e) {
-    console.error('API ERROR:', e); const err = e as Error;
+    const err = e as Error;
     if (err.message.includes('Invalid transition')) return res.status(409).json({ error: err.message });
     throw err;
   }
@@ -38,7 +38,7 @@ export function accept(req: Request, res: Response) {
     acceptAppointment(data.applicationId, req.user!.id);
     res.json({ success: true });
   } catch (e) {
-    console.error('API ERROR:', e); const err = e as Error;
+    const err = e as Error;
     if (err.message.includes('Forbidden')) return res.status(403).json({ error: err.message });
     if (err.message.includes('Conflict') || err.message.includes('Invalid transition')) return res.status(409).json({ error: err.message });
     throw err;
@@ -55,7 +55,7 @@ export function reject(req: Request, res: Response) {
     rejectAppointment(data.applicationId, req.user!.id, data.reason);
     res.json({ success: true });
   } catch (e) {
-    console.error('API ERROR:', e); const err = e as Error;
+    const err = e as Error;
     if (err.message.includes('Forbidden')) return res.status(403).json({ error: err.message });
     if (err.message.includes('Conflict') || err.message.includes('Invalid transition')) return res.status(409).json({ error: err.message });
     throw err;
@@ -87,7 +87,7 @@ export function assignManually(req: Request, res: Response) {
     adminAssign(data.applicationId, data.officerId, req.user.id);
     res.json({ success: true });
   } catch (e) {
-    console.error('API ERROR:', e); const err = e as Error;
+    const err = e as Error;
     if (err.message.includes('Conflict') || err.message.includes('Invalid transition')) return res.status(409).json({ error: err.message });
     throw err;
   }

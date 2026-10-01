@@ -57,9 +57,7 @@ export function SandboxCheckout() {
         else if (status === 'FAILURE') alert('Payment failed');
         else alert('Payment pending');
       }
-    } catch (e) {
-      console.error(e);
-    }
+    } catch { /* ignore */ }
     setProcessing(false);
   };
 

@@ -20,6 +20,8 @@ import { AdminDashboard as AdminFinance } from './pages/AdminFinance';
 import { ApplicationSchedule } from './pages/ApplicationSchedule';
 import { OfficerJobs } from './pages/OfficerJobs';
 import { AdminUnassigned } from './pages/AdminUnassigned';
+import { JobList } from './pages/field/JobList';
+import { JobDetail } from './pages/field/JobDetail';
 
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -71,7 +73,8 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<div>Field verification content goes here</div>} />
+        <Route index element={<JobList />} />
+        <Route path="job/:id" element={<JobDetail />} />
       </Route>
 
       <Route path="/unauthorized" element={<div className="p-8 text-center text-red-500 font-bold">Unauthorized Access</div>} />

@@ -3,4 +3,3 @@ import { seedDemoData } from './seed.js';
 
 runMigrations();
 seedDemoData();
-console.log('Database setup and seeded.');

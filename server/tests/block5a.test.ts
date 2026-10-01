@@ -120,6 +120,37 @@ describe('Block 5a: Payments and Fee-Gate', () => {
     expect(appRecord.state).toBe('PAID');
   });
 
+  it('rejects replay after 15 minutes', async () => {
+    // create a new app
+    const i2 = 'TEST-INST-' + Date.now();
+    db.prepare('INSERT INTO instruments (id, business_id, type_code, serial, make, model, capacity) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(i2, 'BIZ-1', 'NAWI-3', 'SERIAL-' + Date.now(), 'Make', 'Model', '150kg');
+    const aRes = await request(app).post('/api/applications').set('Cookie', `token=${bizToken}`).set('x-csrf-token', 'dummy')
+      .send({ instrument_id: i2, documents: [{ doc_type: 'Invoice', file_name: 't.pdf', file_hash: 'hash' }] });
+    const aId = aRes.body.id;
+
+    const init = await request(app).post('/api/payments/initiate').set('Cookie', `token=${bizToken}`).set('x-csrf-token', 'dummy')
+      .send({ applicationId: aId, amount: 500 });
+    const pId = init.body.paymentId;
+
+    const body = {
+      paymentId: pId,
+      status: 'SUCCESS' as const,
+      amount: 500,
+      timestamp: Date.now() - 20 * 60 * 1000, // 20 minutes ago
+      applicationId: aId
+    };
+
+    const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
+    hmac.update(`${body.paymentId}:${body.status}:${body.amount}:${body.timestamp}:${body.applicationId}`);
+    const signature = hmac.digest('hex');
+
+    const cb = await request(app).post('/api/payments/callback')
+      .set('x-hmac-signature', signature)
+      .send(body);
+    expect([400,403,500]).toContain(cb.status); // Bad request or forbidden because of timestamp
+  });
+
   // checkFeeGate unit tests
   it('gate fails on wrong state', () => {
     // appId is PAID

@@ -16,4 +16,3 @@ for (const rule of unverified) {
 }
 
 fs.writeFileSync(docPath, content);
-console.log(`Generated ${docPath}`);

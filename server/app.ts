@@ -15,6 +15,7 @@ import { uploadMiddleware, handleUpload, downloadDocument } from './api/uploads.
 import { createApplication, listApplications, getApplication } from './api/applications.js';
 import { initiatePayment, paymentCallback, listPayments, listReceipts, gateBlocks } from './api/payments.js';
 import { getSlots, schedule, accept, reject, getMyJobs, listUnassigned, assignManually, listOfficers } from './api/appointments.js';
+import { arriveAtJob } from './api/field.js';
 
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
@@ -88,6 +89,8 @@ export function createApp() {
   app.get('/api/admin/unassigned-jobs', listUnassigned);
   app.post('/api/admin/assign', assignManually);
   app.get('/api/admin/officers', listOfficers);
+
+  app.post('/api/field/jobs/:id/arrive', arriveAtJob);
 
   app.post('/api/demo/login-as/:role', (req, res) => {
     if (process.env.DEMO_MODE !== 'true') return res.status(404).send();

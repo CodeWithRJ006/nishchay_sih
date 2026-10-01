@@ -15,3 +15,4 @@
 - **Block 4a/4b Hygiene**: Extracted API logic into services/repos, enforced strict TS typing, verified Playwright captures locally without external server, and confirmed 100% test pass.
 - **Block 5a Complete**: Built Payment and Receipt APIs with HMAC verification, idempotency, and fee-gate logic. Sandbox Checkout UI handles multiple simulated states. Admin finance views added. Block 5a tests verify parallel callbacks, forged signatures, and state transition security perfectly.
 - **Block 5b Complete**: Scheduling and officer accept/reject flows built. Deterministic auto-assignment to eligible LMO/GATC based on load and capacity rules. Admin Unassigned jobs queue and manual assignment built. Officer Reject correctly reallocates or falls back to queue. Robust concurrency test coverage.
+- **Block 6a Complete**: Field Jobs and Arrival implemented. Mobile-first /field UI, SVG maps, Haversine 300m checks, demo bypass, and isAssignedOfficer RBAC.

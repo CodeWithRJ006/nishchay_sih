@@ -16,7 +16,7 @@
     "typecheck": "tsc -p server/tsconfig.json && tsc -p web/tsconfig.json && tsc -p shared/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
-    "verify": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "verify": "node scripts/check-encoding.mjs && npm run lint && npm run typecheck && npm run test && npm run build",
     "demo:setup": "tsx server/scripts/demo-setup.ts",
     "demo:reset": "tsx server/scripts/demo-reset.ts",
     "preflight": "tsx server/scripts/preflight.ts",
