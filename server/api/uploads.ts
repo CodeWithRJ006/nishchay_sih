@@ -8,6 +8,7 @@ const upload = multer({
 });
 
 export const uploadMiddleware = upload.single('file');
+export const uploadMultipleMiddleware = upload.array('files', 10);
 
 export function handleUpload(req: Request, res: Response) {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });

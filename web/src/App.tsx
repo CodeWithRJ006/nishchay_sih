@@ -22,6 +22,7 @@ import { OfficerJobs } from './pages/OfficerJobs';
 import { AdminUnassigned } from './pages/AdminUnassigned';
 import { JobList } from './pages/field/JobList';
 import { JobDetail } from './pages/field/JobDetail';
+import { JobInspection } from './pages/field/JobInspection';
 
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -75,6 +76,7 @@ function AppRoutes() {
       >
         <Route index element={<JobList />} />
         <Route path="job/:id" element={<JobDetail />} />
+        <Route path="job/:id/inspection" element={<JobInspection />} />
       </Route>
 
       <Route path="/unauthorized" element={<div className="p-8 text-center text-red-500 font-bold">Unauthorized Access</div>} />

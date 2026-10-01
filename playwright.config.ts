@@ -11,5 +11,8 @@ export default defineConfig({
   },
   use: {
     baseURL: 'http://localhost:4001',
+    launchOptions: {
+      args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream']
+    }
   }
 });

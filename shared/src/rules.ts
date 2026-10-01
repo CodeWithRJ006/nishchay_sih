@@ -12,14 +12,15 @@ export type InstrumentRule = {
   tolerancesDemo: number;
   sourceNote: string;
   verified: boolean;
+  checklistDemo: string[];
 };
 
 export const INSTRUMENT_RULES: InstrumentRule[] = [
-  { code: 'W-1', label: 'Weights', validityMonths: 24, routing: 'LMO', baseFeeDemo: 100, tolerancesDemo: 5, sourceNote: 'Assumed validity of 24 months based on general practices.', verified: false },
-  { code: 'L-1', label: 'Length measure', validityMonths: 24, routing: 'LMO', baseFeeDemo: 100, tolerancesDemo: 2, sourceNote: 'Assumed validity of 24 months.', verified: false },
-  { code: 'C-1', label: 'Capacity measure', validityMonths: 12, routing: 'LMO', baseFeeDemo: 150, tolerancesDemo: 10, sourceNote: 'Assumed validity of 12 months.', verified: false },
-  { code: 'CM-1', label: 'Counter machine', validityMonths: 12, routing: 'LMO', baseFeeDemo: 200, tolerancesDemo: 20, sourceNote: 'Assumed validity of 12 months.', verified: false },
-  { code: 'NAWI-3', label: 'NAWI class III up to 150 kg', validityMonths: 12, routing: 'GATC', baseFeeDemo: 500, tolerancesDemo: 50, sourceNote: 'GATC routed per PLAN.md.', verified: false },
+  { code: 'W-1', label: 'Weights', validityMonths: 24, routing: 'LMO', baseFeeDemo: 100, tolerancesDemo: 5, sourceNote: 'Assumed validity of 24 months based on general practices.', verified: false, checklistDemo: ['Surface is clean and rust-free', 'Denomination is clearly stamped', 'Lead seal plug is intact'] },
+  { code: 'L-1', label: 'Length measure', validityMonths: 24, routing: 'LMO', baseFeeDemo: 100, tolerancesDemo: 2, sourceNote: 'Assumed validity of 24 months.', verified: false, checklistDemo: ['Ends are not worn out', 'Graduations are clearly visible', 'Stamp area is prepared'] },
+  { code: 'C-1', label: 'Capacity measure', validityMonths: 12, routing: 'LMO', baseFeeDemo: 150, tolerancesDemo: 10, sourceNote: 'Assumed validity of 12 months.', verified: false, checklistDemo: ['No dents or deformations', 'Striking glass is intact', 'Verification mark is visible'] },
+  { code: 'CM-1', label: 'Counter machine', validityMonths: 12, routing: 'LMO', baseFeeDemo: 200, tolerancesDemo: 20, sourceNote: 'Assumed validity of 12 months.', verified: false, checklistDemo: ['Balance rests at zero', 'Pans are identical', 'No friction in movement'] },
+  { code: 'NAWI-3', label: 'NAWI class III up to 150 kg', validityMonths: 12, routing: 'GATC', baseFeeDemo: 500, tolerancesDemo: 50, sourceNote: 'GATC routed per PLAN.md.', verified: false, checklistDemo: ['Zero tracking is functional', 'Display is fully readable', 'Platform is level and stable', 'No unauthorized modifications'] },
 ];
 
 export function computeValidTo(validFromDate: Date, validityMonths: number): Date {

@@ -108,6 +108,20 @@ export function seedDemoData() {
     db.prepare('INSERT INTO receipts (id, application_id, payment_id, amount, signature, created_at) VALUES (?, ?, ?, ?, ?, ?)')
       .run(rec2, app2, pay2, 500, receiptSignature2, paidTime);
 
+    // Create a SCHEDULED application for USR-LMO1
+    const app4 = generateId.application(2025, 4);
+    // Use an existing business and instrument (b2 is LMO-routed typically, wait b2 is there? b1 is b3 is there. Let's just create one)
+    const b4 = 'BIZ-LMO-TEST';
+    db.prepare('INSERT INTO businesses (id, owner_id, name, address, type, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(b4, 'USR-BIZ1', 'Demo Field Business', 'Demo Field Address', 'DEALER', 'ZONE-1');
+    const i4 = generateId.instrument(4);
+    db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(i4, b4, 'W-1', 'WeighCorp', 'M-100', '10kg');
+    db.prepare('INSERT INTO applications (id, business_id, instrument_id, state, fee_amount, routing_rule) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(app4, b4, i4, 'ACCEPTED', 300, 'Routed to LMO');
+    db.prepare('INSERT INTO appointments (id, application_id, officer_id, slot_date, slot_time, status) VALUES (?, ?, ?, ?, ?, ?)')
+      .run('APT-1', app4, 'USR-LMO1', '2026-10-10', 'Morning', 'SCHEDULED');
+      
   });
 }
 

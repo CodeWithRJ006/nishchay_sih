@@ -46,8 +46,9 @@ export const routeTable: RouteDef[] = [
   { method: 'POST', path: '/api/admin/assign', roles: ['ADMIN'] },
   { method: 'GET', path: '/api/admin/officers', roles: ['ADMIN'] },
   
-  // Block 6a Field Routes
+  // Block 6a/6b Field Routes
   { method: 'POST', path: '/api/field/jobs/:id/arrive', roles: ['LMO', 'GATC'], objectPolicy: isAssignedOfficer },
+  { method: 'POST', path: '/api/field/jobs/:id/inspection', roles: ['LMO', 'GATC'], objectPolicy: isAssignedOfficer },
 ];
 
 export function ownsBusiness(req: Request): boolean {
