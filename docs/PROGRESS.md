@@ -9,3 +9,5 @@
 - **Block 1 Complete**: UI Design System & core components implemented, responsive shells added, Playwright axe checks passed, 100% accessible.
 - **Block 2 Complete**: Implemented core domain logic (pure TS), state machine, Zod schemas, and `canonicalJson`. Built cryptographic sealing (ECDSA P-256) for Node and browser (WebCrypto), with exhaustive Vitest coverage. Generated `RULES_TO_VERIFY.md`.
 - **Block 2 Hygiene**: Re-enabled `noUnusedLocals`, removed unused React imports cleanly, split seal module correctly, and improved test coverage.
+
+Block 3: SQL Migrations, JWT Auth, RBAC, Seed Data implemented and tested.
