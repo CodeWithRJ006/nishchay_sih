@@ -70,8 +70,21 @@ describe('Block 4a API', () => {
       .put('/api/business/profile')
       .set('Cookie', cookie)
       .set('x-csrf-token', 'test')
-      .send({ id: 'BIZ-1', name: 'Updated Name', address: '123 Market', zone_id: 'ZONE-1' }); // BIZ-1 is owned by biz1@example.com
+      .send({ id: 'BIZ-1', name: 'Updated Name', address: '123 Market', zone_id: 'ZONE-1' });
       
     expect(res2.status).toBe(200);
+  });
+
+  it('Rejects business profile updates with missing fields', async () => {
+    const login = await request(app).post('/api/auth/login').send({ email: 'biz1@example.com', password: 'demo123' });
+    const cookie = login.headers['set-cookie'];
+
+    const res = await request(app)
+      .put('/api/business/profile')
+      .set('Cookie', cookie)
+      .set('x-csrf-token', 'test')
+      .send({ id: 'BIZ-1' }); // missing name, address, etc
+
+    expect(res.status).toBe(400); // Bad Request (Zod validation)
   });
 });

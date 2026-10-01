@@ -64,8 +64,22 @@ export function loginRoute(req: Request, res: Response) {
   res.json({ id: user.id, role: user.role, name: user.name });
 }
 
+import { z } from 'zod';
+
+const registerSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  name: z.string().min(1),
+  address: z.string().min(1),
+  zone_id: z.string().optional()
+});
+
 export function registerRoute(req: Request, res: Response) {
-  const { email, password, name, address, zone_id } = req.body;
+  const parse = registerSchema.safeParse(req.body);
+  if (!parse.success) {
+    return res.status(400).json({ code: 'BAD_REQUEST', message: 'Validation failed', errors: parse.error.errors });
+  }
+  const { email, password, name, address, zone_id } = parse.data;
   
   const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
   if (existing) return res.status(400).json({ code: 'EXISTS', message: 'Email taken' });
@@ -79,10 +93,10 @@ export function registerRoute(req: Request, res: Response) {
       .run(userId, email, hash, 'BUSINESS', name);
     
     db.prepare('INSERT INTO businesses (id, owner_id, name, address, zone_id) VALUES (?, ?, ?, ?, ?)')
-      .run(businessId, userId, name, address, zone_id || 'ZONE-DEFAULT');
+      .run(businessId, userId, name, address, zone_id || 'ZONE-1');
   });
 
-  res.json({ message: 'Registered' });
+  res.status(201).json({ message: 'Registered' });
 }
 
 export function logoutRoute(req: Request, res: Response) {

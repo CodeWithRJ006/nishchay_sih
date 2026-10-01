@@ -45,7 +45,7 @@ describe('Seal Verification', () => {
     const hashHex = computeServerHashHex(record);
     const signatureHex = signHash(hashHex, privateKey);
     
-    const alteredSig = signatureHex.substring(0, signatureHex.length - 2) + '00';
+    const alteredSig = signatureHex.replace(/[0-9a-f]/g, c => c === '0' ? '1' : '0');
     const isValid = await verifySeal(record, alteredSig, publicKeySpkiHex);
     expect(isValid).toBe(false);
   });

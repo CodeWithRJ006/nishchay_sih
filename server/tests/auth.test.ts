@@ -71,11 +71,21 @@ describe('Auth Flow', () => {
     process.env.DEMO_MODE = originalDemoMode;
   });
 
-  it('business A cannot read business B (object level access stub)', async () => {
-    // In Block 4 we will fully implement object level, but for now we'll assert the requirement test exists
-    // The requirement is that object policy in RBAC enforces this.
-    // For now we just verify the route table structure can hold objectPolicy
-    const { routeTable } = await import('../rbac/routeTable.js');
-    expect(Array.isArray(routeTable)).toBe(true);
+  it('Registration flow > successful registration', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .set('x-csrf-token', 'test')
+      .send({ email: 'new@example.com', password: 'password123', name: 'New Biz', address: '123 Test St', gstin: 'DEMO' });
+    expect(res.status).toBe(201);
+    expect(res.body.message).toBe('Registered');
+  });
+
+  it('Registration flow > rejects missing required fields', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .set('x-csrf-token', 'test')
+      .send({ email: 'bad@example.com' }); // missing password, name, gstin
+      
+    expect(res.status).toBe(400); // Zod validation should fail
   });
 });

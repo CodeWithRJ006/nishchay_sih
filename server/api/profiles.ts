@@ -10,9 +10,25 @@ export function getBusinessProfile(req: Request, res: Response) {
   res.json(biz);
 }
 
+import { z } from 'zod';
+
+const updateBizSchema = z.object({
+  name: z.string().min(1),
+  type: z.string().optional(),
+  address: z.string().min(1),
+  zone_id: z.string().min(1),
+  lat: z.string().optional(),
+  lng: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().optional()
+});
+
 export function updateBusinessProfile(req: Request, res: Response) {
   const user = (req as unknown as Record<string, unknown>).user as { id: string };
-  const { name, type, address, zone_id, lat, lng, phone, email } = req.body;
+  const parse = updateBizSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ message: 'Validation failed', errors: parse.error.errors });
+  
+  const { name, type, address, zone_id, lat, lng, phone, email } = parse.data;
   
   // Object policy already ran, but we enforce owner_id in the query anyway
   db.prepare(`
@@ -20,10 +36,10 @@ export function updateBusinessProfile(req: Request, res: Response) {
     SET name = ?, type = ?, address = ?, zone_id = ?, lat = ?, lng = ?, phone = ?, email = ?
     WHERE owner_id = ?
   `).run(
-    name ?? null, 
+    name, 
     type ?? null, 
-    address ?? null, 
-    zone_id ?? null, 
+    address, 
+    zone_id, 
     lat ?? null, 
     lng ?? null, 
     phone ?? null, 
