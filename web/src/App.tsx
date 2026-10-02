@@ -25,6 +25,7 @@ import { JobDetail } from './pages/field/JobDetail';
 import { JobInspection } from './pages/field/JobInspection';
 
 import { PublicVerify } from './pages/PublicVerify';
+import { CertificateSearch } from './pages/CertificateSearch';
 
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -55,6 +56,7 @@ function AppRoutes() {
         }
       >
         <Route index element={<div>Dashboard content goes here</div>} />
+          <Route path="search" element={<CertificateSearch />} />
         <Route path="business-profile" element={<BusinessProfile />} />
         <Route path="officer-profile" element={<OfficerProfile />} />
         <Route path="provision" element={<AdminProvision />} />

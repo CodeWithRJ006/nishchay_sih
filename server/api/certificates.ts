@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { db } from '../db/index.js';
 import { certificatePdfService } from '../services/certificatePdfService.js';
+import { certificateService } from '../services/certificateService.js';
 import { rateLimit } from 'express-rate-limit';
 
 // Rate limiter for public endpoints (e.g., verify, export, complaint)
@@ -42,7 +43,7 @@ export const searchCertificates = async (req: Request, res: Response) => {
     params.push(instrumentId);
   }
   if (instrumentClass) {
-    conditions.push('i.class = ?');
+    conditions.push('i.type_code = ?');
     params.push(instrumentClass);
   }
   if (status) {
@@ -65,7 +66,7 @@ export const searchCertificates = async (req: Request, res: Response) => {
   const whereClause = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
 
   const sql = `
-    SELECT c.id, c.public_id, c.instrument_id, i.class as instrument_class, c.status,
+    SELECT c.id, c.public_id, c.instrument_id, i.type_code as instrument_class, c.status,
            c.valid_from, c.valid_to, b.name as business_name
     FROM certificates c
     JOIN instruments i ON c.instrument_id = i.id
@@ -117,7 +118,7 @@ export const exportCertificatesCsv = async (req: Request, res: Response) => {
   const params: (string | number)[] = [];
 
   if (instrumentId) { conditions.push('c.instrument_id = ?'); params.push(instrumentId); }
-  if (instrumentClass) { conditions.push('i.class = ?'); params.push(instrumentClass); }
+  if (instrumentClass) { conditions.push('i.type_code = ?'); params.push(instrumentClass); }
   if (status) { conditions.push('c.status = ?'); params.push(status); }
   if (businessName) { conditions.push('b.name LIKE ?'); params.push(`%${businessName}%`); }
   if (startDate) { conditions.push('c.valid_from >= ?'); params.push(startDate); }
@@ -126,7 +127,7 @@ export const exportCertificatesCsv = async (req: Request, res: Response) => {
   const whereClause = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
 
   const sql = `
-    SELECT c.public_id, c.instrument_id, i.class as instrument_class, c.status,
+    SELECT c.public_id, c.instrument_id, i.type_code as instrument_class, c.status,
            c.valid_from, c.valid_to, b.name as business_name
     FROM certificates c
     JOIN instruments i ON c.instrument_id = i.id
@@ -199,9 +200,41 @@ export const submitComplaint = async (req: Request, res: Response) => {
 };
 
 // Export route bindings for server/app.ts integration
+
+
+export const getCertificatePublic = async (req: Request, res: Response) => {
+  const { publicId } = req.params;
+  try {
+    const cert = await certificateService.getCertificate(publicId);
+    res.json(cert);
+  } catch {
+    res.status(404).json({ error: 'Certificate not found' });
+  }
+};
+
+export const revokeCertificate = async (req: Request, res: Response) => {
+  const { publicId } = req.params;
+  const { reason } = req.body as { reason?: string };
+  const user = req.user as { id: string, role: string };
+  
+  if (!reason) {
+    return res.status(400).json({ error: 'Revocation reason is required' });
+  }
+
+  try {
+    await certificateService.revokeCertificate(publicId, reason, user.id);
+    res.json({ success: true, message: 'Certificate revoked' });
+  } catch (err: unknown) {
+    res.status(400).json({ error: (err as Error).message });
+  }
+};
+
 export const certificateRoutes = [
   { method: 'GET', path: '/api/certificates/search', handler: [publicLimiter, searchCertificates] },
-  { method: 'GET', path: '/api/certificates/:publicId/pdf', handler: [publicLimiter, getCertificatePdf] },
   { method: 'GET', path: '/api/certificates/export', handler: [publicLimiter, exportCertificatesCsv] },
+  { method: 'GET', path: '/api/certificates/:publicId', handler: [publicLimiter, getCertificatePublic] },
+  { method: 'POST', path: '/api/certificates/:publicId/revoke', handler: [revokeCertificate] },
+  { method: 'GET', path: '/api/certificates/:publicId/pdf', handler: [publicLimiter, getCertificatePdf] },
+  
   { method: 'POST', path: '/api/certificates/:publicId/complaint', handler: [publicLimiter, submitComplaint] },
 ];

@@ -88,7 +88,7 @@ export class CertificateService {
         keyId,
         publicRecord.validFrom,
         publicRecord.validTo,
-        crypto.createHash('sha256').update(JSON.stringify(privateDetails)).digest('hex')
+        crypto.createHash('sha256').update(canonicalJson(privateDetails as unknown as Record<string, unknown>)).digest('hex')
       );
       // Update application state
       db.prepare('UPDATE applications SET state = ? WHERE id = ?').run('CERTIFIED', app.id);

@@ -10,9 +10,9 @@
 | Phase 3 | Payments (Block 5) | ✅ DONE | Dummy gateway, HMAC validation, idempotency, strict fee-gate integration. |
 | Phase 4 | Inspections (Block 6) | ✅ DONE | LMO dashboard, offline-ready checklist, Geolocation capture, multipath photo uploads. |
 | Phase 4 | Certificates (Block 7) | ✅ DONE | ECDSA signed certificates, public URL rendering, receipt digestion. |
-| Phase 5 | Public Search (Block 9) | ✅ DONE | Unauthenticated `/verify/:id` route showing cert validity. |
-| Phase 5 | Complaints (Block 10) | ✅ DONE | Citizens can report issues against active certificates. |
-| Phase 6 | Documentation & Polish | ✅ DONE | Screenshots captured, UI polished against DESIGN.md, full documentation (README, SECURITY, ARCHITECTURE, DEMO, etc.) written. Preflight scripts implemented. |
+| Phase 5 | Search & Export (Mods 13/14) | ✅ DONE | Certificate search frontend, CSV export API, integration tests. |
+| Phase 5 | Integrity (Mods 10/11/12/21) | ✅ DONE | Full API test coverage for certificates, PDF generation, complaints, seal validation. |
+| Phase 6 | Documentation & Polish | ✅ DONE | Screenshots captured, UI polished against DESIGN.md, full documentation written. |
 
 ## Next Up
 - **Final SIH Submission!** The prototype is complete, fully tested, securely implemented, and verified via clean-room clone.

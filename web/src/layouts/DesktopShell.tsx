@@ -6,7 +6,10 @@ export const DesktopShell = ({ role = 'User', onSignOut }: { role?: string; onSi
   const location = useLocation();
 
   const getLinks = () => {
-    const base = [{ to: '/dashboard', label: 'Dashboard' }];
+    const base = [
+      { to: '/dashboard', label: 'Dashboard' },
+      { to: '/dashboard/search', label: 'Certificate Search' }
+    ];
     if (role === 'BUSINESS') {
       base.push({ to: '/dashboard/business-profile', label: 'Business Profile' });
       base.push({ to: '/dashboard/instruments', label: 'Instruments' });
