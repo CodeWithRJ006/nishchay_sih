@@ -12,22 +12,22 @@ for (const file of files) {
   
   // Check BOM
   if (buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
-    console.error('BOM found in', file);
+    process.stderr.write(String('BOM found in', file) + '\n');
     failed = true;
   }
   
   // Check UTF-16 LE BOM
   if (buf[0] === 0xff && buf[1] === 0xfe) {
-    console.error('UTF-16 LE BOM found in', file);
+    process.stderr.write(String('UTF-16 LE BOM found in', file) + '\n');
     failed = true;
   }
   
   const text = buf.toString('utf8');
   if (text.includes('\uFFFD') || text.includes('â') || text.includes('Ã') || text.includes('Â')) {
-    console.error('Mojibake / Replacement character found in', file);
+    process.stderr.write(String('Mojibake / Replacement character found in', file) + '\n');
     failed = true;
   }
 }
 
 if (failed) process.exit(1);
-console.log('Encoding check passed.');
+process.stdout.write(String('Encoding check passed.') + '\n');

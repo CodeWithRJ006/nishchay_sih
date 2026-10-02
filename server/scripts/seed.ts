@@ -1,10 +1,14 @@
 import bcrypt from 'bcryptjs';
 import { db, transaction } from '../db/index.js';
+import { canonicalJson } from '../../shared/src/canonicalJson.js';
 import { generateId } from '../../shared/src/ids.js';
-import { ensureKeys, buildDetailsDigest, signHash } from '../seal/index.js';
+import { ensureKeys, signHash } from '../seal/index.js';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 
 export function seedDemoData() {
+  db.exec("INSERT OR REPLACE INTO counters (id, val) VALUES ('INS', 10), ('APP', 10), ('CRT', 10), ('JOB', 10), ('PAY', 10), ('PHO', 10), ('USR', 10)");
   const usersCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as {c: number};
   if (usersCount.c > 0) return; // already seeded
 
@@ -57,7 +61,6 @@ export function seedDemoData() {
 
     db.prepare("INSERT INTO counters (id, val) VALUES ('instrument', 1)").run();
 
-    // Historical sealed certificate
     const app1 = generateId.application(2025, 1);
     db.prepare('INSERT INTO applications (id, business_id, instrument_id, state, fee_amount, routing_rule) VALUES (?, ?, ?, ?, ?, ?)')
       .run(app1, b3, i1, 'CERTIFIED', 500, 'Routed to GATC');
@@ -78,17 +81,53 @@ export function seedDemoData() {
     db.prepare('INSERT INTO receipts (id, application_id, payment_id, amount, signature, created_at) VALUES (?, ?, ?, ?, ?, ?)')
       .run(rec1, app1, pay1, 500, receiptSignature, paidTime);
 
-    const certId = generateId.certificate(2025, 1);
-    const details = {
-      businessName: 'Biz Three (NAWI)',
-      instrumentMake: 'WeighCorp',
-      instrumentModel: 'M-100'
+    // Insert inspection and photos for app1
+    const inspectionId = 'INSP-1';
+    db.prepare('INSERT INTO inspections (id, application_id, officer_id, gps_lat, gps_lng, gps_distance, checklist, readings, pass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(inspectionId, app1, 'USR-LMO1', 28.0, 77.0, 10, JSON.stringify(['ok']), JSON.stringify([{val:1}]), 1);
+    
+    const photoHash = crypto.createHash('sha256').update('dummy').digest('hex');
+    db.prepare('INSERT INTO inspection_photos (id, application_id, uploader_id, file_name, file_hash, client_capture_time, server_receive_time) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run('PHO-1', app1, 'USR-LMO1', 'dummy.png', photoHash, paidTime, paidTime);
+
+    // Write a dummy file to storage/uploads
+    
+    
+    const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'storage', 'uploads');
+    if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
+    fs.writeFileSync(path.join(storageDir, 'dummy.png'), Buffer.from('dummy'));
+
+    // Compute canonical JSON for privateDetails
+    const privateDetails = {
+      officerId: 'USR-LMO1',
+      gpsLat: 28.0,
+      gpsLng: 77.0,
+      distance: 10,
+      checklist: ['ok'],
+      readings: [{val:1}],
+      photos: [{ fileName: 'dummy.png', fileHash: photoHash }]
     };
-    const sealHash = buildDetailsDigest(details);
+    const detailsDigest = crypto.createHash('sha256').update(canonicalJson(privateDetails)).digest('hex');
+
+    const publicRecord = {
+      certNo: 'NSH-C-001',
+      instrumentType: 'WI-01',
+      serialNumber: 'NSH-I-000001',
+      validFrom: '2025-01-01T00:00:00.000Z',
+      validTo: '2026-01-01T00:00:00.000Z',
+      authorityName: 'LMO Demo',
+      receiptDigest: crypto.createHash('sha256').update(JSON.stringify({ id: rec1, amount: 500 })).digest('hex'),
+      detailsDigest
+    };
+
+    const publicRecordStr = JSON.stringify(publicRecord);
+    const sealHash = crypto.createHash('sha256').update(publicRecordStr).digest('hex');
     const signature = signHash(sealHash, privateKey);
+    const keyId = crypto.createHash('sha256').update(ensureKeys().publicKeySpkiHex).digest('hex').slice(0, 8);
+    const certId = generateId.certificate(2025, 1);
     
     db.prepare('INSERT INTO certificates (public_id, application_id, instrument_id, receipt_id, valid_from, valid_to, hash, signature, key_id, public_record, details_digest, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(certId, app1, 'NSH-I-000001', rec1, '2025-01-01T00:00:00Z', '2026-01-01T00:00:00Z', sealHash, signature, 'test-key', '{}', 'details-hash', 'VALID');
+      .run(certId, app1, 'NSH-I-000001', rec1, '2025-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', sealHash, signature, keyId, publicRecordStr, detailsDigest, 'VALID');
 
     // Create an application at INSPECTED_PASS state ready for gate test
     const app2 = generateId.application(2025, 2);

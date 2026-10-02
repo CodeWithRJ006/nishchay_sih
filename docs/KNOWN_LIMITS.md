@@ -11,6 +11,6 @@ This document outlines the known technical and functional limitations of the cur
 
 ## Functional Limits
 
-1. **No External SMS/Email:** Notification logs are written to the database, but actual email/SMS transport layers (SendGrid/Twilio) are mocked.
+1. **No External SMS/Email:** Notifications are NOT built.
 2. **Single Year Validity:** All issued certificates currently default to exactly 1 year of validity. Varying validity lengths by instrument class is not yet configurable via UI.
 3. **Payment Gateway Sim:** The payment gateway strictly returns success/failure instantaneously. Asynchronous payment reconciliation via webhooks is implemented logically, but practically bypassed by the frontend simulating a synchronous flow.

@@ -1,35 +1,38 @@
 import { performance } from 'perf_hooks';
 import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:4000';
 let currentToken = '';
-let currentCsrf = 'test';
+const currentCsrf = 'test';
 
 async function step(name: string, fn: () => Promise<void>) {
   const start = performance.now();
   try {
     await fn();
     const ms = (performance.now() - start).toFixed(0);
-    console.log(`[PASS] ${name} - ${ms}ms`);
-  } catch (err: any) {
+    process.stdout.write(String(`[PASS] ${name} - ${ms}ms`) + '\n');
+  } catch (err: Error) {
     const ms = (performance.now() - start).toFixed(0);
-    console.log(`[FAIL] ${name} - ${ms}ms - ${err.message}`);
+    process.stdout.write(String(`[FAIL] ${name} - ${ms}ms - ${err.message}`) + '\n');
     process.exit(1);
   }
 }
 
-async function request(method: string, urlPath: string, body?: any, useToken: boolean = true) {
+async function request(method: string, urlPath: string, body?: unknown, useToken: boolean = true, extraHeaders?: Record<string, string>) {
   const headers: Record<string, string> = {};
   if (useToken && currentToken) {
     headers['Cookie'] = `token=${currentToken}`;
+  }
+  if (['POST', 'PUT', 'DELETE'].includes(method)) {
     headers['x-csrf-token'] = currentCsrf;
+  }
+  if (extraHeaders) {
+    Object.assign(headers, extraHeaders);
   }
 
   let fetchBody: BodyInit | undefined = undefined;
   if (body instanceof FormData) {
-    fetchBody = body as any;
+    fetchBody = body;
   } else if (body) {
     headers['Content-Type'] = 'application/json';
     fetchBody = JSON.stringify(body);
@@ -60,7 +63,7 @@ async function request(method: string, urlPath: string, body?: any, useToken: bo
 }
 
 async function run() {
-  console.log(`Starting smoke test against ${BASE_URL}`);
+  process.stdout.write(String(`Starting smoke test against ${BASE_URL}`) + '\n');
 
   let instrumentId = '';
   let applicationId = '';
@@ -72,7 +75,7 @@ async function run() {
 
   await step('Register instrument', async () => {
     const res = await request('POST', '/api/instruments', {
-      type_code: 'WI-01',
+      type_code: 'W-1',
       make: 'SmokeMake',
       model: 'SmokeModel',
       serial: `SMK-${Date.now()}`,
@@ -95,30 +98,35 @@ async function run() {
   });
 
   await step('Pay (sandbox callback)', async () => {
-    const txId = `PAY-${applicationId}`;
+    const initRes = await request('POST', '/api/payments/initiate', {
+      applicationId,
+      amount: 100
+    });
+    const txId = (initRes as Record<string, string>).paymentId;
+    const ts = Date.now();
     const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
-    hmac.update(`${txId}:${applicationId}:${instrumentId}:500`);
+    hmac.update(`${txId}:SUCCESS:100:${ts}:${applicationId}`);
     const signature = hmac.digest('hex');
 
     await request('POST', '/api/payments/callback', {
-      transactionId: txId,
+      paymentId: txId,
       applicationId,
       status: 'SUCCESS',
-      amount: 500,
-      signature
-    }, false); 
+      amount: 100,
+      timestamp: ts
+    }, false, { 'x-hmac-signature': signature }); 
   });
-
-  await step('Login as GATC (demo-as)', async () => {
-    await request('POST', '/api/demo/login-as/GATC', undefined, false);
+  await step('Login as BUSINESS (demo-as)', async () => {
+    await request('POST', '/api/demo/login-as/BUSINESS', undefined, false);
   });
 
   await step('Schedule', async () => {
-    await request('POST', `/api/appointments/schedule`, {
-      application_id: applicationId,
-      scheduled_date: new Date(Date.now() + 86400000).toISOString(),
-      officer_id: 'USR-LMO1'
+    const res = await request('POST', '/api/appointments/schedule', {
+      applicationId: applicationId,
+      slotDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      slotTime: '09:00'
     });
+    process.stdout.write(JSON.stringify(res) + '\n');
   });
 
   await step('Login as LMO (demo-as)', async () => {
@@ -127,7 +135,7 @@ async function run() {
 
   await step('Officer accept', async () => {
     await request('POST', `/api/appointments/accept`, {
-      application_id: applicationId
+      applicationId: applicationId
     });
   });
 
@@ -141,12 +149,15 @@ async function run() {
   await step('Upload two photos & Inspection PASS', async () => {
     // We create a dummy PNG
     const dummyPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
+    const hash = crypto.createHash('sha256').update(dummyPng).digest('hex');
     const form = new FormData();
     form.append('checklist', JSON.stringify([{ item: 'Weight', ok: true }]));
     form.append('readings', JSON.stringify([{ val: 10 }]));
     form.append('pass', 'true');
-    form.append('photos', new Blob([dummyPng], { type: 'image/png' }), 'photo1.png');
-    form.append('photos', new Blob([dummyPng], { type: 'image/png' }), 'photo2.png');
+    form.append('clientHashes', JSON.stringify([hash, hash]));
+    form.append('clientCaptureTimes', JSON.stringify([new Date().toISOString(), new Date().toISOString()]));
+    form.append('files', new Blob([dummyPng], { type: 'image/png' }), 'photo1.png');
+    form.append('files', new Blob([dummyPng], { type: 'image/png' }), 'photo2.png');
 
     const res = await request('POST', `/api/field/jobs/${applicationId}/inspection`, form);
     if (!res.certificateId) {
@@ -171,7 +182,7 @@ async function run() {
     }
   });
 
-  console.log('Smoke test completed successfully.');
+  process.stdout.write(String('Smoke test completed successfully.') + '\n');
 }
 
 run();

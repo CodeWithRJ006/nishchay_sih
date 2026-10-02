@@ -1,37 +1,24 @@
-# Demonstration Guide
+# Demo Script
 
-Follow this click path to demonstrate the entire lifecycle of an instrument certification in Nishchay.
+This script walks through the golden path of Nishchay over HTTP locally.
 
-## 1. Business Owner: Apply & Pay
+### Setup
+Ensure the server is running on port 4000:
+```bash
+npm run demo:reset
+npm start
+```
 
-1. Navigate to `/login`.
-2. Login as **Business**:
-   - Email: `biz1@nishchay.example`
-   - Password: `demo123`
-3. Go to **Instruments** in the sidebar.
-4. Click **Add Instrument** (e.g. Weighing Scale, Class III, Temp Serial).
-5. Go to **Applications**. Click **New Application**, select the instrument, and submit.
-6. The state becomes `SUBMITTED`.
-7. Click **Pay Fee** to simulate the dummy payment gateway.
-8. State becomes `PAID`. (System auto-routes to LMO based on the business zone).
+### Golden Path Flow
+1. **Apply:** Login as `biz1@nishchay.example`, register an instrument, and submit an application.
+2. **Pay:** Complete the Sandbox payment callback to move the application forward.
+3. **Schedule:** Login as `gatc1@nishchay.example` (or an admin) to schedule the application for inspection.
+4. **Officer Accept:** Login as `lmo1@nishchay.example`, go to Jobs, and view the assigned inspection.
+5. **Arrive:** Click Arrive at the location.
+6. **Inspect:** Fill out the checklist, take two photos (simulated via file upload or camera capture), and submit.
+7. **Certificate:** The system automatically issues a tamper-evident digital certificate and seals it.
+8. **Public Verify:** Navigate to `/v/:publicId` to verify the certificate's authenticity, which dynamically recalculates and verifies the `detailsDigest`, photo SHAs, and digital signature.
 
-## 2. Inspector (LMO): Field Verification
-
-1. Logout (click profile avatar > Logout).
-2. Login as **LMO**:
-   - Email: `lmo1@nishchay.example`
-   - Password: `demo123`
-3. Click on the mobile **Field Icon** (bottom nav) or navigate to `/field`.
-4. Click on the assigned job.
-5. Click **Start Inspection**.
-6. The app automatically fetches the LMO's GPS coordinates and compares them with the Business Address.
-7. Fill out the inspection checklist, enter readings (Applied vs. Observed), upload evidence photos, and select **Pass**.
-8. Submit. The system digitally signs and issues the certificate.
-
-## 3. Public Verification
-
-1. Logout.
-2. From the Homepage, click **Search Certificates**.
-3. Enter the public ID (or scan the QR code via mobile).
-4. The screen displays the valid green digital certificate.
-5. You can click **Report Issue** to file a consumer complaint against this business.
+### Additional Features
+- **Search & Reports:** Login as Admin or Officer, navigate to Certificate Search, filter by dates/status, and Export CSV.
+- **Admin Provisioning:** Login as Admin to provision new LMO or GATC users.

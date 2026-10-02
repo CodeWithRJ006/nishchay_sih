@@ -1,82 +1,52 @@
-# Nishchay: Legal Metrology Transparency Platform
+# Nishchay
 
-*One-line pitch*: A tamper-proof, geo-tagged certification and verification platform that brings radical transparency to legal metrology instruments.
+Nishchay is a modernization of the Legal Metrology workflows for weighing and measuring instruments. It shifts from purely paper-based, manual certificates to an end-to-end digital lifecycle: from business registration and instrument profiling to tamper-evident digital certificates and public verification.
 
-![Hero Screenshot](docs/screens/home-desktop.png)
+## Features (Built & Run)
 
-## Problem Statement & Solution Mapping
+| Module | Status | Proof |
+|---|---|---|
+| **Registration** | DONE | `web/src/pages/Register.tsx` |
+| **Instrument profile** | DONE | `web/src/pages/Instruments.tsx` |
+| **Verification workflow** | DONE | `web/src/pages/field/JobInspection.tsx` |
+| **Fee payment** | DONE | `web/src/pages/SandboxCheckout.tsx` |
+| **Geo-tagged field verification** | DONE | `web/src/pages/field/CameraCapture.tsx` |
+| **Certificate generation** | DONE | `server/api/certificates.ts` |
+| **QR public verification** | DONE | `web/src/pages/PublicVerify.tsx` |
+| **Right to Check** | DONE | `web/src/pages/PublicVerify.tsx` |
+| **Search** | DONE | `web/src/pages/CertificateSearch.tsx` |
+| **Reports/export** | DONE | `web/src/pages/CertificateSearch.tsx` |
+| **Role dashboards** | DONE | `web/src/pages/OfficerJobs.tsx` |
+| **Tamper-evident seal** | DONE | `server/seal/index.ts` |
 
-Nishchay directly addresses the core requirements of SIH26036.
+## Simulated vs. Not-Built
+- **Payments:** The payment gateway uses a Sandbox checkout flow instead of real bank APIs.
+- **Notifications:** Email and SMS are NOT built.
+- **Hardware Integrations:** We do not currently integrate directly with instrument hardware.
 
-| Requirement | Module | Where to click |
-| :--- | :--- | :--- |
-| **Tamper-proof digital certificates** | Block 7 (Certificates) | Public QR Verification (`/verify/:id`) |
-| **Geo-tagged field inspections** | Block 6b (Inspections) | LMO Dashboard > Start Inspection |
-| **Online fee payments** | Block 5 (Payments) | Business Dashboard > Applications > Pay Fee |
-| **Right-to-check / Consumer feedback** | Block 10 (Complaints) | Public QR Verify > "Report Issue" button |
-| **Role-based access & automated routing** | Block 3 (Routing) | Admin Dashboard > Reassign Jobs |
-| **Public Verification Portal** | Block 9 (Search) | Homepage > "Search Certificates" |
-
-## Architecture Diagram
-
-```mermaid
-flowchart TD
-    Client["Client (React + Tailwind)"]
-    API["Express API Server"]
-    DB[("SQLite Database\n(with better-sqlite3)")]
-    FS["Local File Storage\n(Uploads & Photos)"]
-
-    Client -- "JSON / Multipart (Photos)" --> API
-    API -- "Transactions / Migrations" --> DB
-    API -- "Writes JPEGs" --> FS
-    
-    subgraph Modules
-      Auth["Auth (JWT)"]
-      RBAC["Role-based Access"]
-      Certificates["Digital Seal (ECDSA)"]
-      Field["Geo-tagged Inspection"]
-    end
-    API --- Modules
-```
-
-## Run Commands (Clean Room)
-
-To run the platform locally from a fresh clone:
+## Quick Start
 
 ```bash
-# 1. Install dependencies
-npm ci
-
-# 2. Seed database & create admin/demo accounts
-npm run demo:setup
-
-# 3. Start the server (runs on http://localhost:3000)
+npm install
+npm run build
+npm run demo:reset
 npm start
 ```
-
-### Preflight Verification
-To ensure all tests, linting, formatting, and builds are successful, run:
-```bash
-npm run preflight
-```
+The server will start on port `4000` (`http://localhost:4000`).
 
 ## Demo Logins
+All seeded demo logins use the `@nishchay.example` domain. The password for all is `Password123!`.
+- **Admin:** `admin@nishchay.example`
+- **LMO (Local Metrology Officer):** `lmo1@nishchay.example`, `lmo2@nishchay.example`
+- **GATC (Govt Approved Test Centre):** `gatc1@nishchay.example`
+- **Businesses:** `biz1@nishchay.example`, `biz2@nishchay.example`, `biz3@nishchay.example`
 
-The application starts with a set of seeded demo accounts.
+## Public Verification Route
+Certificates can be publicly verified via `http://localhost:4000/v/:publicId`.
 
-| Role | Email | Password | Purpose |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin1@nishchay.example` | `demo123` | Provision accounts, view system progress |
-| **LMO** (Inspector) | `lmo1@nishchay.example` | `demo123` | View assigned jobs, perform inspections |
-| **Business** | `biz1@nishchay.example` | `demo123` | Add instruments, apply for certification |
-
-## What is Simulated / What is Not Built
-
-Nishchay is a **Prototype built for SIH26036**. As per `PLAN.md`:
-
-- **Real payments are simulated:** The payment gateway uses a mock "Pay with Dummy Gateway" flow instead of Razorpay/CCAvenue.
-- **Physical OCR & AI is omitted:** Reading serial numbers off physical device images is omitted.
-- **SMS/Email alerts are simulated:** The system records notifications in the DB but does not send actual emails or SMS.
-- **Expiry Reminders:** Cron jobs for automated reminders are omitted.
-- **Production File Storage:** Uses local disk (`/uploads`) instead of S3/GCS.
-- **Hardware Security Module (HSM):** Digital signatures use a local private key file instead of an external HSM or KMS.
+## Documentation
+- [Architecture](docs/ARCHITECTURE.md)
+- [Security](docs/SECURITY.md)
+- [Deployment](docs/DEPLOYMENT.md)
+- [Known Limits](docs/KNOWN_LIMITS.md)
+- [Demo Flow](DEMO.md)

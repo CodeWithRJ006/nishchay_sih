@@ -21,16 +21,16 @@ export function CertificateSearch() {
     startDate: '',
     endDate: ''
   });
-  const [results, setResults] = useState<CertificateResult[]>([] /* eslint-disable-line react-hooks/exhaustive-deps */);
+  const [results, setResults] = useState<CertificateResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const fetchResults = async () => {
+  const fetchResults = useCallback(async (currentParams = params) => {
     setLoading(true);
     setError('');
     try {
       const q = new URLSearchParams();
-      Object.entries(params).forEach(([k, v]) => {
+      Object.entries(currentParams).forEach(([k, v]) => {
         if (v) q.append(k, v);
       });
       const res = await fetch(`/api/certificates/search?${q.toString()}`);
@@ -42,11 +42,11 @@ export function CertificateSearch() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params]);
 
   useEffect(() => {
     fetchResults();
-  }, [] /* eslint-disable-line react-hooks/exhaustive-deps */);
+  }, [fetchResults]);
 
   const handleExport = () => {
     const q = new URLSearchParams();
@@ -119,7 +119,7 @@ export function CertificateSearch() {
         </div>
         <div className="flex items-end">
           <button 
-            onClick={fetchResults}
+            onClick={() => fetchResults(params)}
             className="w-full bg-calibration-blue hover:bg-blue-700 text-white px-4 py-2 rounded transition-colors"
           >
             Search
