@@ -14,13 +14,13 @@ let app: Express;
 beforeAll(() => {
   process.env.DEMO_MODE = 'true';
   runMigrations();
-  db.exec('DELETE FROM application_documents; DELETE FROM certificates; DELETE FROM receipts; DELETE FROM payments; DELETE FROM applications; DELETE FROM instruments; DELETE FROM businesses; DELETE FROM users; DELETE FROM counters;');
+  db.exec('DELETE FROM officer_rejections; DELETE FROM appointments; DELETE FROM application_documents; DELETE FROM certificates; DELETE FROM receipts; DELETE FROM payments; DELETE FROM applications; DELETE FROM instruments; DELETE FROM businesses; DELETE FROM users; DELETE FROM counters;');
   seedDemoData();
   app = createApp() as Express;
 });
 
 afterAll(() => {
-  db.exec('DELETE FROM application_documents; DELETE FROM certificates; DELETE FROM receipts; DELETE FROM payments; DELETE FROM applications; DELETE FROM instruments; DELETE FROM businesses; DELETE FROM users; DELETE FROM counters;');
+  db.exec('DELETE FROM officer_rejections; DELETE FROM appointments; DELETE FROM application_documents; DELETE FROM certificates; DELETE FROM receipts; DELETE FROM payments; DELETE FROM applications; DELETE FROM instruments; DELETE FROM businesses; DELETE FROM users; DELETE FROM counters;');
 });
 
 describe('Block 5a: Payments and Fee-Gate', () => {

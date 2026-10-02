@@ -27,8 +27,15 @@ describe('Block 6b Tests', () => {
     // create a job explicitly for testing
     testAppId = 'APP-6B-' + Date.now();
     db.prepare("INSERT INTO businesses (id, owner_id, name, email, phone, address, type, zone_id, lat, lng) VALUES ('BIZ-6B', 'USR-BIZ1', 'Test', 't@t.com', '123', 'addr', 'MANUFACTURER', 'ZONE-1', 0, 0)").run();
-    db.prepare("INSERT INTO applications (id, business_id, instrument_id, state) VALUES (?, 'BIZ-6B', 'NSH-I-000001', 'ACCEPTED')").run(testAppId);
+    db.prepare("INSERT INTO applications (id, business_id, instrument_id, state, fee_amount) VALUES (?, 'BIZ-6B', 'NSH-I-000001', 'ACCEPTED', 500)").run(testAppId);
     db.prepare("INSERT INTO appointments (id, application_id, officer_id, slot_date, slot_time, status) VALUES (?, ?, 'USR-LMO1', '2026-10-10', 'Morning', 'ACCEPTED')").run('APT-' + testAppId, testAppId);
+    // Add payment and receipt for fee gate
+    const receiptId = 'REC-' + testAppId;
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19); // sqlite format
+    const payload = `${receiptId}:${testAppId}:NSH-I-000001:500:${nowStr}`;
+    const sig = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret').update(payload).digest('hex');
+    db.prepare("INSERT INTO payments (id, application_id, amount, status, idempotency_key) VALUES (?, ?, 500, 'PAID', 'test-key')").run('PAY-6B', testAppId);
+    db.prepare("INSERT INTO receipts (id, application_id, payment_id, amount, signature, created_at) VALUES (?, ?, 'PAY-6B', 500, ?, ?)").run(receiptId, testAppId, sig, nowStr);
   });
 
   it('rejects inspection if officer not assigned', async () => {
@@ -167,7 +174,7 @@ describe('Block 6b Tests', () => {
     expect(res.status).toBe(200);
 
     const appRow = db.prepare('SELECT state FROM applications WHERE id = ?').get(testAppId) as { state: string };
-    expect(appRow.state).toBe('INSPECTED_PASS');
+    expect(appRow.state).toBe('CERTIFIED');
   });
 
   it('rejects double submit', async () => {

@@ -87,8 +87,8 @@ export function seedDemoData() {
     const sealHash = buildDetailsDigest(details);
     const signature = signHash(sealHash, privateKey);
     
-    db.prepare('INSERT INTO certificates (id, application_id, receipt_id, valid_from, valid_to, seal_hash, seal_signature, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(certId, app1, rec1, '2025-01-01T00:00:00Z', '2026-01-01T00:00:00Z', sealHash, signature, 'VALID');
+    db.prepare('INSERT INTO certificates (public_id, application_id, instrument_id, receipt_id, valid_from, valid_to, hash, signature, key_id, public_record, details_digest, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+      .run(certId, app1, 'NSH-I-000001', rec1, '2025-01-01T00:00:00Z', '2026-01-01T00:00:00Z', sealHash, signature, 'test-key', '{}', 'details-hash', 'VALID');
 
     // Create an application at INSPECTED_PASS state ready for gate test
     const app2 = generateId.application(2025, 2);

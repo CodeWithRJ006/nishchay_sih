@@ -11,7 +11,8 @@ const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'uploads'
 if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
 
 // We'll use multer in the router for this endpoint
-export function submitInspection(req: Request, res: Response) {
+export async function submitInspection(req: Request, res: Response) {
+  const certificateService = new (await import('../services/certificateService.js')).CertificateService();
   const { id } = req.params; // application_id
   const userId = req.user!.id;
   
@@ -140,12 +141,17 @@ export function submitInspection(req: Request, res: Response) {
 
   try {
     transaction();
+    if (pass) {
+      const publicId = await certificateService.issueCertificate(id, userId);
+      return res.json({ success: true, certificateId: publicId });
+    }
     res.json({ success: true });
   } catch (e: unknown) {
     const err = e as Error;
     if (err.message.includes('UNIQUE constraint failed: inspections.application_id')) {
       return res.status(409).json({ error: 'Inspection already submitted' });
     }
-    throw err;
+    return res.status(500).json({ error: err.message });
   }
 }
+

@@ -112,7 +112,7 @@ export const Design = () => {
         <Button onClick={() => setModalOpen(false)}>Close</Button>
       </Modal>
 
-      <Toast message="This is an info toast notification!" type="info" />
+      <Toast message="This is an info toast notification" type="info" />
     </main>
   );
 };

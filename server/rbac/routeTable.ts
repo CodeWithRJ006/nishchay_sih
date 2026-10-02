@@ -17,7 +17,22 @@ export const routeTable: RouteDef[] = [
   { method: 'GET', path: '/api/auth/me', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
   { method: 'POST', path: '/api/demo/login-as/:role', roles: ['PUBLIC'] },
   { method: 'GET', path: '/api/public/keys', roles: ['PUBLIC'] },
+  // Block 7 Certificate Routes
+  { method: 'POST', path: '/api/certificates/:appId/issue', roles: ['LMO', 'GATC'] },
+  { method: 'GET', path: '/api/certificates/:publicId', roles: ['PUBLIC', 'BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/certificates/:publicId/revoke', roles: ['ADMIN'] },
   { method: 'GET', path: '/api/health', roles: ['PUBLIC'] },
+  // Demo mode routes (only active when DEMO_MODE=true)
+  { method: 'GET', path: '/api/demo/progress', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/admin/demo/issue-no-payment', roles: ['ADMIN'] },
+  { method: 'POST', path: '/api/admin/demo/tamper', roles: ['ADMIN'] },
+  { method: 'POST', path: '/api/admin/demo/reset', roles: ['ADMIN'] },
+  // Block 9 Certificate Search & Export
+  { method: 'GET', path: '/api/certificates/search', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'GET', path: '/api/certificates/export', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'GET', path: '/api/certificates/:publicId/pdf', roles: ['PUBLIC', 'BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  // Right to Check complaint route
+  { method: 'POST', path: '/api/certificates/:publicId/complaint', roles: ['PUBLIC'] },
   { method: 'POST', path: '/api/admin/provision', roles: ['ADMIN'] },
   { method: 'GET', path: '/api/business/profile', roles: ['BUSINESS'] },
   { method: 'PUT', path: '/api/business/profile', roles: ['BUSINESS'], objectPolicy: ownsBusiness },

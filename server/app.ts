@@ -18,6 +18,8 @@ import { getSlots, schedule, accept, reject, getMyJobs, listUnassigned, assignMa
 import { arriveAtJob } from './api/field.js';
 import { submitInspection } from './api/fieldInspection.js';
 import { uploadMultipleMiddleware } from './api/uploads.js';
+import { certificateRoutes } from './api/certificates.js';
+import { demoRoutes } from './api/demo.js';
 
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
@@ -124,6 +126,10 @@ export function createApp() {
       body: JSON.stringify(body)
     }).then(r => r.json()).then(data => res.json(data)).catch(e => res.status(500).json({ error: e.message }));
   });
+// Register Block 9 certificate routes
+certificateRoutes.forEach(r => (app as unknown as Record<string, (...args: unknown[]) => unknown>)[r.method.toLowerCase()](r.path, ...r.handler));
+// Register Block 10 demo routes (handlers already check DEMO_MODE)
+demoRoutes.forEach(r => (app as unknown as Record<string, (...args: unknown[]) => unknown>)[r.method.toLowerCase()](r.path, ...r.handler));
 
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(process.cwd(), 'dist')));
