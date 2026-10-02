@@ -24,6 +24,8 @@ import { JobList } from './pages/field/JobList';
 import { JobDetail } from './pages/field/JobDetail';
 import { JobInspection } from './pages/field/JobInspection';
 
+import { PublicVerify } from './pages/PublicVerify';
+
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   if (loading) return <div>Loading...</div>;
@@ -39,6 +41,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<Home />} />
+      <Route path="/v/:id" element={<PublicVerify />} />
       <Route path="/design" element={<Design />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />

@@ -136,9 +136,35 @@ export const adminResetDemo = (req: Request, res: Response) => {
   }
 };
 
+/**
+ * POST /api/demo/login-as/:role
+ * Generates a JWT for the first seeded user of the given role.
+ */
+export const demoLoginAs = (req: Request, res: Response) => {
+  const role = req.params.role;
+  const user = db.prepare('SELECT id, email, role FROM users WHERE role = ? LIMIT 1').get(role) as { id: string; email: string; role: string } | undefined;
+  if (!user) {
+    return res.status(404).json({ error: 'No demo user found for this role' });
+  }
+  const jwt = require('jsonwebtoken');
+  const token = jwt.sign(
+    { id: user.id, role: user.role, email: user.email },
+    process.env.JWT_SECRET || 'dev-secret',
+    { expiresIn: '1d' }
+  );
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000
+  });
+  res.json({ user });
+};
+
 // Export routes for registration in app.ts
 export const demoRoutes = [
   { method: 'GET', path: '/api/demo/progress', handler: [getDemoProgress] },
+  { method: 'POST', path: '/api/demo/login-as/:role', handler: [demoLoginAs] },
   { method: 'POST', path: '/api/admin/demo/issue-no-payment', handler: [adminIssueNoPayment] },
   { method: 'POST', path: '/api/admin/demo/tamper', handler: [adminTamperCertificate] },
   { method: 'POST', path: '/api/admin/demo/reset', handler: [adminResetDemo] },
