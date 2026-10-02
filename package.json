@@ -15,6 +15,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p server/tsconfig.json && tsc -p web/tsconfig.json && tsc -p shared/tsconfig.json",
     "test": "vitest run",
+    "smoke": "tsx scripts/smoke.ts",
     "test:watch": "vitest",
     "verify": "node scripts/check-encoding.mjs && npm run lint && npm run typecheck && npm run test && npm run build",
     "demo:setup": "tsx server/scripts/demo-setup.ts",
