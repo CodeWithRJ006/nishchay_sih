@@ -104,17 +104,14 @@ async function run() {
     });
     const txId = (initRes as Record<string, string>).paymentId;
     const ts = Date.now();
-    const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
-    hmac.update(`${txId}:SUCCESS:100:${ts}:${applicationId}`);
-    const signature = hmac.digest('hex');
 
-    await request('POST', '/api/payments/callback', {
+    await request('POST', '/api/demo/trigger-callback', {
       paymentId: txId,
       applicationId,
       status: 'SUCCESS',
       amount: 100,
       timestamp: ts
-    }, false, { 'x-hmac-signature': signature }); 
+    }, false); 
   });
   await step('Login as BUSINESS (demo-as)', async () => {
     await request('POST', '/api/demo/login-as/BUSINESS', undefined, false);
