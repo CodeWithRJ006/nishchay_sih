@@ -6,7 +6,7 @@ Follow this click path to demonstrate the entire lifecycle of an instrument cert
 
 1. Navigate to `/login`.
 2. Login as **Business**:
-   - Email: `biz1@example.com`
+   - Email: `biz1@nishchay.example`
    - Password: `demo123`
 3. Go to **Instruments** in the sidebar.
 4. Click **Add Instrument** (e.g. Weighing Scale, Class III, Temp Serial).
@@ -19,7 +19,7 @@ Follow this click path to demonstrate the entire lifecycle of an instrument cert
 
 1. Logout (click profile avatar > Logout).
 2. Login as **LMO**:
-   - Email: `lmo1@nishchay.gov.in`
+   - Email: `lmo1@nishchay.example`
    - Password: `demo123`
 3. Click on the mobile **Field Icon** (bottom nav) or navigate to `/field`.
 4. Click on the assigned job.

@@ -4,7 +4,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 
-const storageDir = path.join(process.cwd(), 'storage');
+const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'storage', 'uploads');
 
 export function saveUploadService(buf: Buffer) {
   let ext = '';

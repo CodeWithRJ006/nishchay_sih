@@ -29,7 +29,7 @@ try {
 
   // 3. Storage Check
   console.log('\n[3/7] Checking Storage...');
-  const uploadDir = path.resolve(process.cwd(), 'uploads');
+  const uploadDir = process.env.STORAGE_DIR || path.resolve(process.cwd(), 'storage', 'uploads');
   if (fs.existsSync(uploadDir)) {
     console.log('✅ Uploads directory exists.');
   } else {

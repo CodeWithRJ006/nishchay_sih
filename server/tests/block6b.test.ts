@@ -16,10 +16,10 @@ describe('Block 6b Tests', () => {
     runMigrations();
     seedDemoData();
     
-    let res = await request(app).post('/api/auth/login').send({ email: 'lmo1@nishchay.gov.in', password: 'demo123' });
+    let res = await request(app).post('/api/auth/login').send({ email: 'lmo1@nishchay.example', password: 'demo123' });
     lmoToken = res.headers['set-cookie'][0].split(';')[0].split('=')[1];
 
-    res = await request(app).post('/api/auth/login').send({ email: 'gatc1@nishchay.gov.in', password: 'demo123' });
+    res = await request(app).post('/api/auth/login').send({ email: 'gatc1@nishchay.example', password: 'demo123' });
     gatcToken = res.headers['set-cookie'][0].split(';')[0].split('=')[1];
   });
 

@@ -66,9 +66,9 @@ The application starts with a set of seeded demo accounts.
 
 | Role | Email | Password | Purpose |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin1@nishchay.gov.in` | `demo123` | Provision accounts, view system progress |
-| **LMO** (Inspector) | `lmo1@nishchay.gov.in` | `demo123` | View assigned jobs, perform inspections |
-| **Business** | `biz1@example.com` | `demo123` | Add instruments, apply for certification |
+| **Admin** | `admin1@nishchay.example` | `demo123` | Provision accounts, view system progress |
+| **LMO** (Inspector) | `lmo1@nishchay.example` | `demo123` | View assigned jobs, perform inspections |
+| **Business** | `biz1@nishchay.example` | `demo123` | Add instruments, apply for certification |
 
 ## What is Simulated / What is Not Built
 

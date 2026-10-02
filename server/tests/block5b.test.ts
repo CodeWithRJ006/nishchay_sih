@@ -134,7 +134,7 @@ describe('Block 5b: Scheduling', () => {
 });
 
 it('rejecting again sends it to unassigned queue, admin manual assignment', async () => {
-  const res = await request(app).post('/api/auth/login').send({ email: 'gatc2@nishchay.gov.in', password: 'demo123' });
+  const res = await request(app).post('/api/auth/login').send({ email: 'gatc2@nishchay.example', password: 'demo123' });
   const gatc2Token = res.headers['set-cookie'][0].split(';')[0].split('=')[1];
 
   const reject2 = await request(app).post('/api/appointments/reject').set('Cookie', `token=${gatc2Token}`)

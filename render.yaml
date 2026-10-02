@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: nishchay
+    runtime: node
+    plan: free
+    buildCommand: "npm ci && npm run build"
+    startCommand: "npm start"
+    healthCheckPath: "/api/health"
+    envVars:
+      - key: DEMO_MODE
+        value: "true"
+      - key: PUBLIC_BASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: HMAC_SECRET
+        generateValue: true

@@ -1,5 +1,6 @@
 // Demo API handlers (Block 10)
 import { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import { db } from '../db/index.js';
 import { certificateService } from '../services/certificateService.js';
 import { execSync } from 'node:child_process';
@@ -146,7 +147,7 @@ export const demoLoginAs = (req: Request, res: Response) => {
   if (!user) {
     return res.status(404).json({ error: 'No demo user found for this role' });
   }
-  const jwt = require('jsonwebtoken');
+
   const token = jwt.sign(
     { id: user.id, role: user.role, email: user.email },
     process.env.JWT_SECRET || 'dev-secret',

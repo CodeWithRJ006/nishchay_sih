@@ -25,7 +25,7 @@ beforeEach(async () => {
 
 describe('Block 4a API', () => {
   it('Admin can provision accounts', async () => {
-    const login = await request(app).post('/api/auth/login').send({ email: 'admin@nishchay.gov.in', password: 'demo123' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'admin@nishchay.example', password: 'demo123' });
     const cookie = login.headers['set-cookie'];
 
     const res = await request(app)
@@ -39,7 +39,7 @@ describe('Block 4a API', () => {
   });
 
   it('Non-admin cannot provision accounts (403 Forbidden)', async () => {
-    const login = await request(app).post('/api/auth/login').send({ email: 'biz1@example.com', password: 'demo123' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'biz1@nishchay.example', password: 'demo123' });
     const cookie = login.headers['set-cookie'];
 
     const res = await request(app)
@@ -52,7 +52,7 @@ describe('Block 4a API', () => {
   });
 
   it('Business A cannot read or modify Business B (object policy)', async () => {
-    const login = await request(app).post('/api/auth/login').send({ email: 'biz1@example.com', password: 'demo123' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'biz1@nishchay.example', password: 'demo123' });
     const cookie = login.headers['set-cookie'];
 
     // Try to update Biz 2's profile by passing their ID. The endpoint normally doesn't take ID to change others, 
@@ -61,7 +61,7 @@ describe('Block 4a API', () => {
       .put('/api/business/profile')
       .set('Cookie', cookie)
       .set('x-csrf-token', 'test')
-      .send({ id: 'BIZ-2', name: 'Hacked Name' }); // BIZ-2 is owned by biz2@example.com
+      .send({ id: 'BIZ-2', name: 'Hacked Name' }); // BIZ-2 is owned by biz2@nishchay.example
 
     expect(res.status).toBe(403);
     
@@ -76,7 +76,7 @@ describe('Block 4a API', () => {
   });
 
   it('Rejects business profile updates with missing fields', async () => {
-    const login = await request(app).post('/api/auth/login').send({ email: 'biz1@example.com', password: 'demo123' });
+    const login = await request(app).post('/api/auth/login').send({ email: 'biz1@nishchay.example', password: 'demo123' });
     const cookie = login.headers['set-cookie'];
 
     const res = await request(app)

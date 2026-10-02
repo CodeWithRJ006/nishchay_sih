@@ -30,13 +30,13 @@ beforeEach(async () => {
   app = await createApp();
   
   // Create test directories if needed
-  const storageDir = path.join(process.cwd(), 'storage');
+  const storageDir = path.join(process.cwd(), 'storage', 'uploads');
   if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
 
-  const res1 = await request(app).post('/api/auth/login').send({ email: 'biz1@example.com', password: 'demo123' });
+  const res1 = await request(app).post('/api/auth/login').send({ email: 'biz1@nishchay.example', password: 'demo123' });
   biz1Cookie = res1.headers['set-cookie'];
 
-  const res2 = await request(app).post('/api/auth/login').send({ email: 'biz2@example.com', password: 'demo123' });
+  const res2 = await request(app).post('/api/auth/login').send({ email: 'biz2@nishchay.example', password: 'demo123' });
   biz2Cookie = res2.headers['set-cookie'];
 });
 
@@ -148,7 +148,7 @@ describe('Block 4b Tests', () => {
 
       expect(fileName).toMatch(/^[a-f0-9]{32}\.png$/);
       
-      const storageDir = path.join(process.cwd(), 'storage');
+      const storageDir = path.join(process.cwd(), 'storage', 'uploads');
       const filePath = path.join(storageDir, fileName);
       
       // Assert it is stored inside STORAGE_DIR

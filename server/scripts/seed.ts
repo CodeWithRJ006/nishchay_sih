@@ -15,7 +15,7 @@ export function seedDemoData() {
   transaction(() => {
     // 1 admin, 2 LMOs, 1 GATC
     db.prepare('INSERT INTO users (id, email, password_hash, role, name, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
-      .run('USR-ADMIN', 'admin@nishchay.gov.in', pwHash, 'ADMIN', 'Admin User', null);
+      .run('USR-ADMIN', 'admin@nishchay.example', pwHash, 'ADMIN', 'Admin User', null);
       
     db.prepare('INSERT INTO zones (id, code, name) VALUES (?, ?, ?)')
       .run('ZONE-1', 'Z-DL-01', 'Delhi North');
@@ -23,30 +23,30 @@ export function seedDemoData() {
       .run('ZONE-2', 'Z-DL-02', 'Delhi South');
 
     db.prepare('INSERT INTO users (id, email, password_hash, role, name, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
-      .run('USR-LMO1', 'lmo1@nishchay.gov.in', pwHash, 'LMO', 'LMO North', 'ZONE-1');
+      .run('USR-LMO1', 'lmo1@nishchay.example', pwHash, 'LMO', 'LMO North', 'ZONE-1');
     db.prepare('INSERT INTO users (id, email, password_hash, role, name, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
-      .run('USR-LMO2', 'lmo2@nishchay.gov.in', pwHash, 'LMO', 'LMO South', 'ZONE-2');
+      .run('USR-LMO2', 'lmo2@nishchay.example', pwHash, 'LMO', 'LMO South', 'ZONE-2');
     db.prepare('INSERT INTO users (id, email, password_hash, role, name, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
-      .run('USR-GATC1', 'gatc1@nishchay.gov.in', pwHash, 'GATC', 'GATC Central', null);
+      .run('USR-GATC1', 'gatc1@nishchay.example', pwHash, 'GATC', 'GATC Central', null);
     db.prepare('INSERT INTO users (id, email, password_hash, role, name, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
-      .run('USR-GATC2', 'gatc2@nishchay.gov.in', pwHash, 'GATC', 'GATC West', null);
+      .run('USR-GATC2', 'gatc2@nishchay.example', pwHash, 'GATC', 'GATC West', null);
 
     // 3 businesses
     const b1 = 'BIZ-1';
     db.prepare('INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)')
-      .run('USR-BIZ1', 'biz1@example.com', pwHash, 'BUSINESS', 'Biz One Owner');
+      .run('USR-BIZ1', 'biz1@nishchay.example', pwHash, 'BUSINESS', 'Biz One Owner');
     db.prepare('INSERT INTO businesses (id, owner_id, name, address, zone_id) VALUES (?, ?, ?, ?, ?)')
       .run(b1, 'USR-BIZ1', 'Biz One', '123 Market', 'ZONE-1');
 
     const b2 = 'BIZ-2';
     db.prepare('INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)')
-      .run('USR-BIZ2', 'biz2@example.com', pwHash, 'BUSINESS', 'Biz Two Owner');
+      .run('USR-BIZ2', 'biz2@nishchay.example', pwHash, 'BUSINESS', 'Biz Two Owner');
     db.prepare('INSERT INTO businesses (id, owner_id, name, address, zone_id) VALUES (?, ?, ?, ?, ?)')
       .run(b2, 'USR-BIZ2', 'Biz Two', '456 Street', 'ZONE-2');
       
     const b3 = 'BIZ-3';
     db.prepare('INSERT INTO users (id, email, password_hash, role, name) VALUES (?, ?, ?, ?, ?)')
-      .run('USR-BIZ3', 'biz3@example.com', pwHash, 'BUSINESS', 'Biz Three Owner');
+      .run('USR-BIZ3', 'biz3@nishchay.example', pwHash, 'BUSINESS', 'Biz Three Owner');
     db.prepare('INSERT INTO businesses (id, owner_id, name, address, zone_id) VALUES (?, ?, ?, ?, ?)')
       .run(b3, 'USR-BIZ3', 'Biz Three (NAWI)', '789 Road', 'ZONE-1');
 

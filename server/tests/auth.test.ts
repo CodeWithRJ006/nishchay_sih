@@ -27,7 +27,7 @@ describe('Auth Flow', () => {
   it('should login and set httpOnly cookie', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'biz1@example.com', password: 'demo123' });
+      .send({ email: 'biz1@nishchay.example', password: 'demo123' });
     
     expect(res.status).toBe(200);
     expect(res.body.role).toBe('BUSINESS');
@@ -48,7 +48,7 @@ describe('Auth Flow', () => {
   it('should return 401 for bad credentials and uniform error', async () => {
     const res = await request(app)
       .post('/api/auth/login')
-      .send({ email: 'biz1@example.com', password: 'wrong' });
+      .send({ email: 'biz1@nishchay.example', password: 'wrong' });
     
     expect(res.status).toBe(401);
     expect(res.body.code).toBe('UNAUTHORIZED');
@@ -56,9 +56,9 @@ describe('Auth Flow', () => {
 
   it('should lock out after 5 failed attempts', async () => {
     for (let i = 0; i < 5; i++) {
-      await request(app).post('/api/auth/login').send({ email: 'admin@nishchay.gov.in', password: 'wrong' });
+      await request(app).post('/api/auth/login').send({ email: 'admin@nishchay.example', password: 'wrong' });
     }
-    const res = await request(app).post('/api/auth/login').send({ email: 'admin@nishchay.gov.in', password: 'demo123' });
+    const res = await request(app).post('/api/auth/login').send({ email: 'admin@nishchay.example', password: 'demo123' });
     expect(res.status).toBe(401);
     expect(res.body.message).toBe('Account locked');
   });

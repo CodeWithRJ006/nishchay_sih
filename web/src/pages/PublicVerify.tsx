@@ -50,7 +50,7 @@ export const PublicVerify = () => {
       } else {
         alert('Failed to submit complaint');
       }
-    } catch (e) {
+    } catch {
       alert('Error connecting to server');
     }
   };
@@ -72,10 +72,10 @@ export const PublicVerify = () => {
     );
   }
 
-  let record: any = {};
+  let record: Record<string, string | boolean> = {};
   try {
     record = JSON.parse(cert.public_record);
-  } catch {}
+  } catch { /* ignore */ }
 
   const isTampered = record.tampered === true;
   const isRevoked = cert.status === 'REVOKED';
