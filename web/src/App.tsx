@@ -25,6 +25,12 @@ import { JobDetail } from './pages/field/JobDetail';
 import { JobInspection } from './pages/field/JobInspection';
 
 import { PublicVerify } from './pages/PublicVerify';
+import { useParams } from 'react-router-dom';
+
+const RedirectVerify = () => {
+  const { id } = useParams();
+  return <Navigate to={`/v/${id}`} replace />;
+};
 import { CertificateSearch } from './pages/CertificateSearch';
 
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
@@ -43,6 +49,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/v/:id" element={<PublicVerify />} />
+      <Route path="/verify/:id" element={<RedirectVerify />} />
       <Route path="/design" element={<Design />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />

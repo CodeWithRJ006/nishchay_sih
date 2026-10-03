@@ -1,17 +1,14 @@
 import bcrypt from 'bcryptjs';
 import { db, transaction } from '../db/index.js';
 import { canonicalJson } from '../../shared/src/canonicalJson.js';
-import { generateId } from '../../shared/src/ids.js';
+import { generateId, DEMO_CERT_VALID, DEMO_CERT_EXPIRED, DEMO_CERT_REVOKED } from '../../shared/src/ids.js';
 import { ensureKeys, signHash } from '../seal/index.js';
+export { DEMO_CERT_VALID, DEMO_CERT_EXPIRED, DEMO_CERT_REVOKED };
 import crypto from 'node:crypto';
 import { hmacSecret } from '../config/secrets.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { clock } from '../../shared/src/clock.js';
-
-export const DEMO_CERT_VALID = 'sample-cert-val1d-0000';
-export const DEMO_CERT_EXPIRED = 'sample-cert-exp1red-00';
-export const DEMO_CERT_REVOKED = 'sample-cert-rev0ked-00';
 
 export function seedDemoData() {
   db.exec("INSERT OR REPLACE INTO counters (id, val) VALUES ('INS', 10), ('APP', 10), ('CRT', 10), ('JOB', 10), ('PAY', 10), ('PHO', 10), ('USR', 10)");
