@@ -30,18 +30,23 @@ describe('Full Seal Verification (Private + Public + Photos)', () => {
     const cert = db.prepare('SELECT public_id, application_id FROM certificates LIMIT 1').get() as { public_id: string; application_id: string };
     const photo = db.prepare('SELECT file_name FROM inspection_photos WHERE application_id = ? LIMIT 1').get(cert.application_id) as { file_name: string };
     const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'storage', 'uploads');
-    const photoPath = path.join(storageDir, photo.file_name);
-    const original = fs.readFileSync(photoPath);
     
-    // Mutate one byte
+    // Use an isolated file so concurrent tests are not affected by on-disk mutation
+    const isolatedFileName = `seal-photo-isolated-${process.pid}.png`;
+    const isolatedPath = path.join(storageDir, isolatedFileName);
+    fs.copyFileSync(path.join(storageDir, photo.file_name), isolatedPath);
+    db.prepare('UPDATE inspection_photos SET file_name = ? WHERE application_id = ?').run(isolatedFileName, cert.application_id);
+
+    const original = fs.readFileSync(isolatedPath);
     const mutated = Buffer.from(original);
     mutated[0] = mutated[0] ^ 0xFF;
-    fs.writeFileSync(photoPath, mutated);
+    fs.writeFileSync(isolatedPath, mutated);
     
     expect(verifyFullSeal(cert.public_id)).toBe(false);
     
-    // revert
-    fs.writeFileSync(photoPath, original);
+    // cleanup
+    if (fs.existsSync(isolatedPath)) fs.unlinkSync(isolatedPath);
+    db.prepare('UPDATE inspection_photos SET file_name = ? WHERE application_id = ?').run(photo.file_name, cert.application_id);
   });
 
   it('fails if public field is mutated', () => {

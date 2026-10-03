@@ -57,6 +57,10 @@ export function createApp() {
     res.json({ status: 'ok', time: new Date().toISOString() });
   });
 
+  app.get('/api/config', (req, res) => {
+    res.json({ demoMode: process.env.DEMO_MODE === 'true' });
+  });
+
   app.use(csrfMiddleware);
   
   // Exclude some static routes from RBAC or list them in table

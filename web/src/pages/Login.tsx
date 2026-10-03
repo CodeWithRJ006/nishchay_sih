@@ -38,7 +38,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gauge-steel flex flex-col items-center justify-center p-4">
+    <main className="min-h-screen bg-gauge-steel flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded shadow-sm border border-gray-200 p-8">
         <h1 className="text-2xl font-bold mb-6 text-center">Portal Login</h1>
         
@@ -94,6 +94,6 @@ export const Login = () => {
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 };

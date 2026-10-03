@@ -18,6 +18,7 @@ export const routeTable: RouteDef[] = [
   { method: 'POST', path: '/api/demo/login-as/:role', roles: ['PUBLIC'] },
   { method: 'POST', path: '/api/demo/trigger-callback', roles: ['BUSINESS'] },
   { method: 'GET', path: '/api/public/keys', roles: ['PUBLIC'] },
+  { method: 'GET', path: '/api/config', roles: ['PUBLIC'] },
   // Block 7 Certificate Routes
   { method: 'POST', path: '/api/certificates/:appId/issue', roles: ['LMO', 'GATC'] },
   { method: 'GET', path: '/api/certificates/:publicId', roles: ['PUBLIC', 'BUSINESS', 'LMO', 'GATC', 'ADMIN'] },

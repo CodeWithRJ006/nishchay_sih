@@ -7,7 +7,8 @@
 | Phase 1c | Shell, Navigation & A11y | ✅ DONE | Sidebars per role, human labels, role switcher, responsive under 1024px, AA badge. |
 | Phase 1d | Typography & Formatters | ✅ DONE | formatDate (en-IN), formatInr, non-clipping TickScale, max-w-7xl left-aligned layout. |
 | Phase 2 | Public Verification Page | ✅ DONE | In-browser ECDSA verification, 4 states, data-driven ticks, timeline, Right to Check. |
-| Verification | Full Suite (Lint/TS/Tests) | ✅ DONE | 132/132 tests green across 27 test files, 13 visual screenshots verified. |
+| Phase 3 | Landing & Home Page | ✅ DONE | Sticky nav, verify card, camera QR modal, 6-step timeline, seal honesty, role panels, FAQ. |
+| Verification | Full Suite (Lint/TS/Tests) | ✅ DONE | 159/159 tests green across 28 test files, Playwright axe & shots clean. |
 
 ## Next Up
-- **Final SIH Demo Review!** Prototype trust loop end-to-end verified and ready for live jury testing.
+- **Final SIH Demo Review!** Full end-to-end prototype trust loop verified and ready for live jury inspection.
