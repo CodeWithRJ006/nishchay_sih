@@ -20,7 +20,8 @@ export default tseslint.config(
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
     },
-    rules: { 'no-console': 'error',
+    rules: {
+      'no-console': 'error',
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': [
         'warn',
@@ -31,6 +32,25 @@ export default tseslint.config(
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
+      'no-restricted-globals': [
+        'error',
+        { name: 'alert', message: 'Do not use alert. Use Toast component instead.' },
+        { name: 'confirm', message: 'Do not use confirm.' },
+        { name: 'prompt', message: 'Do not use prompt.' },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.name='fetch']",
+          message: 'Raw fetch is forbidden outside web/src/lib/api.ts. Use the api client.',
+        },
+      ],
+    },
+  },
+  {
+    files: ['web/src/lib/api.ts', 'server/**', 'shared/**', 'scripts/**', 'tests/**'],
+    rules: {
+      'no-restricted-syntax': 'off',
     },
   }
 );

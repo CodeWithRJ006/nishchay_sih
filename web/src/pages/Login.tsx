@@ -5,6 +5,7 @@ import { Input } from '../components/ui/Input';
 import { Field } from '../components/ui/Field';
 import { Button } from '../components/ui/Button';
 import { post } from '../lib/api';
+import { DEMO_MODE } from '../lib/demo';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -12,9 +13,6 @@ export const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const { refresh } = useAuth();
-  
-  // Hardcoded for prototype as requested
-  const isDemo = true; 
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,8 +22,13 @@ export const Login = () => {
       navigate('/dashboard');
     } catch (e: unknown) {
       const err = e as Error;
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Login failed. Please check your credentials and try again.');
     }
+  };
+
+  const fillDemo = () => {
+    setEmail('biz1@nishchay.example');
+    setPassword('demo123');
   };
 
   const loginAs = async (role: string) => {
@@ -40,19 +43,33 @@ export const Login = () => {
         <h1 className="text-2xl font-bold mb-6 text-center">Portal Login</h1>
         
         {error && <div className="mb-4 text-red-600 text-sm font-semibold text-center">{error}</div>}
+
+        {DEMO_MODE && (
+          <div className="mb-4 flex justify-end">
+            <Button type="button" variant="outline" size="sm" onClick={fillDemo}>
+              Fill demo details
+            </Button>
+          </div>
+        )}
         
         <form onSubmit={handleLogin} className="flex flex-col gap-4 mb-8">
-          <Field label="Email">
+          <Field label="Email" htmlFor="login-email">
             <Input 
+              id="login-email"
+              name="email"
               type="email" 
+              autoComplete="username"
               value={email} 
               onChange={e => setEmail(e.target.value)} 
               required 
             />
           </Field>
-          <Field label="Password">
+          <Field label="Password" htmlFor="login-password">
             <Input 
+              id="login-password"
+              name="password"
               type="password" 
+              autoComplete="current-password"
               value={password} 
               onChange={e => setPassword(e.target.value)} 
               required 
@@ -65,7 +82,7 @@ export const Login = () => {
           <a href="/register" className="text-calibration-blue hover:underline">Don't have an account? Register</a>
         </div>
 
-        {isDemo && (
+        {DEMO_MODE && (
           <div className="pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-500 mb-4 text-center">DEMO MODE: Try as</p>
             <div className="grid grid-cols-2 gap-2">

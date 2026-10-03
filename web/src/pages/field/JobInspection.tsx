@@ -104,11 +104,6 @@ export function JobInspection() {
 
     try {
       await upload(`/api/field/jobs/${id}/inspection`, formData);
-      if (pass) {
-        alert('Inspection passed. Certificate issue is the next step.');
-      } else {
-        alert('Inspection failed.');
-      }
       navigate('/field');
     } catch (e: unknown) {
       setError((e as Error).message);

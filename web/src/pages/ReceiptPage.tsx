@@ -6,6 +6,8 @@ import { NextStepBanner } from '../components/ui/NextStepBanner';
 import { Download } from 'lucide-react';
 import { get } from '../lib/api';
 
+import { formatInr } from '../lib/formatters';
+
 export function ReceiptPage() {
   const { applicationId } = useParams();
   const navigate = useNavigate();
@@ -24,6 +26,7 @@ export function ReceiptPage() {
       <PageHeader 
         title="Payment Receipt" 
         description="Your payment was successful." 
+        backTo={{ to: '/dashboard', label: 'Back to Dashboard' }}
       />
 
       <div className="bg-white p-6 rounded shadow border border-slate-200 mt-6 print-layout">
@@ -35,7 +38,7 @@ export function ReceiptPage() {
           </div>
           <div>
             <p className="text-sm text-slate-500">Amount Paid</p>
-            <p className="font-bold">₹{receipt.fee_amount}</p>
+            <p className="font-bold">{formatInr(receipt.fee_amount)}</p>
           </div>
           <div>
             <p className="text-sm text-slate-500">Status</p>

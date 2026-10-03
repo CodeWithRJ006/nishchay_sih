@@ -9,6 +9,7 @@ import { Select } from '../components/ui/Select';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
 // API client
 import { get, post } from '../lib/api';
+import { DEMO_MODE, nextSeq } from '../lib/demo';
 
 // Instrument data shape
 interface Instrument {
@@ -49,36 +50,41 @@ export function Instruments() {
   }, []);
 
   const fillDemo = () => {
-    setMake('WeighCorp');
-    setModel('M-250');
-    setSerial('WC-' + Math.floor(Math.random() * 10000));
-    setCapacity('250kg');
+    const n = nextSeq();
+    setMake('WeighCorp Precision');
+    setModel(`WC-${100 + n}`);
+    setSerial(`SN-${n}-${Date.now().toString().slice(-4)}`);
+    setCapacity('150kg');
     setTypeCode('NAWI-3');
     setAccuracyClass('III');
-    setLocation('Counter 1');
+    setLocation('Shop Floor Counter 1');
   };
 
   interface RegisterResponse { id: string; }
   const register = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const res = await post<RegisterResponse>('/api/instruments', {
-      type_code: typeCode,
-      make,
-      model,
-      serial,
-      capacity,
-      accuracy_class: accuracyClass,
-      location,
-    });
-    if (res && res.id) {
-      navigate(`/dashboard/instruments/${res.id}`);
-    } else {
-      setError('Registration failed');
+    try {
+      const res = await post<RegisterResponse>('/api/instruments', {
+        type_code: typeCode,
+        make,
+        model,
+        serial,
+        capacity,
+        accuracy_class: accuracyClass,
+        location,
+      });
+      if (res && res.id) {
+        navigate(`/dashboard/instruments/${res.id}`);
+      } else {
+        setError('Registration failed. Please verify the serial number is unique.');
+      }
+    } catch (err: unknown) {
+      setError((err as Error).message || 'Registration failed. Serial number must be unique.');
     }
   };
 
-  if (loading) return <div className="p-4">Loading...</div>;
+  if (loading) return <div className="p-4">Loading instruments...</div>;
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -93,20 +99,32 @@ export function Instruments() {
       <NextStepBanner
         title="Register your instruments"
         description="Add all instruments used in your business to begin the certification process."
-        actionLabel="Fill Demo Details"
-        onAction={fillDemo}
       />
 
       {error && <div className="bg-red-50 text-red-600 p-3 rounded">{error}</div>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <div className="p-4 border-b border-nsh-border font-medium">Register New Instrument</div>
+          <div className="p-4 border-b border-nsh-border flex justify-between items-center">
+            <span className="font-medium">Register New Instrument</span>
+            {DEMO_MODE && (
+              <Button type="button" variant="outline" size="sm" onClick={fillDemo}>
+                Fill demo details
+              </Button>
+            )}
+          </div>
           <form onSubmit={register} className="p-4 space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Type</label>
-                <Select value={typeCode} onChange={e => setTypeCode(e.target.value)} required>
+                <label htmlFor="instrument-type" className="block text-sm font-medium mb-1">Type</label>
+                <Select 
+                  id="instrument-type"
+                  name="instrument_type"
+                  autoComplete="off"
+                  value={typeCode} 
+                  onChange={e => setTypeCode(e.target.value)} 
+                  required
+                >
                   <option value="NAWI-3">Non-Automatic Weighing Instrument (Class III)</option>
                   <option value="W-1">Weights</option>
                   <option value="WM-1">Water Meter</option>
@@ -114,33 +132,75 @@ export function Instruments() {
                 </Select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Capacity</label>
-                <Input value={capacity} onChange={e => setCapacity(e.target.value)} required placeholder="e.g. 150kg" />
+                <label htmlFor="instrument-capacity" className="block text-sm font-medium mb-1">Capacity</label>
+                <Input 
+                  id="instrument-capacity"
+                  name="instrument_capacity"
+                  autoComplete="off"
+                  value={capacity} 
+                  onChange={e => setCapacity(e.target.value)} 
+                  required 
+                  placeholder="e.g. 150kg" 
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Make</label>
-                <Input value={make} onChange={e => setMake(e.target.value)} required />
+                <label htmlFor="instrument-make" className="block text-sm font-medium mb-1">Make</label>
+                <Input 
+                  id="instrument-make"
+                  name="instrument_make"
+                  autoComplete="off"
+                  value={make} 
+                  onChange={e => setMake(e.target.value)} 
+                  required 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Model</label>
-                <Input value={model} onChange={e => setModel(e.target.value)} required />
+                <label htmlFor="instrument-model" className="block text-sm font-medium mb-1">Model</label>
+                <Input 
+                  id="instrument-model"
+                  name="instrument_model"
+                  autoComplete="off"
+                  value={model} 
+                  onChange={e => setModel(e.target.value)} 
+                  required 
+                />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Serial Number</label>
-                <Input value={serial} onChange={e => setSerial(e.target.value)} required />
+                <label htmlFor="instrument-serial" className="block text-sm font-medium mb-1">Serial Number</label>
+                <Input 
+                  id="instrument-serial"
+                  name="instrument_serial"
+                  autoComplete="off"
+                  value={serial} 
+                  onChange={e => setSerial(e.target.value)} 
+                  required 
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Accuracy Class</label>
-                <Input value={accuracyClass} onChange={e => setAccuracyClass(e.target.value)} />
+                <label htmlFor="instrument-class" className="block text-sm font-medium mb-1">Accuracy Class</label>
+                <Input 
+                  id="instrument-class"
+                  name="instrument_accuracy_class"
+                  autoComplete="off"
+                  value={accuracyClass} 
+                  onChange={e => setAccuracyClass(e.target.value)} 
+                />
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Location (Optional)</label>
-              <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Shop Floor 1" />
+              <label htmlFor="instrument-location" className="block text-sm font-medium mb-1">Location (Optional)</label>
+              <Input 
+                id="instrument-location"
+                name="instrument_location"
+                autoComplete="off"
+                value={location} 
+                onChange={e => setLocation(e.target.value)} 
+                placeholder="e.g. Shop Floor 1" 
+              />
             </div>
             <Button type="submit" className="w-full">Register Instrument</Button>
           </form>

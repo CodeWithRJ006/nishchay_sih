@@ -1,12 +1,13 @@
 // Helper functions for consistent formatting across the app
-export const formatDate = (date: Date | string): string => {
-  const d = new Date(date);
-  // Indian locale, abbreviated weekday, day, short month (e.g., "3 Sep 2026")
+
+export const formatDate = (date: Date | string | number): string => {
+  const d = typeof date === 'string' || typeof date === 'number' ? new Date(date) : date;
+  if (isNaN(d.getTime())) return '';
   return new Intl.DateTimeFormat('en-IN', {
-    weekday: 'short',
     day: 'numeric',
     month: 'short',
-  }).format(d);
+    year: 'numeric',
+  }).format(d).replace('Sept', 'Sep');
 };
 
 export const formatInr = (value: number): string => {

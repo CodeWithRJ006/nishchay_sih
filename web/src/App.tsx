@@ -35,7 +35,7 @@ import { CertificateSearch } from './pages/CertificateSearch';
 
 const ProtectedRoute = ({ allowedRoles, children }: { allowedRoles: string[], children: React.ReactNode }) => {
   const { user, loading } = useAuth();
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="p-8 text-center text-slate-500">Loading portal session...</div>;
   if (!user || !allowedRoles.includes(user.role)) {
     return <Navigate to="/login" replace />;
   }
@@ -50,7 +50,7 @@ function AppRoutes() {
       <Route path="/" element={<Home />} />
       <Route path="/v/:id" element={<PublicVerify />} />
       <Route path="/verify/:id" element={<RedirectVerify />} />
-      <Route path="/design" element={<Design />} />
+      {import.meta.env.DEV && <Route path="/design" element={<Design />} />}
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
       <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
       
@@ -62,8 +62,21 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route index element={<div>Dashboard content goes here</div>} />
-          <Route path="search" element={<CertificateSearch />} />
+        <Route 
+          index 
+          element={
+            user?.role === 'ADMIN' ? (
+              <AdminFinance />
+            ) : user?.role === 'LMO' || user?.role === 'GATC' ? (
+              <OfficerJobs />
+            ) : (
+              <Instruments />
+            )
+          } 
+        />
+        <Route path="search" element={<CertificateSearch />} />
+        <Route path="certificates" element={<CertificateSearch />} />
+        <Route path="profile" element={user?.role === 'BUSINESS' ? <BusinessProfile /> : <OfficerProfile />} />
         <Route path="business-profile" element={<BusinessProfile />} />
         <Route path="officer-profile" element={<OfficerProfile />} />
         <Route path="provision" element={<AdminProvision />} />
@@ -75,6 +88,7 @@ function AppRoutes() {
         <Route path="finance" element={<AdminFinance />} />
         <Route path="schedule/:applicationId" element={<ApplicationSchedule />} />
         <Route path="my-jobs" element={<OfficerJobs />} />
+        <Route path="unassigned" element={<AdminUnassigned />} />
         <Route path="unassigned-jobs" element={<AdminUnassigned />} />
       </Route>
 

@@ -4,7 +4,9 @@ import { AlertTriangle, CreditCard, Landmark, Smartphone } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
+import { Toast, ToastType } from '../components/ui/Toast';
 import { get, post } from '../lib/api';
+import { formatInr } from '../lib/formatters';
 
 export function SandboxCheckout() {
   const { applicationId } = useParams();
@@ -13,6 +15,7 @@ export function SandboxCheckout() {
   const [tab, setTab] = useState<'UPI' | 'CARD' | 'NET_BANKING'>('UPI');
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   useEffect(() => {
     get<{fee_amount: number}>(`/api/applications/${applicationId}`)
@@ -44,10 +47,16 @@ export function SandboxCheckout() {
       // Note: /api/demo/trigger-callback is not protected by CSRF, but let's just use post anyway.
       await post('/api/demo/trigger-callback', payload);
       
-      if (status === 'SUCCESS') navigate(`/dashboard/receipt/${applicationId}`);
-      else if (status === 'FAILURE') alert('Payment failed');
-      else alert('Payment pending');
-    } catch { /* ignore */ }
+      if (status === 'SUCCESS') {
+        navigate(`/dashboard/receipt/${applicationId}`);
+      } else if (status === 'FAILURE') {
+        setToast({ message: 'Payment was declined by the bank. Please retry the transaction.', type: 'error' });
+      } else {
+        setToast({ message: 'Payment authorization is pending. Please check again shortly.', type: 'info' });
+      }
+    } catch { 
+      setToast({ message: 'Payment processing error occurred. Please try again.', type: 'error' });
+    }
     setProcessing(false);
   };
 
@@ -63,12 +72,13 @@ export function SandboxCheckout() {
       <PageHeader 
         title="Complete Payment" 
         description="Select a payment method to pay your official fees." 
+        backTo={{ to: '/dashboard', label: 'Back to Dashboard' }}
       />
 
       <div className="bg-white p-6 rounded shadow border border-slate-200 mt-6">
         <div className="flex justify-between items-center mb-6">
           <span className="text-lg">Amount to pay:</span>
-          <span className="text-2xl font-bold text-slate-900">₹{appData?.fee_amount}</span>
+          <span className="text-2xl font-bold text-slate-900">{formatInr(appData?.fee_amount || 0)}</span>
         </div>
 
         <div className="flex border-b border-slate-200 mb-6">
@@ -90,6 +100,7 @@ export function SandboxCheckout() {
       <div className="mt-8">
         <NextStepBanner title="Your receipt will be generated and you can schedule an appointment." />
       </div>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

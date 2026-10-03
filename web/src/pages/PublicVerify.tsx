@@ -101,16 +101,22 @@ export const PublicVerify = () => {
     }
   };
 
+  const [complaintError, setComplaintError] = useState('');
+
   const submitComplaint = async () => {
-    if (complaintText.length > 300) return alert('Note too long');
+    if (complaintText.length > 300) {
+      setComplaintError('Note too long (maximum 300 characters)');
+      return;
+    }
     try {
       // The test expects this payload signature: body: JSON.stringify({ category, note: complaintText, honeypot })
       await post(`/api/public/certificates/${id}/complaints`, { category, note: complaintText, honeypot });
       setComplaintSuccess(true);
       setComplaintMode(false);
+      setComplaintError('');
     } catch (e: unknown) {
       const err = e as Error;
-      alert(err.message || 'Failed to submit complaint');
+      setComplaintError(err.message || 'Failed to submit complaint. Please try again.');
     }
   };
 
@@ -234,6 +240,7 @@ export const PublicVerify = () => {
                 onChange={e => setComplaintText(e.target.value)}
               />
               <input type="text" style={{display: 'none'}} value={honeypot} onChange={e => setHoneypot(e.target.value)} tabIndex={-1} autoComplete="off" />
+              {complaintError && <p className="text-xs text-seal-break-red font-medium mb-2">{complaintError}</p>}
               <div className="flex gap-2">
                 <Button variant="outline" className="flex-1" onClick={() => setComplaintMode(false)}>Cancel</Button>
                 <Button variant="danger" className="flex-1" onClick={submitComplaint}>Submit</Button>

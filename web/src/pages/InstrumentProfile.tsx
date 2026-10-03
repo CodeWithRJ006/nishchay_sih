@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { PageHeader } from '../components/ui/PageHeader';
 import { get } from '../lib/api';
 
 interface Instrument {
@@ -37,13 +38,11 @@ export function InstrumentProfile() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="outline" onClick={() => navigate('/dashboard/instruments')}>&larr; Back</Button>
-        <div>
-          <h1 className="text-2xl font-bold text-nsh-text">Instrument Profile</h1>
-          <p className="text-nsh-text-light text-sm mt-1">{instrument.id}</p>
-        </div>
-      </div>
+      <PageHeader
+        title="Instrument Profile"
+        description={instrument.id}
+        backTo={{ to: '/dashboard/instruments', label: 'Back to Instruments' }}
+      />
 
       <Card>
         <div className="p-4 border-b border-nsh-border font-medium flex justify-between items-center">

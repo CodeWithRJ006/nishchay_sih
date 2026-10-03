@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { get, post } from './lib/api';
 
-type User = { id: string, role: string, email: string };
+type User = { id: string, role: string, email: string, name?: string };
 
 type AuthContextType = {
   user: User | null;

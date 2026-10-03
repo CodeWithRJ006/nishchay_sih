@@ -91,11 +91,16 @@ export function JobDetail() {
     }
   };
 
+  const [rejecting, setRejecting] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+
   const handleReject = async () => {
-    const reason = window.prompt('Reason for rejection:');
-    if (!reason) return;
+    if (!rejectReason) {
+      setRejecting(true);
+      return;
+    }
     try {
-      await post('/api/appointments/reject', { applicationId: id, reason });
+      await post('/api/appointments/reject', { applicationId: id, reason: rejectReason });
       navigate('/field');
     } catch (err: unknown) {
       setError((err as Error).message);
@@ -178,14 +183,31 @@ export function JobDetail() {
       {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t p-4 flex gap-2 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         {job.status === 'SCHEDULED' ? (
-          <div className="w-full flex gap-2">
-            <Button variant="primary" className="flex-1 h-11" onClick={handleAccept}>
-              Accept Job
-            </Button>
-            <Button variant="outline" className="flex-1 h-11" onClick={handleReject}>
-              Reject
-            </Button>
-          </div>
+          rejecting ? (
+            <div className="w-full flex gap-2">
+              <input
+                id="reject-reason"
+                name="reject_reason"
+                autoComplete="off"
+                type="text"
+                placeholder="Reason for rejection"
+                value={rejectReason}
+                onChange={e => setRejectReason(e.target.value)}
+                className="flex-1 border p-2 rounded text-sm"
+              />
+              <Button variant="danger" onClick={handleReject}>Confirm</Button>
+              <Button variant="secondary" onClick={() => setRejecting(false)}>Cancel</Button>
+            </div>
+          ) : (
+            <div className="w-full flex gap-2">
+              <Button variant="primary" className="flex-1 h-11" onClick={handleAccept}>
+                Accept Job
+              </Button>
+              <Button variant="outline" className="flex-1 h-11" onClick={() => setRejecting(true)}>
+                Reject
+              </Button>
+            </div>
+          )
         ) : job.status === 'ACCEPTED' ? (
           <div className="w-full flex flex-col gap-2">
             <Button variant="primary" className="w-full h-11" onClick={() => handleArrive()} disabled={arriving}>

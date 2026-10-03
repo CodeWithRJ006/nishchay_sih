@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { get } from '../lib/api';
+import { formatInr } from '../lib/formatters';
 
 export function AdminGateBlocks() {
   const [gateBlocks, setGateBlocks] = useState(0);
@@ -42,7 +43,7 @@ export function AdminPayments() {
             <tr key={p.id} className="border-t">
               <td className="py-2">{p.id}</td>
               <td className="py-2">{p.application_id}</td>
-              <td className="py-2">₹{p.amount}</td>
+              <td className="py-2">{formatInr(p.amount)}</td>
               <td className="py-2">{p.status}</td>
             </tr>
           ))}
@@ -75,7 +76,7 @@ export function AdminReceipts() {
             <tr key={p.id} className="border-t">
               <td className="py-2 font-mono text-sm">{p.id}</td>
               <td className="py-2">{p.application_id}</td>
-              <td className="py-2">₹{p.amount}</td>
+              <td className="py-2">{formatInr(p.amount)}</td>
             </tr>
           ))}
         </tbody>

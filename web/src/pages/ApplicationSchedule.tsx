@@ -35,7 +35,11 @@ export function ApplicationSchedule() {
 
   return (
     <div className="max-w-7xl mx-auto px-6">
-      <PageHeader title="Schedule Verification" description="Pick a suitable slot for the physical inspection." />
+      <PageHeader 
+        title="Schedule Verification" 
+        description="Pick a suitable slot for the physical inspection." 
+        backTo={{ to: '/dashboard', label: 'Back to Dashboard' }}
+      />
       
       {error && <div className="text-red-600 bg-red-50 p-4 rounded mb-6">{error}</div>}
 

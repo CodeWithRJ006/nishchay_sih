@@ -10,8 +10,8 @@ test.describe('A11y checks', () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
-  test('Design system page should not have any automatically detectable accessibility issues', async ({ page }) => {
-    await page.goto('http://localhost:4000/design');
+  test('Portal shell should not have any automatically detectable accessibility issues', async ({ page }) => {
+    await page.goto('http://localhost:4000/login');
     
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     
