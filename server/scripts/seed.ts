@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import { hmacSecret } from '../config/secrets.js';
 import fs from 'node:fs';
 import path from 'node:path';
+import { clock } from '../../shared/src/clock.js';
 
 export const DEMO_CERT_VALID = 'sample-cert-val1d-0000';
 export const DEMO_CERT_EXPIRED = 'sample-cert-exp1red-00';
@@ -61,8 +62,8 @@ export function seedDemoData() {
 
     // NAWI routed to GATC
     const i1 = generateId.instrument(1);
-    db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(i1, b3, 'NAWI-3', 'WeighCorp', 'M-100', '150kg');
+    db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity, serial) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(i1, b3, 'NAWI-3', 'WeighCorp', 'M-100', '150kg', 'SER-000001');
 
     db.prepare("INSERT INTO counters (id, val) VALUES ('instrument', 1)").run();
 
@@ -84,16 +85,16 @@ export function seedDemoData() {
     };
     const detailsDigest = crypto.createHash('sha256').update(canonicalJson(privateDetails)).digest('hex');
 
-    const createFullCert = (appId: string, recId: string, payId: string, publicId: string, certNo: string, validFrom: string, validTo: string, status: string) => {
+    const createFullCert = (appId: string, recId: string, payId: string, publicId: string, certNo: string, validFrom: string, validTo: string, status: string, bId: string, iId: string) => {
       // Create Application
       db.prepare('INSERT INTO applications (id, business_id, instrument_id, state, fee_amount, routing_rule) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(appId, b3, i1, 'CERTIFIED', 500, 'Routed to GATC');
+        .run(appId, bId, iId, 'CERTIFIED', 500, 'Routed to GATC');
       
       // Create Payment & Receipt
       db.prepare('INSERT INTO payments (id, application_id, idempotency_key, amount, status) VALUES (?, ?, ?, ?, ?)')
         .run(payId, appId, 'idem-' + recId, 500, 'PAID');
       
-      const payload = `${recId}:${appId}:${i1}:500:${paidTime}`;
+      const payload = `${recId}:${appId}:${iId}:500:${paidTime}`;
       const hmac = crypto.createHmac('sha256', hmacSecret());
       hmac.update(payload);
       const receiptSignature = hmac.digest('hex');
@@ -109,10 +110,15 @@ export function seedDemoData() {
         .run('PHO-' + appId, appId, 'USR-LMO1', dummyName, photoHash, paidTime, paidTime);
 
       // Cert
+      const bName = (db.prepare('SELECT name FROM businesses WHERE id = ?').get(bId) as { name: string }).name;
+      const iData = db.prepare('SELECT type_code, serial FROM instruments WHERE id = ?').get(iId) as { type_code: string; serial: string };
       const publicRecord = {
+        v: 1,
         certNo,
-        instrumentType: 'WI-01',
-        serialNumber: 'NSH-I-000001',
+        instrumentId: iId,
+        tradeName: bName,
+        instrumentClass: iData.type_code,
+        serialNo: iData.serial || iId,
         validFrom,
         validTo,
         authorityName: 'LMO Demo',
@@ -126,12 +132,23 @@ export function seedDemoData() {
       const keyId = crypto.createHash('sha256').update(ensureKeys().publicKeySpkiHex).digest('hex').slice(0, 8);
       
       db.prepare('INSERT INTO certificates (public_id, application_id, instrument_id, receipt_id, valid_from, valid_to, hash, signature, key_id, public_record, details_digest, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(publicId, appId, 'NSH-I-000001', recId, validFrom, validTo, sealHash, signature, keyId, publicRecordStr, detailsDigest, status);
+        .run(publicId, appId, iId, recId, validFrom, validTo, sealHash, signature, keyId, publicRecordStr, detailsDigest, status);
     };
 
-    createFullCert(generateId.application(2025, 1), generateId.receipt(2025, 1), 'PAY-1', DEMO_CERT_VALID, generateId.certificate(2025, 1), '2025-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'VALID');
-    createFullCert(generateId.application(2025, 2), generateId.receipt(2025, 2), 'PAY-2', DEMO_CERT_EXPIRED, generateId.certificate(2025, 2), '2023-01-01T00:00:00.000Z', '2024-01-01T00:00:00.000Z', 'EXPIRED');
-    createFullCert(generateId.application(2025, 3), generateId.receipt(2025, 3), 'PAY-3', DEMO_CERT_REVOKED, generateId.certificate(2025, 3), '2025-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'REVOKED');
+    const now = clock.now();
+    const dayMs = 24 * 60 * 60 * 1000;
+
+    const validIssued = new Date(now - 30 * dayMs).toISOString();
+    const validValidTo = new Date(now + 335 * dayMs).toISOString();
+    createFullCert(generateId.application(2025, 1), generateId.receipt(2025, 1), 'PAY-1', DEMO_CERT_VALID, generateId.certificate(2025, 1), validIssued, validValidTo, 'VALID', b3, i1);
+
+    const expiredIssued = new Date(now - 400 * dayMs).toISOString();
+    const expiredValidTo = new Date(now - 35 * dayMs).toISOString();
+    createFullCert(generateId.application(2025, 2), generateId.receipt(2025, 2), 'PAY-2', DEMO_CERT_EXPIRED, generateId.certificate(2025, 2), expiredIssued, expiredValidTo, 'EXPIRED', b3, i1);
+
+    const revokedIssued = new Date(now - 30 * dayMs).toISOString();
+    const revokedValidTo = new Date(now + 335 * dayMs).toISOString();
+    createFullCert(generateId.application(2025, 3), generateId.receipt(2025, 3), 'PAY-3', DEMO_CERT_REVOKED, generateId.certificate(2025, 3), revokedIssued, revokedValidTo, 'REVOKED', b3, i1);
 
     // Create an application at INSPECTED_PASS state ready for gate test
     const app4 = generateId.application(2025, 4);
@@ -200,6 +217,9 @@ export function seedDemoData() {
         certByYear[year].push(p.certNo);
       }
     }
+
+    db.prepare("UPDATE users SET daily_capacity = 100 WHERE role IN ('LMO', 'GATC')").run();
+
     for (const year in certByYear) {
       updateCounter(`certificate-${year}`, getMaxSeq(certByYear[year]));
     }

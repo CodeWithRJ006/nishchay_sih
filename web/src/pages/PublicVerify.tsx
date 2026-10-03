@@ -42,13 +42,14 @@ export const PublicVerify = () => {
       const res = await fetch(`/api/certificates/${id}/complaint`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description: complaintText })
+        body: JSON.stringify({ note: complaintText })
       });
       if (res.ok) {
         setComplaintSuccess(true);
         setComplaintMode(false);
       } else {
-        alert('Failed to submit complaint');
+        const errData = await res.json().catch(() => ({}));
+        alert(errData.message || 'Failed to submit complaint');
       }
     } catch {
       alert('Error connecting to server');
