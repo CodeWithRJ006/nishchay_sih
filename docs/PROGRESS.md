@@ -9,7 +9,8 @@
 | Phase 2 | Public Verification Page | ✅ DONE | In-browser ECDSA verification, 4 states, data-driven ticks, timeline, Right to Check. |
 | Phase 3 | Landing & Home Page | ✅ DONE | Sticky nav, verify card, camera QR modal, 6-step timeline, seal honesty, role panels, FAQ. |
 | Phase 4 | Realistic Data & Business Role | ✅ DONE | Realistic seed data (Hyderabad), business dashboard, next-step banner, wizard stepper, apps/instruments. |
-| Verification | Full Suite (Lint/TS/Tests) | ✅ DONE | 168/168 tests green across 29 test files, Playwright shots clean. |
+| Phase 5 | LMO, GATC & Admin | ✅ DONE | Officer dashboard (KPIs, accept/reject modal, today schedule, history link), admin dashboard (bar chart, assign queue, live feed 3s polling), officer profile (avatar, load bar, read-only dl), all sidebar routes resolve, 182 tests green, verify passes. |
+| Verification | Full Suite (Lint/TS/Tests/Build) | ✅ DONE | 182/182 tests green across 30 test files, build clean. Port mismatch fixed (4000). |
 
 ## Next Up
-- **Phase 5 / Officer inspection workflow & verification.**
+- **Phase 6 / Playwright shots sweep and smoke test.**
