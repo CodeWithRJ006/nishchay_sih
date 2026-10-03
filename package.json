@@ -21,7 +21,8 @@
     "demo:setup": "tsx server/scripts/demo-setup.ts",
     "demo:reset": "tsx server/scripts/demo-reset.ts",
     "preflight": "tsx server/scripts/preflight.ts",
-    "shots": "playwright test tests/shots.spec.ts"
+    "shots": "playwright test tests/shots.spec.ts",
+    "keygen": "tsx server/scripts/keygen.ts"
   },
   "dependencies": {
     "@fontsource/bricolage-grotesque": "^5.1.0",

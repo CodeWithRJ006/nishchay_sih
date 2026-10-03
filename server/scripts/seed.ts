@@ -8,6 +8,10 @@ import { hmacSecret } from '../config/secrets.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
+export const DEMO_CERT_VALID = 'sample-cert-val1d-0000';
+export const DEMO_CERT_EXPIRED = 'sample-cert-exp1red-00';
+export const DEMO_CERT_REVOKED = 'sample-cert-rev0ked-00';
+
 export function seedDemoData() {
   db.exec("INSERT OR REPLACE INTO counters (id, val) VALUES ('INS', 10), ('APP', 10), ('CRT', 10), ('JOB', 10), ('PAY', 10), ('PHO', 10), ('USR', 10)");
   const usersCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as {c: number};
@@ -110,25 +114,30 @@ export function seedDemoData() {
     };
     const detailsDigest = crypto.createHash('sha256').update(canonicalJson(privateDetails)).digest('hex');
 
-    const publicRecord = {
-      certNo: 'NSH-C-001',
-      instrumentType: 'WI-01',
-      serialNumber: 'NSH-I-000001',
-      validFrom: '2025-01-01T00:00:00.000Z',
-      validTo: '2026-01-01T00:00:00.000Z',
-      authorityName: 'LMO Demo',
-      receiptDigest: crypto.createHash('sha256').update(JSON.stringify({ id: rec1, amount: 500 })).digest('hex'),
-      detailsDigest
+    const certBuilder = (publicId: string, certNo: string, recNo: string, validFrom: string, validTo: string, status: string) => {
+      const publicRecord = {
+        certNo,
+        instrumentType: 'WI-01',
+        serialNumber: 'NSH-I-000001',
+        validFrom,
+        validTo,
+        authorityName: 'LMO Demo',
+        receiptDigest: crypto.createHash('sha256').update(JSON.stringify({ id: recNo, amount: 500 })).digest('hex'),
+        detailsDigest
+      };
+
+      const publicRecordStr = JSON.stringify(publicRecord);
+      const sealHash = crypto.createHash('sha256').update(publicRecordStr).digest('hex');
+      const signature = signHash(sealHash, privateKey);
+      const keyId = crypto.createHash('sha256').update(ensureKeys().publicKeySpkiHex).digest('hex').slice(0, 8);
+      
+      db.prepare('INSERT INTO certificates (public_id, application_id, instrument_id, receipt_id, valid_from, valid_to, hash, signature, key_id, public_record, details_digest, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
+        .run(publicId, app1, 'NSH-I-000001', recNo, validFrom, validTo, sealHash, signature, keyId, publicRecordStr, detailsDigest, status);
     };
 
-    const publicRecordStr = JSON.stringify(publicRecord);
-    const sealHash = crypto.createHash('sha256').update(publicRecordStr).digest('hex');
-    const signature = signHash(sealHash, privateKey);
-    const keyId = crypto.createHash('sha256').update(ensureKeys().publicKeySpkiHex).digest('hex').slice(0, 8);
-    const certId = generateId.certificate(2025, 1);
-    
-    db.prepare('INSERT INTO certificates (public_id, application_id, instrument_id, receipt_id, valid_from, valid_to, hash, signature, key_id, public_record, details_digest, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-      .run(certId, app1, 'NSH-I-000001', rec1, '2025-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', sealHash, signature, keyId, publicRecordStr, detailsDigest, 'VALID');
+    certBuilder(DEMO_CERT_VALID, 'NSH-C-001', rec1, '2025-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'VALID');
+    certBuilder(DEMO_CERT_EXPIRED, 'NSH-C-002', 'NSH-R-002', '2023-01-01T00:00:00.000Z', '2024-01-01T00:00:00.000Z', 'EXPIRED');
+    certBuilder(DEMO_CERT_REVOKED, 'NSH-C-003', 'NSH-R-003', '2025-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z', 'REVOKED');
 
     // Create an application at INSPECTED_PASS state ready for gate test
     const app2 = generateId.application(2025, 2);

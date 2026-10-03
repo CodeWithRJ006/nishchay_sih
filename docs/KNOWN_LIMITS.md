@@ -16,3 +16,5 @@ This document outlines the known technical and functional limitations of the cur
 3. **Payment Gateway Sim:** The payment gateway strictly returns success/failure instantaneously. Asynchronous payment reconciliation via webhooks is implemented logically, but practically bypassed by the frontend simulating a synchronous flow.
 4. **Sandbox payments only:** There is no real payment gateway; every payment is simulated. On the live demo, the smoke test uses a signed-in demo shortcut to mark a payment paid; the HMAC-signed callback path is covered by unit tests, not by smoke.
 5. **Production Secrets:** The service refuses to boot in production unless `JWT_SECRET` and `HMAC_SECRET` environment variables are explicitly set, preventing the use of hardcoded fallback secrets.
+
+5. **Free hosting:** certificates created during a demo reset when the instance restarts; the three sample certificates always return with the same codes.

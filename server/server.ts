@@ -9,8 +9,9 @@ if (parseInt(process.versions.node.split('.')[0], 10) < 22) {
 
 runMigrations();
 
+ensureKeys();
+
 if (process.env.DEMO_MODE === 'true') {
-  ensureKeys();
   seedDemoData();
 }
 
