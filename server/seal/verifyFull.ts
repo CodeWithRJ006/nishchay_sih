@@ -21,7 +21,7 @@ export function verifyFullSeal(publicId: string): boolean {
   // 3. Verify signature
   const { publicKey } = ensureKeys();
   const verify = crypto.createVerify('SHA256');
-  const hash = crypto.createHash('sha256').update(cert.public_record).digest('hex');
+  const hash = crypto.createHash('sha256').update(canonicalJson(publicRecord)).digest('hex');
   verify.update('nishchay-seal-v1:' + hash);
   if (!verify.verify({ key: publicKey, dsaEncoding: 'ieee-p1363' }, cert.signature, 'hex')) {
     return false;

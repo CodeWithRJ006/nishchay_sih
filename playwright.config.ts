@@ -3,7 +3,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   webServer: {
-    command: 'cross-env PORT=4001 npm run start',
+    command: 'cross-env PORT=4001 DEMO_MODE=true npm run start',
     env: { DEMO_MODE: 'true', PORT: '4001' },
     port: 4001,
     reuseExistingServer: !process.env.CI,

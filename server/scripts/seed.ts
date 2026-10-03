@@ -11,16 +11,16 @@ import path from 'node:path';
 import { clock } from '../../shared/src/clock.js';
 
 export function seedDemoData() {
-  db.exec("INSERT OR REPLACE INTO counters (id, val) VALUES ('INS', 10), ('APP', 10), ('CRT', 10), ('JOB', 10), ('PAY', 10), ('PHO', 10), ('USR', 10)");
+  db.exec("INSERT OR REPLACE INTO counters (id, val) VALUES ('INS', 10), ('APP', 10), ('CRT', 10), ('JOB', 10), ('PAY', 10), ('PHO', 10), ('USR', 10), ('application', 10), ('instrument', 10), ('receipt', 10)");
   const usersCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as {c: number};
   if (usersCount.c > 0) return; // already seeded
 
-  const { privateKey } = ensureKeys();
+  const { privateKey, keyId } = ensureKeys();
 
   const pwHash = bcrypt.hashSync('demo123', 10);
   
   transaction(() => {
-    // 1 admin, 2 LMOs, 1 GATC
+    // 1 admin, 2 LMOs, 2 GATC
     db.prepare('INSERT INTO users (id, email, password_hash, role, name, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
       .run('USR-ADMIN', 'admin@nishchay.example', pwHash, 'ADMIN', 'Admin User', null);
       
@@ -57,35 +57,61 @@ export function seedDemoData() {
     db.prepare('INSERT INTO businesses (id, owner_id, name, address, zone_id) VALUES (?, ?, ?, ?, ?)')
       .run(b3, 'USR-BIZ3', 'Biz Three (NAWI)', '789 Road', 'ZONE-1');
 
-    // NAWI routed to GATC
-    const i1 = generateId.instrument(1);
+    // Requirement 4: Seed three genuinely different samples with the same fixed ids, computed relative to clock.now():
+    // 1. VALID: Biz One, weights (W-1), issued 2 months ago
+    // 2. EXPIRED: a different business (Biz Two) and class (CM-1), issued 18 months ago, valid 12 months
+    // 3. REVOKED: Biz Three NAWI (NAWI-3), issued 2 months ago, revoked 3 weeks ago, still inside its validity
+    // Different serials. All three have intact seals.
+
+    const iValid = generateId.instrument(1);
     db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity, serial) VALUES (?, ?, ?, ?, ?, ?, ?)')
-      .run(i1, b3, 'NAWI-3', 'WeighCorp', 'M-100', '150kg', 'SER-000001');
+      .run(iValid, b1, 'W-1', 'National Standards', 'Class-M1', '10kg', 'WT-2026-0001');
 
-    db.prepare("INSERT INTO counters (id, val) VALUES ('instrument', 1)").run();
+    const iExpired = generateId.instrument(2);
+    db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity, serial) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(iExpired, b2, 'CM-1', 'Avery India', 'CounterScale-50', '50kg', 'CS-2025-0042');
 
-    const paidTime = new Date().toISOString();
-    const dummyName = `dummy-${crypto.randomBytes(4).toString('hex')}.png`;
-    const photoHash = crypto.createHash('sha256').update('dummy').digest('hex');
+    const iRevoked = generateId.instrument(3);
+    db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity, serial) VALUES (?, ?, ?, ?, ?, ?, ?)')
+      .run(iRevoked, b3, 'NAWI-3', 'WeighCorp', 'M-100', '150kg', 'NW-2026-0999');
+
     const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'storage', 'uploads');
     if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
-    fs.writeFileSync(path.join(storageDir, dummyName), Buffer.from('dummy'));
 
-    const privateDetails = {
-      officerId: 'USR-LMO1',
-      gpsLat: 28.0,
-      gpsLng: 77.0,
-      distance: 10,
-      checklist: ['ok'],
-      readings: [{val:1}],
-      photos: [{ fileName: dummyName, fileHash: photoHash }]
-    };
-    const detailsDigest = crypto.createHash('sha256').update(canonicalJson(privateDetails)).digest('hex');
+    const createFullCert = (
+      appId: string,
+      recId: string,
+      payId: string,
+      publicId: string,
+      certificateNo: string,
+      validFrom: string,
+      validTo: string,
+      status: string,
+      bId: string,
+      iId: string,
+      revokedAt: string | null = null,
+      revokedReason: string | null = null
+    ) => {
+      const paidTime = validFrom;
+      const photoName = `seal-photo-${publicId}.png`;
+      const photoContent = `photo-data-for-${publicId}`;
+      const photoHash = crypto.createHash('sha256').update(photoContent).digest('hex');
+      fs.writeFileSync(path.join(storageDir, photoName), Buffer.from(photoContent));
 
-    const createFullCert = (appId: string, recId: string, payId: string, publicId: string, certNo: string, validFrom: string, validTo: string, status: string, bId: string, iId: string) => {
+      const privateDetails = {
+        officerId: 'USR-LMO1',
+        gpsLat: 28.6139,
+        gpsLng: 77.2090,
+        distance: 12,
+        checklist: ['Visual inspection intact', 'Verification scale verified', 'Zero balance verified'],
+        readings: [{ applied: 10, observed: 10 }, { applied: 20, observed: 20 }],
+        photos: [{ fileName: photoName, fileHash: photoHash }]
+      };
+      const detailsDigest = crypto.createHash('sha256').update(canonicalJson(privateDetails)).digest('hex');
+
       // Create Application
       db.prepare('INSERT INTO applications (id, business_id, instrument_id, state, fee_amount, routing_rule) VALUES (?, ?, ?, ?, ?, ?)')
-        .run(appId, bId, iId, 'CERTIFIED', 500, 'Routed to GATC');
+        .run(appId, bId, iId, 'CERTIFIED', 500, 'Routed to Authority');
       
       // Create Payment & Receipt
       db.prepare('INSERT INTO payments (id, application_id, idempotency_key, amount, status) VALUES (?, ?, ?, ?, ?)')
@@ -99,19 +125,25 @@ export function seedDemoData() {
       db.prepare('INSERT INTO receipts (id, application_id, payment_id, amount, signature, created_at) VALUES (?, ?, ?, ?, ?, ?)')
         .run(recId, appId, payId, 500, receiptSignature, paidTime);
 
+      // Audit Log for arrival record
+      db.prepare(`
+        INSERT INTO audit_log (id, table_name, record_id, action, changed_by, new_data, timestamp)
+        VALUES (hex(randomblob(16)), 'applications', ?, 'ARRIVED', 'USR-LMO1', 'Officer arrived on premises', CURRENT_TIMESTAMP)
+      `).run(appId);
+
       // Create Inspection & Photo
       db.prepare('INSERT INTO inspections (id, application_id, officer_id, gps_lat, gps_lng, gps_distance, checklist, readings, pass) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .run('INSP-' + appId, appId, 'USR-LMO1', 28.0, 77.0, 10, JSON.stringify(['ok']), JSON.stringify([{val:1}]), 1);
+        .run('INSP-' + appId, appId, 'USR-LMO1', 28.6139, 77.2090, 12, JSON.stringify(privateDetails.checklist), JSON.stringify(privateDetails.readings), 1);
       
       db.prepare('INSERT INTO inspection_photos (id, application_id, uploader_id, file_name, file_hash, client_capture_time, server_receive_time) VALUES (?, ?, ?, ?, ?, ?, ?)')
-        .run('PHO-' + appId, appId, 'USR-LMO1', dummyName, photoHash, paidTime, paidTime);
+        .run('PHO-' + appId, appId, 'USR-LMO1', photoName, photoHash, paidTime, paidTime);
 
-      // Cert
+      // Public Record
       const bName = (db.prepare('SELECT name FROM businesses WHERE id = ?').get(bId) as { name: string }).name;
       const iData = db.prepare('SELECT type_code, serial FROM instruments WHERE id = ?').get(iId) as { type_code: string; serial: string };
       const publicRecord = {
         v: 1,
-        certNo,
+        certificateNo,
         instrumentId: iId,
         tradeName: bName,
         instrumentClass: iData.type_code,
@@ -123,51 +155,90 @@ export function seedDemoData() {
         detailsDigest
       };
 
-      const publicRecordStr = JSON.stringify(publicRecord);
+      const publicRecordStr = canonicalJson(publicRecord);
       const sealHash = crypto.createHash('sha256').update(publicRecordStr).digest('hex');
       const signature = signHash(sealHash, privateKey);
-      const keyId = crypto.createHash('sha256').update(ensureKeys().publicKeySpkiHex).digest('hex').slice(0, 8);
       
-      db.prepare('INSERT INTO certificates (public_id, application_id, instrument_id, receipt_id, valid_from, valid_to, hash, signature, key_id, public_record, details_digest, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .run(publicId, appId, iId, recId, validFrom, validTo, sealHash, signature, keyId, publicRecordStr, detailsDigest, status);
+      db.prepare(`INSERT INTO certificates (public_id, application_id, instrument_id, receipt_id, valid_from, valid_to, hash, signature, key_id, public_record, details_digest, status, revoked_at, revoked_reason) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        .run(publicId, appId, iId, recId, validFrom, validTo, sealHash, signature, keyId, publicRecordStr, detailsDigest, status, revokedAt, revokedReason);
     };
 
     const now = clock.now();
     const dayMs = 24 * 60 * 60 * 1000;
 
-    const validIssued = new Date(now - 30 * dayMs).toISOString();
-    const validValidTo = new Date(now + 335 * dayMs).toISOString();
-    createFullCert(generateId.application(2025, 1), generateId.receipt(2025, 1), 'PAY-1', DEMO_CERT_VALID, generateId.certificate(2025, 1), validIssued, validValidTo, 'VALID', b3, i1);
+    // 1. VALID: Biz One (b1), weights (iValid), issued 2 months ago, valid 12 months
+    const validIssued = new Date(now - 60 * dayMs).toISOString();
+    const validValidTo = new Date(now + 305 * dayMs).toISOString();
+    createFullCert(
+      generateId.application(2025, 1),
+      generateId.receipt(2025, 1),
+      'PAY-1',
+      DEMO_CERT_VALID,
+      generateId.certificate(2025, 1),
+      validIssued,
+      validValidTo,
+      'VALID',
+      b1,
+      iValid
+    );
 
-    const expiredIssued = new Date(now - 400 * dayMs).toISOString();
-    const expiredValidTo = new Date(now - 35 * dayMs).toISOString();
-    createFullCert(generateId.application(2025, 2), generateId.receipt(2025, 2), 'PAY-2', DEMO_CERT_EXPIRED, generateId.certificate(2025, 2), expiredIssued, expiredValidTo, 'EXPIRED', b3, i1);
+    // 2. EXPIRED: Biz Two (b2), counter machine (iExpired), issued 18 months ago, valid 12 months (expired 6 months ago)
+    const expiredIssued = new Date(now - 18 * 30 * dayMs).toISOString();
+    const expiredValidTo = new Date(now - 6 * 30 * dayMs).toISOString();
+    createFullCert(
+      generateId.application(2025, 2),
+      generateId.receipt(2025, 2),
+      'PAY-2',
+      DEMO_CERT_EXPIRED,
+      generateId.certificate(2025, 2),
+      expiredIssued,
+      expiredValidTo,
+      'EXPIRED',
+      b2,
+      iExpired
+    );
 
-    const revokedIssued = new Date(now - 30 * dayMs).toISOString();
-    const revokedValidTo = new Date(now + 335 * dayMs).toISOString();
-    createFullCert(generateId.application(2025, 3), generateId.receipt(2025, 3), 'PAY-3', DEMO_CERT_REVOKED, generateId.certificate(2025, 3), revokedIssued, revokedValidTo, 'REVOKED', b3, i1);
+    // 3. REVOKED: Biz Three NAWI (b3), NAWI-3 (iRevoked), issued 2 months ago, revoked 3 weeks ago, still inside its validity
+    const revokedIssued = new Date(now - 60 * dayMs).toISOString();
+    const revokedValidTo = new Date(now + 305 * dayMs).toISOString();
+    const revokedAt = new Date(now - 21 * dayMs).toISOString();
+    createFullCert(
+      generateId.application(2025, 3),
+      generateId.receipt(2025, 3),
+      'PAY-3',
+      DEMO_CERT_REVOKED,
+      generateId.certificate(2025, 3),
+      revokedIssued,
+      revokedValidTo,
+      'REVOKED',
+      b3,
+      iRevoked,
+      revokedAt,
+      'Surveillance re-audit detected load cell calibration drift beyond MPE'
+    );
 
     // Create an application at INSPECTED_PASS state ready for gate test
     const app4 = generateId.application(2025, 4);
     db.prepare('INSERT INTO applications (id, business_id, instrument_id, state, fee_amount, routing_rule) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(app4, b3, i1, 'INSPECTED_PASS', 500, 'Routed to GATC');
+      .run(app4, b3, iRevoked, 'INSPECTED_PASS', 500, 'Routed to GATC');
     
     const rec4 = generateId.receipt(2025, 4);
     const pay4 = 'PAY-4';
     db.prepare('INSERT INTO payments (id, application_id, idempotency_key, amount, status) VALUES (?, ?, ?, ?, ?)')
       .run(pay4, app4, 'idem4', 500, 'PAID');
       
-    const payload4 = `${rec4}:${app4}:${i1}:500:${paidTime}`;
+    const paidTime4 = new Date(now).toISOString();
+    const payload4 = `${rec4}:${app4}:${iRevoked}:500:${paidTime4}`;
     const hmac4 = crypto.createHmac('sha256', hmacSecret());
     hmac4.update(payload4);
     const receiptSignature4 = hmac4.digest('hex');
 
     db.prepare('INSERT INTO receipts (id, application_id, payment_id, amount, signature, created_at) VALUES (?, ?, ?, ?, ?, ?)')
-      .run(rec4, app4, pay4, 500, receiptSignature4, paidTime);
+      .run(rec4, app4, pay4, 500, receiptSignature4, paidTime4);
 
     // Create a SCHEDULED application for USR-LMO1
     const app5 = generateId.application(2025, 5);
-    // Use an existing business and instrument (b2 is LMO-routed typically, wait b2 is there? b1 is b3 is there. Let's just create one)
     const b4 = 'BIZ-LMO-TEST';
     db.prepare('INSERT INTO businesses (id, owner_id, name, address, type, zone_id) VALUES (?, ?, ?, ?, ?, ?)')
       .run(b4, 'USR-BIZ1', 'Demo Field Business', 'Demo Field Address', 'DEALER', 'ZONE-1');
@@ -195,9 +266,12 @@ export function seedDemoData() {
       const rows = db.prepare(`SELECT id FROM ${table}`).all() as {id:string}[];
       const byYear: Record<string, string[]> = {};
       for (const r of rows) {
-        const year = r.id.split('-')[2];
-        if (!byYear[year]) byYear[year] = [];
-        byYear[year].push(r.id);
+        const parts = r.id.split('-');
+        const year = parts[2];
+        if (year) {
+          if (!byYear[year]) byYear[year] = [];
+          byYear[year].push(r.id);
+        }
       }
       for (const year in byYear) {
         updateCounter(`${table.slice(0,-1)}-${year}`, getMaxSeq(byYear[year]));
@@ -208,10 +282,14 @@ export function seedDemoData() {
     const certByYear: Record<string, string[]> = {};
     for (const c of certs) {
       const p = JSON.parse(c.public_record);
-      if (p.certNo && p.certNo.startsWith('NSH-C-')) {
-        const year = p.certNo.split('-')[2];
-        if (!certByYear[year]) certByYear[year] = [];
-        certByYear[year].push(p.certNo);
+      const no = p.certificateNo || p.certNo;
+      if (no && no.startsWith('NSH-C-')) {
+        const parts = no.split('-');
+        const year = parts[2];
+        if (year) {
+          if (!certByYear[year]) certByYear[year] = [];
+          certByYear[year].push(no);
+        }
       }
     }
 
@@ -224,6 +302,5 @@ export function seedDemoData() {
 }
 
 if (process.argv[1] === new URL(import.meta.url).pathname) {
-  // if run directly
   seedDemoData();
 }

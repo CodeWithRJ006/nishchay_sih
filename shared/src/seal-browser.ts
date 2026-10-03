@@ -1,4 +1,11 @@
-import { canonicalJson } from './canonicalJson';
+import { canonicalJson } from './canonicalJson.js';
+
+export type SealVerificationState = 'checking' | 'verified' | 'failed' | 'unavailable';
+
+export interface SealVerificationResult {
+  state: SealVerificationState;
+  reason?: string;
+}
 
 export async function computeHashHex(record: unknown): Promise<string> {
   const json = canonicalJson(record);
@@ -7,7 +14,19 @@ export async function computeHashHex(record: unknown): Promise<string> {
   return arrayBufferToHex(hashBuffer);
 }
 
-export async function verifySeal(publicRecord: unknown, signatureHex: string, publicKeySpkiHex: string): Promise<boolean> {
+export async function verifySealResult(
+  publicRecord: unknown,
+  signatureHex: string | null | undefined,
+  publicKeySpkiHex: string | null | undefined
+): Promise<SealVerificationResult> {
+  if (!publicRecord || !signatureHex || !publicKeySpkiHex) {
+    return { state: 'unavailable', reason: 'Missing verification data (record, signature, or public key).' };
+  }
+
+  if (typeof globalThis.crypto?.subtle === 'undefined') {
+    return { state: 'unavailable', reason: 'WebCrypto API is not supported in this runtime environment.' };
+  }
+
   try {
     const hashHex = await computeHashHex(publicRecord);
     const dataToVerify = new TextEncoder().encode(`nishchay-seal-v1:${hashHex}`);
@@ -30,16 +49,26 @@ export async function verifySeal(publicRecord: unknown, signatureHex: string, pu
       dataToVerify
     );
     
-    return isValid;
-  } catch {
-    return false;
+    if (isValid) {
+      return { state: 'verified' };
+    }
+    return { state: 'failed', reason: 'Cryptographic signature mismatch. Record content does not match authority seal.' };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { state: 'failed', reason: `Cryptographic verification failed: ${msg}` };
   }
 }
 
+export async function verifySeal(publicRecord: unknown, signatureHex: string, publicKeySpkiHex: string): Promise<boolean> {
+  const result = await verifySealResult(publicRecord, signatureHex, publicKeySpkiHex);
+  return result.state === 'verified';
+}
+
 function hexToArrayBuffer(hex: string): ArrayBuffer {
-  const bytes = new Uint8Array(Math.ceil(hex.length / 2));
+  const cleanHex = hex.trim();
+  const bytes = new Uint8Array(Math.ceil(cleanHex.length / 2));
   for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.substring(i * 2, i * 2 + 2), 16);
+    bytes[i] = parseInt(cleanHex.substring(i * 2, i * 2 + 2), 16);
   }
   return bytes.buffer;
 }

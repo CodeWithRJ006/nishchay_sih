@@ -15,7 +15,7 @@ export function ensureKeys(): { privateKey: crypto.KeyObject; publicKey: crypto.
     privateKey = crypto.createPrivateKey(pem);
     publicKey = crypto.createPublicKey(privateKey);
   } else {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && process.env.DEMO_MODE !== 'true') {
       throw new Error('SEAL_PRIVATE_KEY environment variable is required in production.');
     }
 

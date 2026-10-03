@@ -2,7 +2,10 @@ import { test } from '@playwright/test';
 
 const publicRoutes = [
   { path: '/', name: 'home' },
-  { path: '/login', name: 'login' }
+  { path: '/login', name: 'login' },
+  { path: '/v/sample-cert-val1d-0000', name: 'public-verify-valid' },
+  { path: '/v/sample-cert-exp1red-00', name: 'public-verify-expired' },
+  { path: '/v/sample-cert-rev0ked-00', name: 'public-verify-revoked' }
 ];
 
 const authRoutes = [
@@ -18,6 +21,9 @@ test.describe('Visual Screenshots Desktop', () => {
     test(`Desktop screenshot for ${route.name}`, async ({ page }) => {
       await page.goto(`${route.path}`);
       await page.waitForLoadState('networkidle');
+      if (route.path.startsWith('/v/')) {
+        await page.waitForTimeout(1600);
+      }
       await page.screenshot({ path: `docs/screens/${route.name}-desktop.png`, fullPage: true });
     });
   }
@@ -44,6 +50,9 @@ test.describe('Visual Screenshots Mobile', () => {
     test(`Mobile screenshot for ${route.name}`, async ({ page }) => {
       await page.goto(`${route.path}`);
       await page.waitForLoadState('networkidle');
+      if (route.path.startsWith('/v/')) {
+        await page.waitForTimeout(1600);
+      }
       await page.screenshot({ path: `docs/screens/${route.name}-mobile.png`, fullPage: true });
     });
   }

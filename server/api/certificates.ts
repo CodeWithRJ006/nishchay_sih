@@ -6,6 +6,8 @@ import { certificatePdfService } from '../services/certificatePdfService.js';
 import { certificateService } from '../services/certificateService.js';
 import { rateLimit } from 'express-rate-limit';
 import { verifyFullSeal } from '../seal/verifyFull.js';
+import { ensureKeys } from '../seal/keys.js';
+import { hmacSecret } from '../config/secrets.js';
 import { clock } from '../../shared/src/clock.js';
 
 // Rate limiter for public endpoints (e.g., verify, export, complaint)
@@ -220,6 +222,23 @@ export const submitComplaint = async (req: Request, res: Response) => {
 
 // Export route bindings for server/app.ts integration
 
+export const getPublicKeys = async (req: Request, res: Response) => {
+  const { keyId, publicKeySpkiHex, publicKey } = ensureKeys();
+  const publicKeyPem = publicKey.export({ type: 'spki', format: 'pem' }).toString();
+  res.json({
+    keyId,
+    publicKeySpkiHex,
+    publicKeyPem,
+    keys: [
+      {
+        keyId,
+        publicKeySpkiHex,
+        publicKeyPem,
+      }
+    ]
+  });
+};
+
 export const verifyCertificatePublic = async (req: Request, res: Response) => {
   const { publicId } = req.params;
   
@@ -231,6 +250,7 @@ export const verifyCertificatePublic = async (req: Request, res: Response) => {
     status: 'UNKNOWN',
     validFrom: null,
     validUntil: null,
+    revokedAt: null,
     authorityName: 'Unknown',
     integrity: false,
     ticks: {
@@ -258,7 +278,45 @@ export const verifyCertificatePublic = async (req: Request, res: Response) => {
     }
 
     const publicRecord = JSON.parse(cert.public_record as string);
+
+    // Dynamic data-driven ticks:
+    // 1. Fee receipt (receipt exists, HMAC signature valid, amount equals the fee snapshot)
+    const app = db.prepare('SELECT fee_amount FROM applications WHERE id = ?').get(cert.application_id) as { fee_amount: number } | undefined;
+    const receipt = db.prepare('SELECT id, amount, signature, created_at FROM receipts WHERE id = ?').get(cert.receipt_id) as { id: string; amount: number; signature: string; created_at: string } | undefined;
     
+    let feeReceiptValid = false;
+    if (app && receipt && receipt.amount === app.fee_amount) {
+      const payload = `${receipt.id}:${cert.application_id}:${cert.instrument_id}:${receipt.amount}:${receipt.created_at}`;
+      const hmac = crypto.createHmac('sha256', hmacSecret());
+      hmac.update(payload);
+      if (hmac.digest('hex') === receipt.signature) {
+        feeReceiptValid = true;
+      }
+    }
+
+    // 2. Officer on site (arrival record exists)
+    const hasArrival = Boolean(
+      db.prepare("SELECT 1 FROM appointments WHERE application_id = ? AND status IN ('ARRIVED', 'COMPLETED')").get(cert.application_id) ||
+      db.prepare("SELECT 1 FROM audit_log WHERE record_id = ? AND action = 'ARRIVED'").get(cert.application_id) ||
+      db.prepare("SELECT 1 FROM inspections WHERE application_id = ? AND officer_id IS NOT NULL AND gps_lat IS NOT NULL").get(cert.application_id)
+    );
+
+    // 3. Checklist recorded (checklist and readings stored)
+    const inspection = db.prepare('SELECT checklist, readings FROM inspections WHERE application_id = ?').get(cert.application_id) as { checklist: string; readings: string } | undefined;
+    let checklistValid = false;
+    if (inspection && inspection.checklist && inspection.readings) {
+      try {
+        const cl = JSON.parse(inspection.checklist);
+        const rd = JSON.parse(inspection.readings);
+        checklistValid = Array.isArray(cl) && cl.length > 0 && Array.isArray(rd) && rd.length > 0;
+      } catch {
+        checklistValid = false;
+      }
+    }
+
+    // 4. Seal intact
+    const sealIntact = isIntact;
+
     res.json({
       tradeName: publicRecord.tradeName || 'Unknown',
       instrumentType: publicRecord.instrumentType || 'Unknown',
@@ -267,13 +325,14 @@ export const verifyCertificatePublic = async (req: Request, res: Response) => {
       status,
       validFrom: publicRecord.validFrom || null,
       validUntil: publicRecord.validTo || null,
+      revokedAt: (cert.revoked_at as string) || null,
       authorityName: publicRecord.authorityName || 'Unknown',
       integrity: isIntact,
       ticks: {
-        feeReceipt: true,
-        officerOnSite: true,
-        checklistRecorded: true,
-        sealIntact: isIntact
+        feeReceipt: feeReceiptValid,
+        officerOnSite: hasArrival,
+        checklistRecorded: checklistValid,
+        sealIntact
       },
       publicRecord,
       signature: cert.signature,
@@ -318,6 +377,7 @@ export const certificateRoutes = [
   { method: 'POST', path: '/api/certificates/:publicId/revoke', handler: [revokeCertificate] },
   { method: 'GET', path: '/api/certificates/:publicId/pdf', handler: [publicLimiter, getCertificatePdf] },
   
+  { method: 'GET', path: '/api/public/keys', handler: [publicLimiter, getPublicKeys] },
   { method: 'GET', path: '/api/public/verify/:publicId', handler: [publicLimiter, verifyCertificatePublic] },
   { method: 'POST', path: '/api/public/certificates/:publicId/complaints', handler: [publicLimiter, complaintClientLimiter, complaintCertLimiter, submitComplaint] },
   

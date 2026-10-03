@@ -23,6 +23,7 @@ describe('Block 8a Tests', () => {
       status: 'UNKNOWN',
       validFrom: null,
       validUntil: null,
+      revokedAt: null,
       authorityName: 'Unknown',
       integrity: false,
       ticks: { feeReceipt: false, officerOnSite: false, checklistRecorded: false, sealIntact: false },
@@ -74,7 +75,7 @@ describe('Block 8a Tests', () => {
       const keys = Object.keys(resJson).sort();
       expect(keys).toEqual([
         'authorityName', 'instrumentClass', 'instrumentType', 'integrity', 
-        'keyId', 'publicRecord', 'serial', 'signature', 'status', 'ticks', 
+        'keyId', 'publicRecord', 'revokedAt', 'serial', 'signature', 'status', 'ticks', 
         'tradeName', 'validFrom', 'validUntil'
       ]);
     }
