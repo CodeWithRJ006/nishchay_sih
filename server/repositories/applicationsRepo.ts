@@ -48,3 +48,25 @@ export function findApplicationsByBusiness(bizId: string) {
 export function findApplicationById(id: string) {
   return db.prepare('SELECT * FROM applications WHERE id = ?').get(id) as Record<string, unknown> | undefined;
 }
+
+export function findAllApplications(state?: string) {
+  if (state && state !== 'ALL') {
+    return db.prepare(`
+      SELECT a.*, b.name as business_name, i.type_code as instrument_class, i.serial as instrument_serial, z.name as zone_name
+      FROM applications a
+      JOIN businesses b ON a.business_id = b.id
+      JOIN instruments i ON a.instrument_id = i.id
+      LEFT JOIN zones z ON b.zone_id = z.id
+      WHERE a.state = ?
+      ORDER BY a.created_at DESC
+    `).all(state);
+  }
+  return db.prepare(`
+    SELECT a.*, b.name as business_name, i.type_code as instrument_class, i.serial as instrument_serial, z.name as zone_name
+    FROM applications a
+    JOIN businesses b ON a.business_id = b.id
+    JOIN instruments i ON a.instrument_id = i.id
+    LEFT JOIN zones z ON b.zone_id = z.id
+    ORDER BY a.created_at DESC
+  `).all();
+}

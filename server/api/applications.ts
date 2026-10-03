@@ -29,7 +29,8 @@ export function createApplication(req: Request, res: Response) {
 }
 
 export function listApplications(req: Request, res: Response) {
-  const apps = listApplicationsService(req.user);
+  const state = req.query.state as string | undefined;
+  const apps = listApplicationsService(req.user, state);
   res.json(apps);
 }
 

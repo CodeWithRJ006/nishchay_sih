@@ -16,6 +16,8 @@ if (process.env.DEMO_MODE === 'true') {
 }
 
 const PORT = process.env.PORT || 4000;
+// Log chosen port for debugging
+logger.info(`Using port ${PORT}`);
 const app = createApp();
 
 app.listen(PORT, () => {

@@ -37,17 +37,21 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
     if (currentRole === 'LMO' || currentRole === 'GATC') {
       return [
         { to: '/dashboard', label: 'Dashboard' },
+        { to: '/dashboard/my-jobs', label: 'My jobs' },
         { to: '/dashboard/profile', label: 'Profile' },
-        { to: '/dashboard/search', label: 'Certificate Search' },
+        { to: '/dashboard/search', label: 'Certificate search' },
       ];
     }
     if (currentRole === 'ADMIN') {
       return [
         { to: '/dashboard', label: 'Dashboard' },
+        { to: '/dashboard/applications', label: 'Applications' },
         { to: '/dashboard/unassigned', label: 'Unassigned jobs' },
-        { to: '/dashboard/provision', label: 'Provision accounts' },
+        { to: '/dashboard/finance', label: 'Payments' },
+        { to: '/dashboard/complaints', label: 'Complaints' },
         { to: '/dashboard/certificates', label: 'Certificates' },
-        { to: '/dashboard/search', label: 'Certificate Search' },
+        { to: '/dashboard/provision', label: 'Provision accounts' },
+        { to: '/dashboard/search', label: 'Certificate search' },
       ];
     }
     return [

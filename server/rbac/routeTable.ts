@@ -45,6 +45,10 @@ export const routeTable: RouteDef[] = [
   { method: 'GET', path: '/api/officer/profile', roles: ['LMO', 'GATC'] },
   { method: 'GET', path: '/api/zones', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
   { method: 'GET', path: '/api/dashboard/business', roles: ['BUSINESS'] },
+  { method: 'GET', path: '/api/dashboard/officer', roles: ['LMO', 'GATC'] },
+  { method: 'GET', path: '/api/dashboard/admin', roles: ['ADMIN'] },
+  { method: 'GET', path: '/api/admin/complaints', roles: ['ADMIN'] },
+  { method: 'GET', path: '/api/admin/activity-feed', roles: ['ADMIN'] },
 
   // Block 4b Routes
   { method: 'POST', path: '/api/instruments', roles: ['BUSINESS'] },

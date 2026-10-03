@@ -67,7 +67,13 @@ export function getUnassignedJobs() {
 }
 
 export function getAllOfficers() {
-  return db.prepare('SELECT id, name, role, zone_id, daily_capacity FROM users WHERE role IN ("LMO", "GATC")').all();
+  return db.prepare(`
+    SELECT u.id, u.name, u.email, u.role, u.zone_id, u.daily_capacity, u.gatc_centre_name, z.name as zone_name
+    FROM users u
+    LEFT JOIN zones z ON u.zone_id = z.id
+    WHERE u.role IN ('LMO', 'GATC')
+    ORDER BY u.role ASC, u.name ASC
+  `).all();
 }
 
 export function recordAudit(applicationId: string, userId: string, action: string, details: string) {

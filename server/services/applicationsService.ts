@@ -1,5 +1,12 @@
 import { getBusinessByOwner } from '../repositories/instrumentsRepo.js';
-import { getInstrumentForBusiness, hasPendingApplication, insertApplication, findApplicationsByBusiness, findApplicationById } from '../repositories/applicationsRepo.js';
+import { 
+  getInstrumentForBusiness, 
+  hasPendingApplication, 
+  insertApplication, 
+  findApplicationsByBusiness, 
+  findApplicationById,
+  findAllApplications
+} from '../repositories/applicationsRepo.js';
 import { transaction } from '../db/index.js';
 import { transition } from '../../shared/src/stateMachine.js'; // Rule 9: confirm submit uses transition()
 
@@ -25,13 +32,17 @@ export function createApplicationService(user: Express.Request['user'], data: { 
   });
 }
 
-export function listApplicationsService(user: Express.Request['user']) {
-  if (!user || user.role !== 'BUSINESS') return [];
-  
-  const biz = getBusinessByOwner(user.id);
-  if (!biz) return [];
-  
-  return findApplicationsByBusiness(biz.id);
+export function listApplicationsService(user: Express.Request['user'], state?: string) {
+  if (!user) return [];
+  if (user.role === 'BUSINESS') {
+    const biz = getBusinessByOwner(user.id);
+    if (!biz) return [];
+    return findApplicationsByBusiness(biz.id);
+  }
+  if (user.role === 'ADMIN') {
+    return findAllApplications(state);
+  }
+  return [];
 }
 
 export function getApplicationService(user: Express.Request['user'], id: string) {

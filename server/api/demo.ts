@@ -143,6 +143,10 @@ export const adminResetDemo = (req: Request, res: Response) => {
  * Generates a JWT for the first seeded user of the given role.
  */
 export const demoLoginAs = (req: Request, res: Response) => {
+  // Demo login is only available when DEMO_MODE is enabled
+  if (process.env.DEMO_MODE !== 'true') {
+    return res.status(404).json({ error: 'Demo mode disabled' });
+  }
   const role = req.params.role;
   const user = db.prepare('SELECT id, email, role FROM users WHERE role = ? LIMIT 1').get(role) as { id: string; email: string; role: string } | undefined;
   if (!user) {
@@ -160,7 +164,8 @@ export const demoLoginAs = (req: Request, res: Response) => {
     sameSite: 'strict',
     maxAge: 24 * 60 * 60 * 1000
   });
-  res.json({ user });
+  // Respond with the user object directly (contains role field)
+  res.json(user);
 };
 
 // Export routes for registration in app.ts

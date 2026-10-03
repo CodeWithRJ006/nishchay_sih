@@ -23,6 +23,10 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 };
 
 export const csrfMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // Bypass CSRF checks in demo mode for easier UI interaction
+  if (process.env.DEMO_MODE === 'true') {
+    return next();
+  }
   if (req.method !== 'GET' && !req.path.startsWith('/api/auth/') && !req.path.startsWith('/api/demo/') && req.path !== '/api/payments/callback') {
     const csrfHeader = req.headers['x-csrf-token'];
     if (!csrfHeader) {
@@ -108,5 +112,7 @@ export function logoutRoute(req: Request, res: Response) {
 }
 
 export function meRoute(req: Request, res: Response) {
-  res.json(req.user);
+  // Ensure a valid JSON object is always returned; undefined triggers empty response which breaks the client JSON parser.
+  const payload = req.user ?? null;
+  res.json(payload);
 }

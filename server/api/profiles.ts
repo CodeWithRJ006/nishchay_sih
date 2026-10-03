@@ -52,8 +52,40 @@ export function updateBusinessProfile(req: Request, res: Response) {
 
 export function getOfficerProfile(req: Request, res: Response) {
   const user = (req as unknown as Record<string, unknown>).user as { id: string };
-  const officer = db.prepare('SELECT id, name, role, zone_id, daily_capacity, gatc_centre_name FROM users WHERE id = ?').get(user.id);
-  res.json(officer);
+  const officer = db.prepare(`
+    SELECT u.id, u.name, u.email, u.role, u.zone_id, u.daily_capacity, u.gatc_centre_name, z.name as zone_name
+    FROM users u
+    LEFT JOIN zones z ON u.zone_id = z.id
+    WHERE u.id = ?
+  `).get(user.id) as {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    zone_id: string | null;
+    daily_capacity: number | null;
+    gatc_centre_name: string | null;
+    zone_name: string | null;
+  } | undefined;
+
+  if (!officer) return res.status(404).json({ message: 'Officer not found' });
+
+  const todayStr = new Date(clock.now()).toISOString().split('T')[0];
+  const todayLoad = (db.prepare('SELECT COUNT(*) as c FROM appointments WHERE officer_id = ? AND slot_date = ?').get(user.id, todayStr) as { c: number }).c;
+  const totalAssigned = (db.prepare('SELECT COUNT(*) as c FROM appointments WHERE officer_id = ?').get(user.id) as { c: number }).c;
+  const totalCompleted = (db.prepare(`
+    SELECT COUNT(*) as c 
+    FROM applications a 
+    JOIN appointments ap ON a.id = ap.application_id 
+    WHERE ap.officer_id = ? AND a.state IN ('CERTIFIED', 'INSPECTED_PASS', 'FAILED')
+  `).get(user.id) as { c: number }).c;
+
+  res.json({
+    ...officer,
+    today_load: todayLoad,
+    total_assigned: totalAssigned,
+    total_completed: totalCompleted,
+  });
 }
 
 export function provisionOfficer(req: Request, res: Response) {
@@ -64,12 +96,19 @@ export function provisionOfficer(req: Request, res: Response) {
   if (existing) return res.status(400).json({ message: 'Email in use' });
 
   const id = `USR-${clock.now()}`;
-  const hash = bcrypt.hashSync('demo123', 10); // default password for provisioned accounts
+  const defaultPassword = 'demo123';
+  const hash = bcrypt.hashSync(defaultPassword, 10); // default password for provisioned accounts
   
   db.prepare(`
     INSERT INTO users (id, email, password_hash, role, name, zone_id, daily_capacity, gatc_centre_name)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(id, email, hash, role, name, zone_id, daily_capacity, gatc_centre_name);
+
+  const adminUser = (req as unknown as Record<string, unknown>).user as { id: string } | undefined;
+  db.prepare(`
+    INSERT INTO audit_log (id, table_name, record_id, action, changed_by, new_data)
+    VALUES (hex(randomblob(16)), 'users', ?, 'PROVISION_OFFICER', ?, ?)
+  `).run(id, adminUser?.id || 'ADMIN', JSON.stringify({ email, role, name }));
   
-  res.json({ message: 'Provisioned', id });
+  res.json({ message: 'Provisioned', id, email, name, role, defaultPassword });
 }

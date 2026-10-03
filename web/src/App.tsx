@@ -11,6 +11,10 @@ import { BusinessProfile } from './pages/BusinessProfile';
 import { AdminProvision } from './pages/AdminProvision';
 import { OfficerProfile } from './pages/OfficerProfile';
 import { BusinessDashboard } from './pages/BusinessDashboard';
+import { OfficerDashboard } from './pages/OfficerDashboard';
+import { AdminDashboard } from './pages/AdminDashboard';
+import { AdminComplaints } from './pages/AdminComplaints';
+import { AdminFinance } from './pages/AdminFinance';
 import { Applications } from './pages/Applications';
 import { ApplicationDetail } from './pages/ApplicationDetail';
 
@@ -19,7 +23,6 @@ import { InstrumentProfile } from './pages/InstrumentProfile';
 import { ApplicationWizard } from './pages/ApplicationWizard';
 import { SandboxCheckout } from './pages/SandboxCheckout';
 import { ReceiptPage } from './pages/ReceiptPage';
-import { AdminDashboard as AdminFinance } from './pages/AdminFinance';
 import { ApplicationSchedule } from './pages/ApplicationSchedule';
 import { OfficerJobs } from './pages/OfficerJobs';
 import { AdminUnassigned } from './pages/AdminUnassigned';
@@ -69,9 +72,9 @@ function AppRoutes() {
           index 
           element={
             user?.role === 'ADMIN' ? (
-              <AdminFinance />
+              <AdminDashboard />
             ) : user?.role === 'LMO' || user?.role === 'GATC' ? (
-              <OfficerJobs />
+              <OfficerDashboard />
             ) : (
               <BusinessDashboard />
             )
@@ -92,10 +95,13 @@ function AppRoutes() {
         <Route path="payment/:applicationId" element={<SandboxCheckout />} />
         <Route path="receipt/:applicationId" element={<ReceiptPage />} />
         <Route path="finance" element={<AdminFinance />} />
+        <Route path="payments" element={<AdminFinance />} />
+        <Route path="complaints" element={<AdminComplaints />} />
         <Route path="schedule/:applicationId" element={<ApplicationSchedule />} />
         <Route path="my-jobs" element={<OfficerJobs />} />
         <Route path="unassigned" element={<AdminUnassigned />} />
         <Route path="unassigned-jobs" element={<AdminUnassigned />} />
+        <Route path="certificates" element={<CertificateSearch />} />
       </Route>
 
       <Route 
@@ -107,8 +113,11 @@ function AppRoutes() {
         }
       >
         <Route index element={<JobList />} />
+        <Route path="jobs" element={<JobList />} />
         <Route path="job/:id" element={<JobDetail />} />
         <Route path="job/:id/inspection" element={<JobInspection />} />
+        <Route path="jobs/:id" element={<JobDetail />} />
+        <Route path="jobs/:id/inspection" element={<JobInspection />} />
       </Route>
 
       <Route path="/unauthorized" element={<div className="p-8 text-center text-red-500 font-bold">Unauthorized Access</div>} />

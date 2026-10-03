@@ -5,9 +5,7 @@ import pino from 'pino';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import cookieParser from 'cookie-parser';
-import jwt from 'jsonwebtoken';
 import { db } from './db/index.js';
-import { jwtSecret } from './config/secrets.js';
 import { demoPayService } from './services/paymentsService.js';
 import { authMiddleware, csrfMiddleware, loginRoute, registerRoute, logoutRoute, meRoute } from './auth/index.js';
 import { rbacMiddleware } from './rbac/routeTable.js';
@@ -23,7 +21,13 @@ import { uploadMultipleMiddleware } from './api/uploads.js';
 import { certificateRoutes } from './api/certificates.js';
 import { demoRoutes } from './api/demo.js';
 import { getZones } from './api/zones.js';
-import { getBusinessDashboard } from './api/dashboard.js';
+import { 
+  getBusinessDashboard, 
+  getOfficerDashboard, 
+  getAdminDashboard, 
+  getAdminComplaints, 
+  getAdminActivity 
+} from './api/dashboard.js';
 
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
@@ -59,7 +63,9 @@ export function createApp() {
   });
 
   app.get('/api/config', (req, res) => {
-    res.json({ demoMode: process.env.DEMO_MODE === 'true' });
+    // Default to demo mode unless explicitly disabled
+    const demoMode = process.env.DEMO_MODE !== 'false';
+    res.json({ demoMode });
   });
 
   app.use(csrfMiddleware);
@@ -76,6 +82,10 @@ export function createApp() {
   app.get('/api/officer/profile', getOfficerProfile);
   app.get('/api/zones', getZones);
   app.get('/api/dashboard/business', getBusinessDashboard);
+  app.get('/api/dashboard/officer', getOfficerDashboard);
+  app.get('/api/dashboard/admin', getAdminDashboard);
+  app.get('/api/admin/complaints', getAdminComplaints);
+  app.get('/api/admin/activity-feed', getAdminActivity);
   app.post('/api/admin/provision', provisionOfficer);
 
   // Block 4b Routes
@@ -108,16 +118,7 @@ export function createApp() {
   app.post('/api/field/jobs/:id/arrive', arriveAtJob);
   app.post('/api/field/jobs/:id/inspection', uploadMultipleMiddleware, submitInspection);
 
-  app.post('/api/demo/login-as/:role', (req, res) => {
-    if (process.env.DEMO_MODE !== 'true') return res.status(404).send();
-    // Helper to log in directly via seed
-    const role = req.params.role;
-    const user = db.prepare('SELECT id, email, role, name FROM users WHERE role = ? LIMIT 1').get(role) as Record<string, unknown>;
-    if (!user) return res.status(404).json({ error: 'Role not found' });
-    const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, jwtSecret(), { expiresIn: '1d' });
-    res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
-    res.json(user);
-  });
+  // Demo login route handled via demoRoutes (removed duplicate)
 
   app.post('/api/demo/trigger-callback', (req, res) => {
     if (process.env.DEMO_MODE !== 'true') return res.status(404).send();

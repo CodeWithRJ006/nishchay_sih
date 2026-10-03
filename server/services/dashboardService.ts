@@ -4,8 +4,20 @@ import {
   getOpenApplications, 
   getInstrumentsWithStatus, 
   getRecentPaymentsForBusiness, 
-  getCertificatesForBusiness 
+  getCertificatesForBusiness,
+  getOfficerDetails,
+  getOfficerDashboardKpis,
+  getOfficerNeedsResponse,
+  getOfficerTodaySchedule,
+  getOfficerHistory,
+  getAdminDashboardKpis,
+  getApplicationsByState,
+  getAdminComplaintsSummary,
+  getAdminActivityFeed,
 } from '../repositories/dashboardRepo.js';
+import { getUnassignedJobs } from '../repositories/appointmentsRepo.js';
+import { db } from '../db/index.js';
+import { clock } from '../../shared/src/clock.js';
 
 export interface NextStepBannerInfo {
   title: string;
@@ -149,5 +161,63 @@ export function getBusinessDashboardData(ownerId: string) {
     instruments,
     recentPayments,
     certificates,
+  };
+}
+
+export function getOfficerDashboardData(officerId: string) {
+  const officer = getOfficerDetails(officerId);
+  if (!officer) {
+    throw new Error('Officer not found');
+  }
+
+  const roleLabel = officer.role === 'LMO' ? 'Legal Metrology Officer' : 'Government Approved Test Centre';
+  const now = clock.now();
+  const todayStr = new Date(now).toISOString().split('T')[0];
+
+  const kpis = getOfficerDashboardKpis(officer.id, officer.role, todayStr);
+  const needsResponse = getOfficerNeedsResponse(officer.id, officer.role);
+  const todaySchedule = getOfficerTodaySchedule(officer.id, todayStr);
+  const history = getOfficerHistory(officer.id, 5);
+
+  return {
+    officerId: officer.id,
+    name: officer.name,
+    role: officer.role,
+    roleLabel,
+    zoneId: officer.zone_id,
+    zoneName: officer.zone_name || officer.zone_id || 'All Zones',
+    centreName: officer.gatc_centre_name || null,
+    kpis,
+    needsResponse,
+    todaySchedule,
+    history,
+  };
+}
+
+export function getAdminDashboardData() {
+  const kpis = getAdminDashboardKpis();
+  const applicationsByState = getApplicationsByState();
+  const unassignedJobs = getUnassignedJobs();
+  const payments = db.prepare(`
+    SELECT p.id, p.application_id, p.amount, p.status, p.created_at, b.name as business_name
+    FROM payments p
+    JOIN applications a ON p.application_id = a.id
+    JOIN businesses b ON a.business_id = b.id
+    ORDER BY p.created_at DESC
+    LIMIT 10
+  `).all();
+  const complaints = getAdminComplaintsSummary();
+  const activityFeed = getAdminActivityFeed(15);
+
+  return {
+    kpis,
+    applicationsByState,
+    unassignedQueue: unassignedJobs,
+    paymentsAndGateBlocks: {
+      payments,
+      gateBlockCount: kpis.gateBlocks,
+    },
+    complaints,
+    activityFeed,
   };
 }

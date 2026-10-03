@@ -9,7 +9,12 @@ import { PageHeader } from '../components/ui/PageHeader';
 
 interface ApplicationItem {
   id: string;
+  business_id?: string;
+  business_name?: string;
   instrument_id: string;
+  instrument_class?: string;
+  instrument_serial?: string;
+  zone_name?: string;
   state: string;
   fee_amount: number;
   routing_rule?: string;
@@ -33,6 +38,19 @@ const STAGES = [
   { key: 'CERTIFIED', label: 'Certified' },
 ];
 
+const ALL_STATES = [
+  'ALL',
+  'DRAFT',
+  'SUBMITTED',
+  'PAID',
+  'SCHEDULED',
+  'ACCEPTED',
+  'INSPECTED_PASS',
+  'CERTIFIED',
+  'FAILED',
+  'CANCELLED',
+];
+
 function getStageIndex(state: string): number {
   switch (state) {
     case 'SUBMITTED': return 0;
@@ -51,11 +69,14 @@ export function Applications() {
   const [instruments, setInstruments] = useState<InstrumentMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedState, setSelectedState] = useState('ALL');
 
   useEffect(() => {
+    setLoading(true);
+    const query = selectedState !== 'ALL' ? `?state=${selectedState}` : '';
     Promise.all([
-      get<ApplicationItem[]>('/api/applications'),
-      get<Array<{ id: string; make: string; model: string; serial: string; type_code: string }>>('/api/instruments'),
+      get<ApplicationItem[]>(`/api/applications${query}`),
+      get<Array<{ id: string; make: string; model: string; serial: string; type_code: string }>>('/api/instruments').catch(() => []),
     ])
       .then(([apps, insts]) => {
         if (Array.isArray(apps)) setApplications(apps);
@@ -70,7 +91,7 @@ export function Applications() {
         setError(err.message || 'Failed to load applications');
         setLoading(false);
       });
-  }, []);
+  }, [selectedState]);
 
   if (loading) {
     return (
@@ -107,12 +128,32 @@ export function Applications() {
         </div>
       )}
 
+      {/* Filter by state */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2">
+        <span className="text-xs font-semibold uppercase text-slate-500 mr-1">Filter state:</span>
+        {ALL_STATES.map(st => (
+          <button
+            key={st}
+            onClick={() => setSelectedState(st)}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+              selectedState === st
+                ? 'bg-calibration-blue text-white shadow-xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+            }`}
+          >
+            {st}
+          </button>
+        ))}
+      </div>
+
       {applications.length === 0 ? (
         <Card className="p-12 text-center border border-dashed border-slate-300 bg-white">
           <FileText className="w-12 h-12 text-slate-400 mx-auto mb-3" />
-          <h2 className="text-lg font-bold text-slate-800 font-heading">No applications submitted</h2>
+          <h2 className="text-lg font-bold text-slate-800 font-heading">No applications found</h2>
           <p className="text-sm text-slate-500 mt-1 max-w-md mx-auto">
-            Apply for verification of your registered commercial instruments to earn a verified digital seal.
+            {selectedState === 'ALL'
+              ? 'Apply for verification of your registered commercial instruments to earn a verified digital seal.'
+              : `No applications found with state ${selectedState}.`}
           </p>
           <Button 
             variant="primary" 
@@ -132,8 +173,13 @@ export function Applications() {
               <Card key={app.id} className="p-6 border border-slate-200 bg-white shadow-sm space-y-4 hover:border-slate-300 transition-colors">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="font-mono text-sm font-bold text-calibration-blue">{app.id}</span>
+                      {app.business_name && (
+                        <span className="font-semibold text-xs text-ink bg-slate-100 px-2 py-0.5 rounded">
+                          {app.business_name}
+                        </span>
+                      )}
                       <span className={`text-xs font-semibold px-2 py-0.5 rounded uppercase tracking-wide ${
                         app.state === 'CERTIFIED' 
                           ? 'bg-emerald-100 text-verified-green' 
@@ -145,7 +191,11 @@ export function Applications() {
                       </span>
                     </div>
                     <div className="text-sm font-medium text-slate-900 mt-1">
-                      {inst ? `${inst.make} ${inst.model} (SN: ${inst.serial})` : `Instrument ${app.instrument_id}`}
+                      {inst 
+                        ? `${inst.make} ${inst.model} (SN: ${inst.serial})` 
+                        : app.instrument_class 
+                          ? `${app.instrument_class} (SN: ${app.instrument_serial || app.instrument_id})` 
+                          : `Instrument ${app.instrument_id}`}
                     </div>
                   </div>
 

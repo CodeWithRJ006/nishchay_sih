@@ -1,7 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { formatDate } from '../lib/formatters';
-import { get } from '../lib/api';
+import { get, post } from '../lib/api';
+import { useAuth } from '../AuthContext';
+import { Button } from '../components/ui/Button';
+import { Toast, ToastType } from '../components/ui/Toast';
+import { ShieldAlert, AlertTriangle } from 'lucide-react';
 
 interface CertificateResult {
   id: string;
@@ -15,6 +19,7 @@ interface CertificateResult {
 }
 
 export function CertificateSearch() {
+  const { user } = useAuth();
   const [params, setParams] = useState({
     instrumentId: '',
     businessName: '',
@@ -26,6 +31,10 @@ export function CertificateSearch() {
   const [results, setResults] = useState<CertificateResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [revokeCert, setRevokeCert] = useState<CertificateResult | null>(null);
+  const [revokeReason, setRevokeReason] = useState('');
+  const [revoking, setRevoking] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
 
   const fetchResults = useCallback(async (currentParams = params) => {
     setLoading(true);
@@ -54,6 +63,23 @@ export function CertificateSearch() {
       if (v) q.append(k, v);
     });
     window.location.href = `/api/certificates/export?${q.toString()}`;
+  };
+
+  const handleRevoke = async () => {
+    if (!revokeCert || !revokeReason.trim()) return;
+    setRevoking(true);
+    try {
+      await post(`/api/certificates/${revokeCert.public_id}/revoke`, { reason: revokeReason.trim() });
+      setToast({ message: `Certificate ${revokeCert.public_id} revoked successfully.`, type: 'success' });
+      setRevokeCert(null);
+      setRevokeReason('');
+      await fetchResults(params);
+    } catch (err: unknown) {
+      const error = err as Error;
+      setToast({ message: error.message || 'Failed to revoke certificate', type: 'error' });
+    } finally {
+      setRevoking(false);
+    }
   };
 
   return (
@@ -158,8 +184,19 @@ export function CertificateSearch() {
                     </span>
                   </td>
                   <td className="p-3">{formatDate(r.valid_to)}</td>
-                  <td className="p-3">
-                    <Link to={`/v/${r.public_id}`} className="text-calibration-blue hover:underline">View</Link>
+                  <td className="p-3 flex items-center gap-2">
+                    <Link to={`/v/${r.public_id}`} className="text-calibration-blue hover:underline text-xs font-semibold">
+                      View
+                    </Link>
+                    {user?.role === 'ADMIN' && r.status === 'VALID' && (
+                      <button
+                        onClick={() => setRevokeCert(r)}
+                        className="text-red-600 hover:text-red-800 text-xs font-semibold hover:underline flex items-center gap-0.5 ml-2"
+                      >
+                        <ShieldAlert className="w-3.5 h-3.5" />
+                        Revoke
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))
@@ -167,6 +204,61 @@ export function CertificateSearch() {
           </tbody>
         </table>
       </div>
+
+      {/* Revoke Modal */}
+      {revokeCert && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl border border-slate-200">
+            <div className="flex items-center gap-2 text-red-600 mb-2">
+              <AlertTriangle className="w-5 h-5" />
+              <h3 className="text-lg font-bold font-heading text-ink">Revoke Certificate</h3>
+            </div>
+            <p className="text-sm text-slate-600 mb-4">
+              You are revoking certificate <span className="font-mono font-bold text-ink">{revokeCert.public_id}</span> issued to <span className="font-semibold text-ink">{revokeCert.business_name}</span>.
+            </p>
+
+            <div className="mb-4">
+              <label htmlFor="revoke-reason" className="block text-xs font-semibold text-slate-700 uppercase mb-1">
+                Official Revocation Reason *
+              </label>
+              <textarea
+                id="revoke-reason"
+                rows={3}
+                className="w-full border border-slate-300 rounded p-2 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                placeholder="e.g., Lead seal broken during field inspection, commercial fraud reported, non-conformity..."
+                value={revokeReason}
+                onChange={e => setRevokeReason(e.target.value)}
+                required
+              />
+              <p className="text-xs text-slate-400 mt-1">
+                Revocation reason is recorded for audit purposes and will not be displayed on the public verification view.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setRevokeCert(null);
+                  setRevokeReason('');
+                }}
+                disabled={revoking}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleRevoke}
+                disabled={!revokeReason.trim() || revoking}
+              >
+                {revoking ? 'Revoking...' : 'Confirm Revocation'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   );
 }

@@ -85,15 +85,20 @@ export function AdminReceipts() {
   );
 }
 
-export function AdminDashboard() {
+export function AdminFinance() {
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Admin Finance Dashboard</h1>
+    <div className="p-6 max-w-5xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold font-heading text-ink">Official Payments & Financial Telemetry</h1>
+        <p className="text-sm text-slate-600 mt-1">Review official e-receipt transactions and financial gate protection telemetry.</p>
+      </div>
       <AdminGateBlocks />
-      <div className="bg-white p-6 shadow rounded">
+      <div className="bg-white p-6 shadow-sm border border-slate-200 rounded-lg">
         <AdminPayments />
         <AdminReceipts />
       </div>
     </div>
   );
 }
+
+export const AdminDashboard = AdminFinance;
