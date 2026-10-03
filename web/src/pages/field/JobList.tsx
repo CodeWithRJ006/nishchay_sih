@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { get } from '../../lib/api';
 
 export interface Job {
   id: string;
@@ -20,8 +21,7 @@ export function JobList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('/api/appointments/my-jobs')
-      .then(res => res.json())
+    get<Job[]>('/api/appointments/my-jobs')
       .then(data => {
         setJobs(data);
       });

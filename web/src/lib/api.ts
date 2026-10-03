@@ -14,14 +14,16 @@ function getCsrfToken(): string {
 }
 
 function handleResponse<T>(response: Response): Promise<T> {
-  if (response.ok) return response.json();
-  return response.json().then(err => {
+  if (response.ok) {
+    return response.json() as unknown as Promise<T>;
+  }
+  return response.json().then((err) => {
     throw new ApiError(err.code ?? 'UNKNOWN_ERROR', err.message ?? 'Error', err.requestId);
-  });
+  }) as unknown as Promise<T>;
 }
 
 export function get<T>(url: string): Promise<T> {
-  return fetch(url, { credentials: 'include' }).then(handleResponse);
+  return fetch(url, { credentials: 'include' }).then((r) => handleResponse<T>(r));
 }
 
 export function post<T>(url: string, body: unknown): Promise<T> {
@@ -33,7 +35,7 @@ export function post<T>(url: string, body: unknown): Promise<T> {
       'x-csrf-token': getCsrfToken(),
     },
     body: JSON.stringify(body),
-  }).then(handleResponse);
+  }).then((r) => handleResponse<T>(r));
 }
 
 
@@ -46,7 +48,7 @@ export function put<T>(url: string, body: unknown): Promise<T> {
       'x-csrf-token': getCsrfToken(),
     },
     body: JSON.stringify(body),
-  }).then(handleResponse);
+  }).then((r) => handleResponse<T>(r));
 }
 
 
@@ -59,7 +61,7 @@ export function patch<T>(url: string, body: unknown): Promise<T> {
       'x-csrf-token': getCsrfToken(),
     },
     body: JSON.stringify(body),
-  }).then(handleResponse);
+  }).then(handleResponse<T>);
 }
 
 
@@ -70,7 +72,7 @@ export function del<T>(url: string): Promise<T> {
     headers: {
       'x-csrf-token': getCsrfToken(),
     },
-  }).then(handleResponse);
+  }).then(handleResponse<T>);
 }
 
 export function upload<T>(url: string, form: FormData): Promise<T> {
@@ -81,5 +83,5 @@ export function upload<T>(url: string, form: FormData): Promise<T> {
       'x-csrf-token': getCsrfToken(),
     },
     body: form,
-  }).then(handleResponse);
+  }).then(handleResponse<T>);
 }

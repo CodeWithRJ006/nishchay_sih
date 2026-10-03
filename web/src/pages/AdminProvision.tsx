@@ -16,16 +16,16 @@ export const AdminProvision = () => {
 
   const handleProvision = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await post('/api/admin/provision', {
-      ...form,
-      daily_capacity: form.daily_capacity ? parseInt(form.daily_capacity, 10) : null
-    });
-    if (res.ok) {
+    try {
+      await post('/api/admin/provision', {
+        ...form,
+        daily_capacity: form.daily_capacity ? parseInt(form.daily_capacity, 10) : null
+      });
       setToast('Account provisioned successfully');
       setForm({ email: '', name: '', role: 'LMO', zone_id: '', daily_capacity: '', gatc_centre_name: '' });
       setTimeout(() => setToast(''), 3000);
-    } else {
-      const err = await res.json();
+    } catch (e: unknown) {
+      const err = e as Error;
       setToast(err.message || 'Failed to provision');
     }
   };

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { get } from '../lib/api';
 
 interface Instrument {
   id: string;
@@ -22,10 +23,14 @@ export function InstrumentProfile() {
   const [instrument, setInstrument] = useState<Instrument | null>(null);
   const [loading, setLoading] = useState(true);
 
-    get(`/api/instruments/${id}`).then(data => {
-      setInstrument(data);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+  useEffect(() => {
+    get<Instrument>(`/api/instruments/${id}`)
+      .then(data => {
+        setInstrument(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [id]);
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (!instrument || !('id' in instrument)) return <div className="p-4 text-red-500">Instrument not found.</div>;
@@ -49,7 +54,7 @@ export function InstrumentProfile() {
         </div>
         <div className="p-4 grid grid-cols-2 gap-4">
           <div>
-            <div className="text-xs text-nsh-text-light uppercase tracking-wider font-semibold">Make & Model</div>
+            <div className="text-xs text-nsh-text-light uppercase tracking-wider font-semibold">Make &amp; Model</div>
             <div className="font-medium mt-1">{instrument.make} {instrument.model}</div>
           </div>
           <div>

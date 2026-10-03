@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { CameraCapture } from './CameraCapture';
 import { INSTRUMENT_RULES, evaluateReadings } from '../../../../shared/src/rules';
+import { get, upload } from '../../lib/api';
 
 interface PhotoRecord {
   blob: Blob;
@@ -24,18 +25,16 @@ export function JobInspection() {
   const [instrumentCode, setInstrumentCode] = useState<string>('W-1'); 
 
   useEffect(() => {
-    fetch('/api/appointments/my-jobs')
-      .then(r => r.json())
-      .then((jobs: { application_id: string, instrument_id: string }[]) => {
+    get<{ application_id: string, instrument_id: string }[]>('/api/appointments/my-jobs')
+      .then((jobs) => {
         const j = jobs.find(x => x.application_id === id);
         if (j) {
           setInstrumentId(j.instrument_id);
           // Normally we'd need to know the instrument code for checklist. We will default to W-1 if not fetched.
           // Since the API only returns instrument_id, we need a way to get the class.
           // We can fetch the application or instrument.
-          fetch(`/api/instruments/${j.instrument_id}`)
-            .then(r => r.json())
-            .then((inst: { type: string }) => {
+          get<{ type: string }>(`/api/instruments/${j.instrument_id}`)
+            .then((inst) => {
                if (inst.type) {
                  const match = INSTRUMENT_RULES.find(r => r.label === inst.type);
                  if (match) setInstrumentCode(match.code);
@@ -104,15 +103,7 @@ export function JobInspection() {
     photos.forEach(p => formData.append('files', p.blob));
 
     try {
-      const res = await fetch(`/api/field/jobs/${id}/inspection`, {
-        method: 'POST',
-        headers: { 'x-csrf-token': 'dummy' }, // No content-type so fetch sets multipart/form-data boundary
-        body: formData
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Submit failed');
-      }
+      await upload(`/api/field/jobs/${id}/inspection`, formData);
       if (pass) {
         alert('Inspection passed. Certificate issue is the next step.');
       } else {

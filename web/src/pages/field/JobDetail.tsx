@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '../../components/ui/Button';
 import { haversine } from '../../utils/haversine';
+import { get, post } from '../../lib/api';
 
 interface JobDetailData {
   id: string;
@@ -27,8 +28,7 @@ export function JobDetail() {
   useEffect(() => {
     // We don't have a specific endpoint for single job, but we can fetch all and find it
     // Alternatively, we could create an endpoint, but since jobs are small, fetching all is fine for now
-    fetch('/api/appointments/my-jobs')
-      .then(r => r.json())
+    get<JobDetailData[]>('/api/appointments/my-jobs')
       .then((data: JobDetailData[]) => {
         const found = data.find(j => j.application_id === id);
         if (found) setJob(found);
@@ -71,14 +71,7 @@ export function JobDetail() {
         throw new Error(`You are ${Math.round(dist)}m away. You must be within 300m of the premises to arrive.`);
       }
 
-      const res = await fetch(`/api/field/jobs/${id}/arrive`, {
-        method: 'POST',
-        headers: { 'x-csrf-token': 'dummy' }
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to arrive');
-      }
+      await post(`/api/field/jobs/${id}/arrive`, {});
 
       // Success, update local state
       setJob({ ...job!, status: 'ARRIVED' });
@@ -91,12 +84,7 @@ export function JobDetail() {
 
   const handleAccept = async () => {
     try {
-      const res = await fetch('/api/appointments/accept', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': 'dummy' },
-        body: JSON.stringify({ applicationId: id })
-      });
-      if (!res.ok) throw new Error('Failed to accept');
+      await post('/api/appointments/accept', { applicationId: id });
       setJob({ ...job!, status: 'ACCEPTED' });
     } catch (err: unknown) {
       setError((err as Error).message);
@@ -107,12 +95,7 @@ export function JobDetail() {
     const reason = window.prompt('Reason for rejection:');
     if (!reason) return;
     try {
-      const res = await fetch('/api/appointments/reject', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': 'dummy' },
-        body: JSON.stringify({ applicationId: id, reason })
-      });
-      if (!res.ok) throw new Error('Failed to reject');
+      await post('/api/appointments/reject', { applicationId: id, reason });
       navigate('/field');
     } catch (err: unknown) {
       setError((err as Error).message);

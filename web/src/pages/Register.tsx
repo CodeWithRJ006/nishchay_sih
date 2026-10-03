@@ -9,6 +9,7 @@ export const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
+  const [error, setError] = useState('');
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
 
@@ -19,13 +20,12 @@ export const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name: 'New Business', gstin: 'DEMOGSTIN' })
-    });
-    if (res.ok) {
+    try {
+      await post('/api/auth/register', { email, password, name: 'New Business', gstin: 'DEMOGSTIN' });
       navigate('/login');
+    } catch (e: unknown) {
+      const err = e as Error;
+      setError(err.message || 'Registration failed');
     }
   };
 
@@ -34,6 +34,8 @@ export const Register = () => {
       <div className="max-w-md w-full bg-white rounded shadow-sm border border-gray-200 p-8">
         <h1 className="text-2xl font-bold mb-2">Business Registration</h1>
         <p className="text-sm text-gray-600 mb-6">Create an account to register your instruments and apply for verifications.</p>
+        
+        {error && <div className="mb-4 text-red-600 text-sm font-semibold text-center">{error}</div>}
         
         {step === 1 ? (
           <form onSubmit={handleSendOtp} className="flex flex-col gap-4">

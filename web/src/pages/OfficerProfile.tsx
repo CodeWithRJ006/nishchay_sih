@@ -3,14 +3,14 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
 import { Input } from '../components/ui/Input';
 import { Field } from '../components/ui/Field';
+import { get } from '../lib/api';
 
 export const OfficerProfile = () => {
   const [profile, setProfile] = useState<{name: string, role: string, zone_id: string, daily_capacity?: number, gatc_centre_name?: string} | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/officer/profile')
-      .then(res => res.json())
+    get<{name: string, role: string, zone_id: string, daily_capacity?: number, gatc_centre_name?: string}>('/api/officer/profile')
       .then(data => {
         setProfile(data);
         setLoading(false);

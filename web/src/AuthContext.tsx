@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { get, post } from '../lib/api';
+import { get, post } from './lib/api';
 
 type User = { id: string, role: string, email: string };
 
@@ -18,7 +18,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = async () => {
     try {
-      const data = await get('/api/auth/me').catch(() => null);
+      const data = await get<User>('/api/auth/me').catch(() => null);
       setUser(data);
     } catch {
       setUser(null);

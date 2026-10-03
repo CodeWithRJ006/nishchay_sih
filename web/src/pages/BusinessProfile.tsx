@@ -6,6 +6,7 @@ import { Select } from '../components/ui/Select';
 import { Field } from '../components/ui/Field';
 import { Button } from '../components/ui/Button';
 import { Toast } from '../components/ui/Toast';
+import { get, put } from '../lib/api';
 
 export const BusinessProfile = () => {
   const [profile, setProfile] = useState({
@@ -15,7 +16,7 @@ export const BusinessProfile = () => {
   const [toast, setToast] = useState('');
 
   useEffect(() => {
-    get('/api/business/profile')
+    get<{ name: string; type: string; address: string; zone_id: string; lat: string; lng: string; phone: string; email: string }>('/api/business/profile')
       .then(data => {
         setProfile({
           name: data.name || '',

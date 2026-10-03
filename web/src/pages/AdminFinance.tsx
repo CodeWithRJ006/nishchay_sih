@@ -5,7 +5,7 @@ export function AdminGateBlocks() {
   const [gateBlocks, setGateBlocks] = useState(0);
 
   useEffect(() => {
-    get('/api/admin/gate-blocks')
+    get<{ count: number }>('/api/admin/gate-blocks')
       .then(d => setGateBlocks(d.count));
   }, []);
 
@@ -22,7 +22,7 @@ export function AdminPayments() {
   const [payments, setPayments] = useState<{id: string, application_id: string, amount: number, status: string}[]>([]);
 
   useEffect(() => {
-    get('/api/admin/payments').then(setPayments);
+    get<{id: string, application_id: string, amount: number, status: string}[]>('/api/admin/payments').then(setPayments);
   }, []);
 
   return (
@@ -56,7 +56,7 @@ export function AdminReceipts() {
   const [receipts, setReceipts] = useState<{id: string, application_id: string, amount: number}[]>([]);
 
   useEffect(() => {
-    get('/api/admin/receipts').then(setReceipts);
+    get<{id: string, application_id: string, amount: number}[]>('/api/admin/receipts').then(setReceipts);
   }, []);
 
   return (

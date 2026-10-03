@@ -18,22 +18,20 @@ export const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await post('/api/auth/login', { email, password });
-    if (res.ok) {
+    try {
+      await post('/api/auth/login', { email, password });
       await refresh();
       navigate('/dashboard');
-    } else {
-      const data = await res.json();
-      setError(data.message || 'Login failed');
+    } catch (e: unknown) {
+      const err = e as Error;
+      setError(err.message || 'Login failed');
     }
   };
 
   const loginAs = async (role: string) => {
-    const res = await fetch(`/api/demo/login-as/${role}`, { method: 'POST' });
-    if (res.ok) {
-      await refresh();
-      navigate('/dashboard');
-    }
+    await post(`/api/demo/login-as/${role}`, {});
+    await refresh();
+    navigate('/dashboard');
   };
 
   return (

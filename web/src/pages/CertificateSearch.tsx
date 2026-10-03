@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { formatDate } from '../lib/formatters';
+import { get } from '../lib/api';
 
 interface CertificateResult {
   id: string;
@@ -33,9 +35,7 @@ export function CertificateSearch() {
       Object.entries(currentParams).forEach(([k, v]) => {
         if (v) q.append(k, v);
       });
-      const res = await fetch(`/api/certificates/search?${q.toString()}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json() as { results: CertificateResult[] };
+      const data = await get<{ results: CertificateResult[] }>(`/api/certificates/search?${q.toString()}`);
       setResults(data.results);
     } catch {
       setError('Search failed.');
@@ -157,7 +157,7 @@ export function CertificateSearch() {
                       {r.status}
                     </span>
                   </td>
-                  <td className="p-3">{new Date(r.valid_to).toLocaleDateString()}</td>
+                  <td className="p-3">{formatDate(r.valid_to)}</td>
                   <td className="p-3">
                     <Link to={`/v/${r.public_id}`} className="text-calibration-blue hover:underline">View</Link>
                   </td>

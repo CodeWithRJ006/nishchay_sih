@@ -1,11 +1,16 @@
+// import React and hooks
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+// UI components
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
+// API client
+import { get, post } from '../lib/api';
 
+// Instrument data shape
 interface Instrument {
   id: string;
   type_code: string;
@@ -30,15 +35,15 @@ export function Instruments() {
   const [accuracyClass, setAccuracyClass] = useState('III');
   const [location, setLocation] = useState('');
 
+  // load instruments on mount
   useEffect(() => {
-    fetch('/api/instruments')
-      .then(r => r.json())
+    get<Instrument[]>('/api/instruments')
       .then(data => {
         if (Array.isArray(data)) setInstruments(data);
         setLoading(false);
       })
       .catch(() => {
-                setError('Failed to load instruments');
+        setError('Failed to load instruments');
         setLoading(false);
       });
   }, []);
@@ -53,27 +58,23 @@ export function Instruments() {
     setLocation('Counter 1');
   };
 
+  interface RegisterResponse { id: string; }
   const register = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const res = await fetch('/api/instruments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type_code: typeCode,
-        make,
-        model,
-        serial,
-        capacity,
-        accuracy_class: accuracyClass,
-        location
-      })
+    const res = await post<RegisterResponse>('/api/instruments', {
+      type_code: typeCode,
+      make,
+      model,
+      serial,
+      capacity,
+      accuracy_class: accuracyClass,
+      location,
     });
-    const data = await res.json();
-    if (res.ok) {
-      navigate(`/dashboard/instruments/${data.id}`);
+    if (res && res.id) {
+      navigate(`/dashboard/instruments/${res.id}`);
     } else {
-      setError(data.message || 'Registration failed');
+      setError('Registration failed');
     }
   };
 
@@ -89,7 +90,7 @@ export function Instruments() {
         <Button variant="outline" onClick={() => navigate('/dashboard/apply')}>New Application</Button>
       </div>
 
-      <NextStepBanner 
+      <NextStepBanner
         title="Register your instruments"
         description="Add all instruments used in your business to begin the certification process."
         actionLabel="Fill Demo Details"
@@ -105,7 +106,7 @@ export function Instruments() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Type</label>
-                <Select value={typeCode} onChange={(e) => setTypeCode(e.target.value)} required>
+                <Select value={typeCode} onChange={e => setTypeCode(e.target.value)} required>
                   <option value="NAWI-3">Non-Automatic Weighing Instrument (Class III)</option>
                   <option value="W-1">Weights</option>
                   <option value="WM-1">Water Meter</option>
@@ -114,34 +115,33 @@ export function Instruments() {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Capacity</label>
-                <Input value={capacity} onChange={(e) => setCapacity(e.target.value)} required placeholder="e.g. 150kg" />
+                <Input value={capacity} onChange={e => setCapacity(e.target.value)} required placeholder="e.g. 150kg" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Make</label>
-                <Input value={make} onChange={(e) => setMake(e.target.value)} required />
+                <Input value={make} onChange={e => setMake(e.target.value)} required />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Model</label>
-                <Input value={model} onChange={(e) => setModel(e.target.value)} required />
+                <Input value={model} onChange={e => setModel(e.target.value)} required />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Serial Number</label>
-                <Input value={serial} onChange={(e) => setSerial(e.target.value)} required />
+                <Input value={serial} onChange={e => setSerial(e.target.value)} required />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Accuracy Class</label>
-                <Input value={accuracyClass} onChange={(e) => setAccuracyClass(e.target.value)} />
+                <Input value={accuracyClass} onChange={e => setAccuracyClass(e.target.value)} />
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium mb-1">Location (Optional)</label>
-              <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Shop Floor 1" />
+              <Input value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Shop Floor 1" />
             </div>
-            
             <Button type="submit" className="w-full">Register Instrument</Button>
           </form>
         </Card>
@@ -156,11 +156,9 @@ export function Instruments() {
                 <div key={i.id} className="p-4 flex items-center justify-between hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/dashboard/instruments/${i.id}`)}>
                   <div>
                     <div className="font-medium">{i.make} {i.model}</div>
-                    <div className="text-sm text-nsh-text-light">SN: {i.serial} &bull; Cap: {i.capacity}</div>
+                    <div className="text-sm text-nsh-text-light">SN: {i.serial} • Cap: {i.capacity}</div>
                   </div>
-                  <div className="text-sm font-mono bg-blue-50 text-nsh-primary px-2 py-1 rounded">
-                    {i.id}
-                  </div>
+                  <div className="text-sm font-mono bg-blue-50 text-nsh-primary px-2 py-1 rounded">{i.id}</div>
                 </div>
               ))
             )}

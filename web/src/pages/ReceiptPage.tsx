@@ -4,22 +4,17 @@ import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
 import { Download } from 'lucide-react';
+import { get } from '../lib/api';
 
 export function ReceiptPage() {
   const { applicationId } = useParams();
   const navigate = useNavigate();
   const [receipt, setReceipt] = useState<{id: string, fee_amount: number} | null>(null);
   
-  // To keep it simple, we fetch the application and if it has a receipt, we show it
-  // Wait, I didn't make an API to get the receipt for a specific application for BUSINESS!
-  // Let me add one later or just fetch the application.
-  
   useEffect(() => {
-    fetch(`/api/applications/${applicationId}`)
-      .then(res => res.json())
-      .then(data => {
-        setReceipt(data);
-      });
+    get<{id: string, fee_amount: number}>(`/api/applications/${applicationId}`)
+      .then(setReceipt)
+      .catch(() => {});
   }, [applicationId]);
 
   if (!receipt) return <div>Loading...</div>;

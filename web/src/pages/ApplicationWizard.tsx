@@ -22,7 +22,7 @@ export function ApplicationWizard() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    get('/api/instruments').then(r => r.json()).then(data => {
+    get<Array<{ id: string, type_code: string, make: string, model: string, serial: string }>>('/api/instruments').then(data => {
       if (Array.isArray(data)) setInstruments(data);
     });
   }, []);
@@ -50,14 +50,9 @@ export function ApplicationWizard() {
     formData.append('file', f);
     
     try {
-      const res = await upload('/api/upload', formData);
-      const data = await res.json();
-      if (res.ok) {
-        setDocName(data.fileName);
-        setDocHash(data.fileHash);
-      } else {
-        setError(data.message);
-      }
+      const data = await upload<{ fileName: string; fileHash: string }>('/api/upload', formData);
+      setDocName(data.fileName);
+      setDocHash(data.fileHash);
     } catch {
       setError('Upload failed');
     }
@@ -66,18 +61,19 @@ export function ApplicationWizard() {
   const submit = async () => {
     setError('');
     try {
-      const result = await post('/api/applications', {
+      const result = await post<{ id: string }>('/api/applications', {
         instrument_id: selectedInstId,
         documents: docName ? [{ doc_type: 'INVOICE', file_name: docName, file_hash: docHash }] : [],
       });
       navigate('/dashboard/payment/' + result.id);
-    } catch (e: any) {
-      setError(e.message || 'Submission failed');
+    } catch (e: unknown) {
+      const err = e as Error;
+      setError(err.message || 'Submission failed');
     }
   };
     
 
-  };
+
 
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">

@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
+import { NextStepBanner } from '../components/ui/NextStepBanner';
 import { get, post } from '../lib/api';
+import { formatDate } from '../lib/formatters';
 
 export function ApplicationSchedule() {
   const { applicationId } = useParams();
@@ -14,27 +16,25 @@ export function ApplicationSchedule() {
   const [error, setError] = useState('');
   
   useEffect(() => {
-    get('/api/appointments/slots')
+    get<{date: string, slots: string[]}[]>('/api/appointments/slots')
       .then(setSlots)
       .finally(() => setLoading(false));
   }, []);
 
   const handleSchedule = async () => {
     try {
-      const res = await post('/api/appointments/schedule', { applicationId, slotDate: selectedDate, slotTime: selectedTime });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to schedule');
+      await post('/api/appointments/schedule', { applicationId, slotDate: selectedDate, slotTime: selectedTime });
       navigate('/dashboard');
-    } catch (e) {
+    } catch (e: unknown) {
       const err = e as Error;
-      setError(err.message);
+      setError(err.message || 'Failed to schedule');
     }
   };
 
   if (loading) return <div>Loading slots...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto px-6">
       <PageHeader title="Schedule Verification" description="Pick a suitable slot for the physical inspection." />
       
       {error && <div className="text-red-600 bg-red-50 p-4 rounded mb-6">{error}</div>}
@@ -46,7 +46,7 @@ export function ApplicationSchedule() {
             {slots.map(s => (
               <label key={s.date} className={`block p-4 border rounded cursor-pointer ${selectedDate === s.date ? 'border-primary-600 bg-primary-50' : 'border-slate-200 bg-white hover:bg-slate-50'}`}>
                 <input type="radio" name="date" value={s.date} className="sr-only" onChange={() => setSelectedDate(s.date)} />
-                <span className="font-bold">{new Date(s.date).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+                <span className="font-bold">{formatDate(s.date)}</span>
               </label>
             ))}
           </div>

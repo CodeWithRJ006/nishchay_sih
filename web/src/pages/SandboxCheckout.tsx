@@ -4,6 +4,7 @@ import { AlertTriangle, CreditCard, Landmark, Smartphone } from 'lucide-react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
+import { get, post } from '../lib/api';
 
 export function SandboxCheckout() {
   const { applicationId } = useParams();
@@ -14,8 +15,7 @@ export function SandboxCheckout() {
   const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/applications/${applicationId}`)
-      .then(res => res.json())
+    get<{fee_amount: number}>(`/api/applications/${applicationId}`)
       .then(data => {
         setAppData(data);
         setLoading(false);
@@ -25,12 +25,7 @@ export function SandboxCheckout() {
   const handleOutcome = async (status: 'SUCCESS' | 'FAILURE' | 'PENDING') => {
     setProcessing(true);
     try {
-      const initRes = await fetch('/api/payments/initiate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': 'dummy' },
-        body: JSON.stringify({ applicationId, amount: appData?.fee_amount || 0 })
-      });
-      const initData = await initRes.json();
+      const initData = await post<{ paymentId: string }>('/api/payments/initiate', { applicationId, amount: appData?.fee_amount || 0 });
 
       // In real life this would happen on the provider's server. We simulate the webhook callback.
       const payload = {
@@ -46,17 +41,12 @@ export function SandboxCheckout() {
       // But the browser cannot sign it. The Sandbox Provider needs to sign it.
       // So I need a fake Sandbox Provider endpoint to trigger the callback!
       
-      const res = await fetch('/api/demo/trigger-callback', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+      // Note: /api/demo/trigger-callback is not protected by CSRF, but let's just use post anyway.
+      await post('/api/demo/trigger-callback', payload);
       
-      if (res.ok) {
-        if (status === 'SUCCESS') navigate(`/dashboard/receipt/${applicationId}`);
-        else if (status === 'FAILURE') alert('Payment failed');
-        else alert('Payment pending');
-      }
+      if (status === 'SUCCESS') navigate(`/dashboard/receipt/${applicationId}`);
+      else if (status === 'FAILURE') alert('Payment failed');
+      else alert('Payment pending');
     } catch { /* ignore */ }
     setProcessing(false);
   };

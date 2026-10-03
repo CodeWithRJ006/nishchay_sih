@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
+import { get, post } from '../lib/api';
 
 export function OfficerJobs() {
   const [jobs, setJobs] = useState<Record<string, string>[]>([]);
@@ -8,25 +9,17 @@ export function OfficerJobs() {
   const [reason, setReason] = useState('');
 
   useEffect(() => {
-    fetch('/api/appointments/my-jobs').then(r => r.json()).then(setJobs);
+    get<Record<string, string>[]>('/api/appointments/my-jobs').then(setJobs);
   }, []);
 
   const handleAccept = async (appId: string) => {
-    await fetch('/api/appointments/accept', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-csrf-token': 'dummy' },
-      body: JSON.stringify({ applicationId: appId })
-    });
+    await post('/api/appointments/accept', { applicationId: appId });
     setJobs(jobs.map(j => j.application_id === appId ? { ...j, status: 'ACCEPTED', state: 'ACCEPTED' } : j));
   };
 
   const handleReject = async (appId: string) => {
     if (!reason) return;
-    await fetch('/api/appointments/reject', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-csrf-token': 'dummy' },
-      body: JSON.stringify({ applicationId: appId, reason })
-    });
+    await post('/api/appointments/reject', { applicationId: appId, reason });
     setJobs(jobs.filter(j => j.application_id !== appId));
     setRejecting(null);
     setReason('');

@@ -1,21 +1,35 @@
 import { useState, useEffect } from 'react';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
+import { get, post } from '../lib/api';
+
+interface Job {
+  id: string;
+  business_name: string;
+  instrument_id: string;
+  zone_id?: string;
+}
+
+interface Officer {
+  id: string;
+  name: string;
+  role: string;
+  zone_id?: string;
+}
 
 export function AdminUnassigned() {
-  const [jobs, setJobs] = useState<Record<string, string>[]>([]);
-  const [officers, setOfficers] = useState<Record<string, string>[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [officers, setOfficers] = useState<Officer[]>([]);
   const [selectedOfficer, setSelectedOfficer] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    get('/api/admin/unassigned-jobs').then(setJobs);
-    get('/api/admin/officers').then(setOfficers);
+    get<Job[]>('/api/admin/unassigned-jobs').then(setJobs);
+    get<Officer[]>('/api/admin/officers').then(setOfficers);
   }, []);
 
   const handleAssign = async (appId: string) => {
     const officerId = selectedOfficer[appId];
     if (!officerId) return;
-    
     await post('/api/admin/assign', { applicationId: appId, officerId });
     setJobs(jobs.filter(j => j.id !== appId));
   };
@@ -23,7 +37,6 @@ export function AdminUnassigned() {
   return (
     <div className="max-w-6xl mx-auto p-6">
       <PageHeader title="Unassigned Jobs" description="Manually assign jobs that could not be auto-routed." />
-      
       <div className="mt-8 space-y-4">
         {jobs.length === 0 ? (
           <div className="p-8 text-center text-slate-500 bg-slate-50 rounded border border-slate-200">No unassigned jobs.</div>
@@ -39,8 +52,8 @@ export function AdminUnassigned() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <select 
-                  className="border rounded p-2 text-sm" 
+                <select
+                  className="border rounded p-2 text-sm"
                   value={selectedOfficer[job.id] || ''}
                   onChange={e => setSelectedOfficer({ ...selectedOfficer, [job.id]: e.target.value })}
                 >
