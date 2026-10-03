@@ -27,9 +27,10 @@ describe('Full Seal Verification (Private + Public + Photos)', () => {
   });
 
   it('fails if photo byte is mutated', () => {
-    const cert = db.prepare('SELECT public_id FROM certificates LIMIT 1').get() as { public_id: string; application_id: string; public_record: string; signature: string };
+    const cert = db.prepare('SELECT public_id, application_id FROM certificates LIMIT 1').get() as { public_id: string; application_id: string };
+    const photo = db.prepare('SELECT file_name FROM inspection_photos WHERE application_id = ? LIMIT 1').get(cert.application_id) as { file_name: string };
     const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'storage', 'uploads');
-    const photoPath = path.join(storageDir, 'dummy.png');
+    const photoPath = path.join(storageDir, photo.file_name);
     const original = fs.readFileSync(photoPath);
     
     // Mutate one byte

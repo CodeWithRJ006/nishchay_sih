@@ -25,11 +25,11 @@ describe('Block 9-14 Tests (Certificates, Search, Export, Public Verify, Seal, C
     const resBiz = await request(app).post('/api/auth/login').send({ email: 'biz1@nishchay.example', password: 'demo123' });
     bizCookie = resBiz.headers['set-cookie']![0];
 
-    const app2Id = 'NSH-A-2025-000002';
-    // Insert an inspection for app2 so we can issue a cert
-    db.prepare("INSERT INTO inspections (application_id, officer_id, gps_lat, gps_lng, gps_distance, checklist, readings, pass) VALUES (?, 'USR-LMO1', 0, 0, 0, '[]', '[]', 1)").run(app2Id);
+    const app4Id = 'NSH-A-2025-000004';
+    // Insert an inspection for app4 so we can issue a cert
+    db.prepare("INSERT OR IGNORE INTO inspections (id, application_id, officer_id, gps_lat, gps_lng, gps_distance, checklist, readings, pass) VALUES ('INSP-block9', ?, 'USR-LMO1', 0, 0, 0, '[]', '[]', 1)").run(app4Id);
     
-    publicId = await certificateService.issueCertificate(app2Id, 'USR-LMO1');
+    publicId = await certificateService.issueCertificate(app4Id, 'USR-LMO1');
   });
 
   it('GET /api/certificates/:publicId returns certificate and verifies seal', async () => {
