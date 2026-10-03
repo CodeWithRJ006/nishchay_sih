@@ -7,6 +7,8 @@ import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import jwt from 'jsonwebtoken';
 import { db } from './db/index.js';
+import { jwtSecret } from './config/secrets.js';
+import { demoPayService } from './services/paymentsService.js';
 import { authMiddleware, csrfMiddleware, loginRoute, registerRoute, logoutRoute, meRoute } from './auth/index.js';
 import { rbacMiddleware } from './rbac/routeTable.js';
 import { getBusinessProfile, updateBusinessProfile, getOfficerProfile, provisionOfficer } from './api/profiles.js';
@@ -103,28 +105,18 @@ export function createApp() {
     const role = req.params.role;
     const user = db.prepare('SELECT id, email, role, name FROM users WHERE role = ? LIMIT 1').get(role) as Record<string, unknown>;
     if (!user) return res.status(404).json({ error: 'Role not found' });
-    const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, process.env.JWT_SECRET || 'dev-secret', { expiresIn: '1d' });
+    const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, jwtSecret(), { expiresIn: '1d' });
     res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
     res.json(user);
   });
 
-  app.post('/api/demo/trigger-callback', async (req, res) => {
+  app.post('/api/demo/trigger-callback', (req, res) => {
     if (process.env.DEMO_MODE !== 'true') return res.status(404).send();
-    const crypto = await import('node:crypto');
-    const body = req.body;
-    const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
-    hmac.update(`${body.paymentId}:${body.status}:${body.amount}:${body.timestamp}:${body.applicationId}`);
-    const signature = hmac.digest('hex');
-    
-    // forward to local callback
-    fetch(`http://127.0.0.1:${process.env.PORT || 4000}/api/payments/callback`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-hmac-signature': signature
-      },
-      body: JSON.stringify(body)
-    }).then(r => r.json()).then(data => res.json(data)).catch(e => res.status(500).json({ error: e.message }));
+    const paymentId = typeof req.body?.paymentId === 'string' ? req.body.paymentId : '';
+    if (!paymentId) return res.status(400).json({ code: 'BAD_REQUEST', message: 'paymentId is required' });
+    const result = demoPayService(req.user, paymentId);
+    if (!result.ok) return res.status(result.httpStatus).json({ code: result.code, message: result.message });
+    return res.json({ status: result.status, receiptId: result.receiptId });
   });
 // Register Block 9 certificate routes
 certificateRoutes.forEach(r => (app as unknown as Record<string, (...args: unknown[]) => unknown>)[r.method.toLowerCase()](r.path, ...r.handler));

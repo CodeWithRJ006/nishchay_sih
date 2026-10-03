@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { db } from '../db/index.js';
+import { jwtSecret } from '../config/secrets.js';
 import { certificateService } from '../services/certificateService.js';
 import { execSync } from 'node:child_process';
 
@@ -150,7 +151,7 @@ export const demoLoginAs = (req: Request, res: Response) => {
 
   const token = jwt.sign(
     { id: user.id, role: user.role, email: user.email },
-    process.env.JWT_SECRET || 'dev-secret',
+    jwtSecret(),
     { expiresIn: '1d' }
   );
   res.cookie('token', token, {

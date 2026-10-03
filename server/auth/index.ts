@@ -5,8 +5,9 @@ import { db, transaction } from '../db/index.js';
 import { clock } from '../../shared/src/clock.js';
 
 import '../types.js';
+import { jwtSecret } from '../config/secrets.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret';
+const JWT_SECRET = jwtSecret();
 
 export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const token = req.cookies?.token;

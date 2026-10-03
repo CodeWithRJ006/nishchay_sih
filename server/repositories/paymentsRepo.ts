@@ -1,6 +1,7 @@
 import { db, nextSequence } from '../db/index.js';
 import { generateId } from '../../shared/src/ids.js';
 import crypto from 'node:crypto';
+import { hmacSecret } from '../config/secrets.js';
 
 export function getPaymentByIdempotencyKey(key: string) {
   return db.prepare('SELECT * FROM payments WHERE idempotency_key = ?').get(key) as Record<string, unknown> | undefined;
@@ -32,7 +33,7 @@ export function processPaymentSuccess(paymentId: string, applicationId: string, 
   // HMAC-sign receipt
   // (receipt number, application id, instrument id, amount, paid time)
   const payload = `${receiptId}:${applicationId}:${instrumentId}:${amount}:${paidTime}`;
-  const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
+  const hmac = crypto.createHmac('sha256', hmacSecret());
   hmac.update(payload);
   const signature = hmac.digest('hex');
   
@@ -75,4 +76,10 @@ export function recordGateBlock(applicationId: string, userId: string, reason: s
     INSERT INTO audit_log (id, table_name, record_id, action, changed_by, new_data)
     VALUES (hex(randomblob(16)), 'applications', ?, 'GATE_BLOCKED', ?, ?)
   `).run(applicationId, userId, JSON.stringify({ reason }));
+}
+export function recordDemoTool(applicationId: string, userId: string, detail: Record<string, unknown>) {
+  db.prepare(`
+    INSERT INTO audit_log (id, table_name, record_id, action, changed_by, new_data)
+    VALUES (hex(randomblob(16)), 'applications', ?, 'DEMO_TOOL', ?, ?)
+  `).run(applicationId, userId, JSON.stringify(detail));
 }

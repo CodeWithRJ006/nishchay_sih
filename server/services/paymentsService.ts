@@ -1,9 +1,11 @@
 import { transaction, db } from '../db/index.js';
-import { createPayment, getPaymentById, processPaymentSuccess, processPaymentFailure, getReceiptByApplication, recordGateBlock } from '../repositories/paymentsRepo.js';
+import { createPayment, getPaymentById, processPaymentSuccess, processPaymentFailure, getReceiptByApplication, recordGateBlock, recordDemoTool } from '../repositories/paymentsRepo.js';
 import { findApplicationById } from '../repositories/applicationsRepo.js';
+import { getBusinessByOwner } from '../repositories/instrumentsRepo.js';
 import { transition, State } from '../../shared/src/stateMachine.js';
 import { clock } from '../../shared/src/clock.js';
 import crypto from 'node:crypto';
+import { hmacSecret } from '../config/secrets.js';
 
 export function initiatePaymentService(user: Express.Request['user'], applicationId: string, amount: number) {
   if (!user || user.role !== 'BUSINESS') throw new Error('Forbidden');
@@ -21,29 +23,9 @@ export function initiatePaymentService(user: Express.Request['user'], applicatio
   });
 }
 
-export function paymentCallbackService(
-  body: { paymentId: string, status: 'SUCCESS' | 'FAILURE' | 'PENDING', amount: number, timestamp: number, applicationId: string },
-  signature: string
+export function settlePayment(
+  body: { paymentId: string, status: 'SUCCESS' | 'FAILURE' | 'PENDING', amount: number, timestamp: number, applicationId: string }
 ) {
-  // Verify signature
-  const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
-  hmac.update(`${body.paymentId}:${body.status}:${body.amount}:${body.timestamp}:${body.applicationId}`);
-  const expectedSig = hmac.digest('hex');
-  
-  try {
-    if (!crypto.timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expectedSig, 'utf8'))) {
-      throw new Error('Invalid signature');
-    }
-  } catch {
-    throw new Error('Invalid signature');
-  }
-
-  // Check timestamp (within 15 minutes)
-  const now = clock.now();
-  if (Math.abs(now - body.timestamp) > 15 * 60 * 1000) {
-    throw new Error('Timestamp expired');
-  }
-
   return transaction(() => {
     const payment = getPaymentById(body.paymentId);
     if (!payment) throw new Error('Payment not found');
@@ -82,6 +64,52 @@ export function paymentCallbackService(
   });
 }
 
+export function paymentCallbackService(
+  body: { paymentId: string, status: 'SUCCESS' | 'FAILURE' | 'PENDING', amount: number, timestamp: number, applicationId: string },
+  signature: string
+) {
+  // Verify signature
+  const hmac = crypto.createHmac('sha256', hmacSecret());
+  hmac.update(`${body.paymentId}:${body.status}:${body.amount}:${body.timestamp}:${body.applicationId}`);
+  const expectedSig = hmac.digest('hex');
+  
+  try {
+    if (!crypto.timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expectedSig, 'utf8'))) {
+      throw new Error('Invalid signature');
+    }
+  } catch {
+    throw new Error('Invalid signature');
+  }
+
+  // Check timestamp (within 15 minutes)
+  const now = clock.now();
+  if (Math.abs(now - body.timestamp) > 15 * 60 * 1000) {
+    throw new Error('Timestamp expired');
+  }
+
+  return settlePayment(body);
+}
+
+export type DemoPayResult =
+  | { ok: true; status: 'PAID'; receiptId: string }
+  | { ok: false; httpStatus: 403 | 404 | 409; code: string; message: string };
+
+export function demoPayService(user: Express.Request['user'], paymentId: string): DemoPayResult {
+  if (!user || user.role !== 'BUSINESS') return { ok: false, httpStatus: 403, code: 'FORBIDDEN', message: 'Forbidden' };
+  const payment = getPaymentById(paymentId);
+  if (!payment) return { ok: false, httpStatus: 404, code: 'NOT_FOUND', message: 'Payment not found' };
+  const app = findApplicationById(payment.application_id as string);
+  if (!app) return { ok: false, httpStatus: 404, code: 'NOT_FOUND', message: 'Application not found' };
+  // Ownership check: same pattern as getApplicationService
+  const biz = getBusinessByOwner(user.id);
+  if (!biz || app.business_id !== biz.id) return { ok: false, httpStatus: 403, code: 'FORBIDDEN', message: 'Forbidden' };
+  if (payment.status !== 'PENDING') return { ok: false, httpStatus: 409, code: 'CONFLICT', message: 'Payment is not pending' };
+  if (app.state !== 'SUBMITTED') return { ok: false, httpStatus: 409, code: 'CONFLICT', message: 'Application is not awaiting payment' };
+  const result = settlePayment({ paymentId, status: 'SUCCESS', amount: payment.amount as number, timestamp: clock.now(), applicationId: app.id as string });
+  recordDemoTool(app.id as string, user.id, { action: 'demo_pay', paymentId });
+  return { ok: true, status: 'PAID', receiptId: (result as { receiptId: string }).receiptId };
+}
+
 export function checkFeeGate(applicationId: string, userId: string = 'SYSTEM') {
   return transaction(() => {
     const app = findApplicationById(applicationId);
@@ -114,7 +142,7 @@ export function checkFeeGate(applicationId: string, userId: string = 'SYSTEM') {
     
     // Receipt HMAC valid
     const payload = `${receipt.id}:${applicationId}:${app.instrument_id}:${receipt.amount}:${receipt.created_at}`;
-    const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
+    const hmac = crypto.createHmac('sha256', hmacSecret());
     hmac.update(payload);
     if (hmac.digest('hex') !== receipt.signature) {
       return fail('Receipt signature invalid');

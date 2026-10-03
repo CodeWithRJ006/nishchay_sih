@@ -4,6 +4,7 @@ import { canonicalJson } from '../../shared/src/canonicalJson.js';
 import { generateId } from '../../shared/src/ids.js';
 import { ensureKeys, signHash } from '../seal/index.js';
 import crypto from 'node:crypto';
+import { hmacSecret } from '../config/secrets.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -74,7 +75,7 @@ export function seedDemoData() {
       
     const paidTime = new Date().toISOString();
     const payload = `${rec1}:${app1}:${i1}:500:${paidTime}`;
-    const hmac = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
+    const hmac = crypto.createHmac('sha256', hmacSecret());
     hmac.update(payload);
     const receiptSignature = hmac.digest('hex');
 
@@ -140,7 +141,7 @@ export function seedDemoData() {
       .run(pay2, app2, 'idem2', 500, 'PAID');
       
     const payload2 = `${rec2}:${app2}:${i1}:500:${paidTime}`;
-    const hmac2 = crypto.createHmac('sha256', process.env.HMAC_SECRET || 'dev-hmac-secret');
+    const hmac2 = crypto.createHmac('sha256', hmacSecret());
     hmac2.update(payload2);
     const receiptSignature2 = hmac2.digest('hex');
 

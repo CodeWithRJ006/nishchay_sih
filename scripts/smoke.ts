@@ -103,15 +103,8 @@ async function run() {
       amount: 100
     });
     const txId = (initRes as Record<string, string>).paymentId;
-    const ts = Date.now();
 
-    await request('POST', '/api/demo/trigger-callback', {
-      paymentId: txId,
-      applicationId,
-      status: 'SUCCESS',
-      amount: 100,
-      timestamp: ts
-    }, false); 
+    await request('POST', '/api/demo/trigger-callback', { paymentId: txId }); 
   });
   await step('Login as BUSINESS (demo-as)', async () => {
     await request('POST', '/api/demo/login-as/BUSINESS', undefined, false);
