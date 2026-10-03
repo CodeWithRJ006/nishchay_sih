@@ -27,6 +27,7 @@ export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
 export function createApp() {
   const app = express();
+  app.set('trust proxy', 1);
 
   app.use(helmet({
     contentSecurityPolicy: {
@@ -125,6 +126,26 @@ demoRoutes.forEach(r => (app as unknown as Record<string, (...args: unknown[]) =
 
   if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(process.cwd(), 'dist')));
+    
+    app.get('/v/:publicId', (req, res, next) => {
+      import('node:fs').then(fs => {
+        let html = fs.readFileSync(path.join(process.cwd(), 'dist', 'index.html'), 'utf-8');
+        const cert = db.prepare('SELECT public_record, status FROM certificates WHERE public_id = ?').get(req.params.publicId) as { public_record: string, status: string } | undefined;
+        if (cert) {
+           try {
+             const record = JSON.parse(cert.public_record);
+             const tradeName = String(record.tradeName || '').replace(/[&<>"']/g, (m: string) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m] || m));
+             
+             let status = cert.status;
+             if (new Date(record.validTo).getTime() < Date.now()) status = 'EXPIRED';
+             
+             html = html.replace('</head>', `<noscript><meta name="description" content="Certificate for ${tradeName} - Status: ${status}"></noscript></head>`);
+           } catch { /* ignore */ }
+        }
+        res.send(html);
+      }).catch(next);
+    });
+
     app.get('*', (req, res) => {
       if (!req.path.startsWith('/api')) {
         res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
@@ -134,8 +155,15 @@ demoRoutes.forEach(r => (app as unknown as Record<string, (...args: unknown[]) =
     });
   }
 
-  app.use((err: Error & { code?: string }, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  app.use((err: Error & { code?: string, status?: number, type?: string }, req: express.Request, res: express.Response, _next: express.NextFunction) => {
     const requestId = req.id;
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+      return res.status(400).json({
+        code: 'BAD_REQUEST',
+        message: 'Malformed JSON payload',
+        requestId
+      });
+    }
     if (err && err.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       return res.status(409).json({
         code: 'CONFLICT',

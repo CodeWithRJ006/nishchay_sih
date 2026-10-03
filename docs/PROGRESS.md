@@ -12,6 +12,7 @@
 | Phase 4 | Certificates (Block 7) | ✅ DONE | ECDSA signed certificates, public URL rendering, receipt digestion. |
 | Phase 5 | Search & Export (Mods 13/14) | ✅ DONE | Certificate search frontend, CSV export API, integration tests. |
 | Phase 5 | Integrity (Mods 10/11/12/21) | ✅ DONE | Full API test coverage for certificates, PDF generation, complaints, seal validation. |
+| Phase 5 | Public Verification (Block 8a) | ✅ DONE | Verification Plate UI, WebCrypto client-side validation, Right to Check UI, API rate limits. |
 | Phase 6 | Documentation & Polish | ✅ DONE | Screenshots captured, UI polished against DESIGN.md, full documentation written. |
 
 ## Next Up

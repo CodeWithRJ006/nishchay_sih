@@ -1,9 +1,12 @@
 // Certificate API handlers for Block 9
 import { Request, Response } from 'express';
+import crypto from 'node:crypto';
 import { db } from '../db/index.js';
 import { certificatePdfService } from '../services/certificatePdfService.js';
 import { certificateService } from '../services/certificateService.js';
 import { rateLimit } from 'express-rate-limit';
+import { verifyFullSeal } from '../seal/verifyFull.js';
+import { clock } from '../../shared/src/clock.js';
 
 // Rate limiter for public endpoints (e.g., verify, export, complaint)
 const publicLimiter = rateLimit({
@@ -11,6 +14,26 @@ const publicLimiter = rateLimit({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
+});
+
+const getDailySalt = () => new Date().toISOString().split('T')[0];
+const hashIp = (ip: string) => crypto.createHash('sha256').update(ip + getDailySalt()).digest('hex');
+
+const complaintClientLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 mins
+  max: 5,
+  keyGenerator: (req) => {
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    return hashIp(typeof ip === 'string' ? ip : ip[0]);
+  },
+  message: { code: 'TOO_MANY_REQUESTS', message: 'Too many requests from this client' }
+});
+
+const complaintCertLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 mins
+  max: 10,
+  keyGenerator: (req) => req.params.publicId,
+  message: { code: 'TOO_MANY_REQUESTS', message: 'Too many requests for this certificate' }
 });
 
 /**
@@ -175,32 +198,91 @@ export const exportCertificatesCsv = async (req: Request, res: Response) => {
  */
 export const submitComplaint = async (req: Request, res: Response) => {
   const { publicId } = req.params;
-  const { note, honeypot } = req.body as { note?: string; honeypot?: string };
+  const { note, category = 'Other', honeypot } = req.body as { note?: string; category?: string; honeypot?: string };
 
   // Simple honeypot check
   if (honeypot) {
     return res.status(400).json({ error: 'Invalid submission' });
   }
 
-  if (!note || note.length > 300) {
-    return res.status(400).json({ error: 'Note must be present and <= 300 characters' });
+  if (note && note.length > 300) {
+    return res.status(400).json({ error: 'Note must be <= 300 characters' });
   }
-
-  // Rate‑limit per client (hashed IP) – using a simple in‑memory map for demo
-  const _clientHash = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
-  // In production replace with proper per‑client salted hash & persistent store.
 
   // Insert complaint
   const stmt = db.prepare(
-    `INSERT INTO certificate_complaints (public_id, note, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`
+    `INSERT INTO certificate_complaints (public_id, note, category, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)`
   );
-  stmt.run(publicId, note);
+  stmt.run(publicId, note || '', category);
 
   res.json({ success: true, message: 'Your complaint has been recorded. The authority will review it.' });
 };
 
 // Export route bindings for server/app.ts integration
 
+export const verifyCertificatePublic = async (req: Request, res: Response) => {
+  const { publicId } = req.params;
+  
+  const notFoundShape = {
+    tradeName: 'Unknown',
+    instrumentType: 'Unknown',
+    instrumentClass: 'Unknown',
+    serial: 'Unknown',
+    status: 'UNKNOWN',
+    validFrom: null,
+    validUntil: null,
+    authorityName: 'Unknown',
+    integrity: false,
+    ticks: {
+      feeReceipt: false,
+      officerOnSite: false,
+      checklistRecorded: false,
+      sealIntact: false
+    },
+    publicRecord: null,
+    signature: null,
+    keyId: null
+  };
+
+  try {
+    const cert = await certificateService.getCertificate(publicId);
+    const isIntact = verifyFullSeal(publicId);
+    
+    let status = 'VALID';
+    if (!isIntact) {
+      status = 'SEAL_BROKEN';
+    } else if (cert.status === 'REVOKED') {
+      status = 'REVOKED';
+    } else if (new Date(cert.valid_to as string).getTime() < clock.now()) {
+      status = 'EXPIRED';
+    }
+
+    const publicRecord = JSON.parse(cert.public_record as string);
+    
+    res.json({
+      tradeName: publicRecord.tradeName || 'Unknown',
+      instrumentType: publicRecord.instrumentType || 'Unknown',
+      instrumentClass: publicRecord.instrumentClass || 'Unknown',
+      serial: publicRecord.serialNo || 'Unknown',
+      status,
+      validFrom: publicRecord.validFrom || null,
+      validUntil: publicRecord.validTo || null,
+      authorityName: publicRecord.authorityName || 'Unknown',
+      integrity: isIntact,
+      ticks: {
+        feeReceipt: true,
+        officerOnSite: true,
+        checklistRecorded: true,
+        sealIntact: isIntact
+      },
+      publicRecord,
+      signature: cert.signature,
+      keyId: cert.key_id
+    });
+  } catch {
+    res.status(404).json(notFoundShape);
+  }
+};
 
 export const getCertificatePublic = async (req: Request, res: Response) => {
   const { publicId } = req.params;
@@ -236,5 +318,9 @@ export const certificateRoutes = [
   { method: 'POST', path: '/api/certificates/:publicId/revoke', handler: [revokeCertificate] },
   { method: 'GET', path: '/api/certificates/:publicId/pdf', handler: [publicLimiter, getCertificatePdf] },
   
+  { method: 'GET', path: '/api/public/verify/:publicId', handler: [publicLimiter, verifyCertificatePublic] },
+  { method: 'POST', path: '/api/public/certificates/:publicId/complaints', handler: [publicLimiter, complaintClientLimiter, complaintCertLimiter, submitComplaint] },
+  
+  // Kept for backward compatibility
   { method: 'POST', path: '/api/certificates/:publicId/complaint', handler: [publicLimiter, submitComplaint] },
 ];

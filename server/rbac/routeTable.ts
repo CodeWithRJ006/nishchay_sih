@@ -32,6 +32,10 @@ export const routeTable: RouteDef[] = [
   { method: 'GET', path: '/api/certificates/search', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
   { method: 'GET', path: '/api/certificates/export', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
   { method: 'GET', path: '/api/certificates/:publicId/pdf', roles: ['PUBLIC', 'BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  
+  { method: 'GET', path: '/api/public/verify/:publicId', roles: ['PUBLIC', 'BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/public/certificates/:publicId/complaints', roles: ['PUBLIC'] },
+  
   // Right to Check complaint route
   { method: 'POST', path: '/api/certificates/:publicId/complaint', roles: ['PUBLIC'] },
   { method: 'POST', path: '/api/admin/provision', roles: ['ADMIN'] },

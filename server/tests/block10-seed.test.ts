@@ -60,11 +60,11 @@ describe('Seed Dates & Properties', () => {
     }
   });
 
-  it('POST complaint to the VALID sample with { note: "test" } returns 200 and with { description: "x" } returns 400', async () => {
+  it('POST complaint to the VALID sample with { note: "test" } returns 200 and with { honeypot: "x" } returns 400', async () => {
     const res200 = await request(app).post(`/api/certificates/${DEMO_CERT_VALID}/complaint`).set('x-csrf-token', 'test').send({ note: "test" });
     expect(res200.status).toBe(200);
 
-    const res400 = await request(app).post(`/api/certificates/${DEMO_CERT_VALID}/complaint`).set('x-csrf-token', 'test').send({ description: "x" });
+    const res400 = await request(app).post(`/api/certificates/${DEMO_CERT_VALID}/complaint`).set('x-csrf-token', 'test').send({ honeypot: "x" });
     expect(res400.status).toBe(400);
   });
 });
