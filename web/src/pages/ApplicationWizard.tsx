@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
+import { get, post, upload } from '../lib/api';
 
 export function ApplicationWizard() {
   const [searchParams] = useSearchParams();
@@ -21,7 +22,7 @@ export function ApplicationWizard() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/api/instruments').then(r => r.json()).then(data => {
+    get('/api/instruments').then(r => r.json()).then(data => {
       if (Array.isArray(data)) setInstruments(data);
     });
   }, []);
@@ -49,11 +50,7 @@ export function ApplicationWizard() {
     formData.append('file', f);
     
     try {
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'x-csrf-token': 'test' },
-        body: formData
-      });
+      const res = await upload('/api/upload', formData);
       const data = await res.json();
       if (res.ok) {
         setDocName(data.fileName);
@@ -68,25 +65,18 @@ export function ApplicationWizard() {
 
   const submit = async () => {
     setError('');
-    const res = await fetch('/api/applications', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-csrf-token': 'test'
-      },
-      body: JSON.stringify({
+    try {
+      const result = await post('/api/applications', {
         instrument_id: selectedInstId,
-        documents: docName ? [{ doc_type: 'INVOICE', file_name: docName, file_hash: docHash }] : []
-      })
-    });
-    
-    if (res.ok) {
-      const result = await res.json();
+        documents: docName ? [{ doc_type: 'INVOICE', file_name: docName, file_hash: docHash }] : [],
+      });
       navigate('/dashboard/payment/' + result.id);
-    } else {
-      const data = await res.json();
-      setError(data.message || 'Submission failed');
+    } catch (e: any) {
+      setError(e.message || 'Submission failed');
     }
+  };
+    
+
   };
 
   return (

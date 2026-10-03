@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Input } from '../components/ui/Input';
 import { Field } from '../components/ui/Field';
 import { Button } from '../components/ui/Button';
+import { post } from '../lib/api';
 
 export const Register = () => {
   const [email, setEmail] = useState('');

@@ -15,13 +15,17 @@ export const BusinessProfile = () => {
   const [toast, setToast] = useState('');
 
   useEffect(() => {
-    fetch('/api/business/profile')
-      .then(res => res.json())
+    get('/api/business/profile')
       .then(data => {
         setProfile({
-          name: data.name || '', type: data.type || '', address: data.address || '', 
-          zone_id: data.zone_id || '', lat: data.lat || '', lng: data.lng || '',
-          phone: data.phone || '', email: data.email || ''
+          name: data.name || '',
+          type: data.type || '',
+          address: data.address || '',
+          zone_id: data.zone_id || '',
+          lat: data.lat || '',
+          lng: data.lng || '',
+          phone: data.phone || '',
+          email: data.email || ''
         });
         setLoading(false);
       });
@@ -29,15 +33,9 @@ export const BusinessProfile = () => {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/business/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(profile)
-    });
-    if (res.ok) {
-      setToast('Profile saved successfully');
-      setTimeout(() => setToast(''), 3000);
-    }
+    await put('/api/business/profile', profile);
+    setToast('Profile saved successfully');
+    setTimeout(() => setToast(''), 3000);
   };
 
   const fillDemo = () => {

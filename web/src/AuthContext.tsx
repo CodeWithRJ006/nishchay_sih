@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { get, post } from '../lib/api';
 
 type User = { id: string, role: string, email: string };
 
@@ -17,13 +18,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = async () => {
     try {
-      const res = await fetch('/api/auth/me');
-      if (res.ok) {
-        const data = await res.json();
-        setUser(data);
-      } else {
-        setUser(null);
-      }
+      const data = await get('/api/auth/me').catch(() => null);
+      setUser(data);
     } catch {
       setUser(null);
     } finally {
@@ -32,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await post('/api/auth/logout', {});
     setUser(null);
   };
 

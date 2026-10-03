@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../components/ui/PageHeader';
 import { Button } from '../components/ui/Button';
-import { NextStepBanner } from '../components/ui/NextStepBanner';
+import { get, post } from '../lib/api';
 
 export function ApplicationSchedule() {
   const { applicationId } = useParams();
@@ -14,21 +14,14 @@ export function ApplicationSchedule() {
   const [error, setError] = useState('');
   
   useEffect(() => {
-    fetch('/api/appointments/slots')
-      .then(r => r.json())
-      .then(d => {
-        setSlots(d);
-        setLoading(false);
-      });
+    get('/api/appointments/slots')
+      .then(setSlots)
+      .finally(() => setLoading(false));
   }, []);
 
   const handleSchedule = async () => {
     try {
-      const res = await fetch('/api/appointments/schedule', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-csrf-token': 'dummy' },
-        body: JSON.stringify({ applicationId, slotDate: selectedDate, slotTime: selectedTime })
-      });
+      const res = await post('/api/appointments/schedule', { applicationId, slotDate: selectedDate, slotTime: selectedTime });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to schedule');
       navigate('/dashboard');

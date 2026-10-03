@@ -8,19 +8,15 @@ export function AdminUnassigned() {
   const [selectedOfficer, setSelectedOfficer] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetch('/api/admin/unassigned-jobs').then(r => r.json()).then(setJobs);
-    fetch('/api/admin/officers').then(r => r.json()).then(setOfficers);
+    get('/api/admin/unassigned-jobs').then(setJobs);
+    get('/api/admin/officers').then(setOfficers);
   }, []);
 
   const handleAssign = async (appId: string) => {
     const officerId = selectedOfficer[appId];
     if (!officerId) return;
     
-    await fetch('/api/admin/assign', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-csrf-token': 'dummy' },
-      body: JSON.stringify({ applicationId: appId, officerId })
-    });
+    await post('/api/admin/assign', { applicationId: appId, officerId });
     setJobs(jobs.filter(j => j.id !== appId));
   };
 

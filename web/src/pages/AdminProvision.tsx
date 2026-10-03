@@ -5,6 +5,7 @@ import { Select } from '../components/ui/Select';
 import { Field } from '../components/ui/Field';
 import { Button } from '../components/ui/Button';
 import { Toast } from '../components/ui/Toast';
+import { post } from '../lib/api';
 import { NextStepBanner } from '../components/ui/NextStepBanner';
 
 export const AdminProvision = () => {
@@ -15,13 +16,9 @@ export const AdminProvision = () => {
 
   const handleProvision = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/admin/provision', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...form,
-        daily_capacity: form.daily_capacity ? parseInt(form.daily_capacity, 10) : null
-      })
+    const res = await post('/api/admin/provision', {
+      ...form,
+      daily_capacity: form.daily_capacity ? parseInt(form.daily_capacity, 10) : null
     });
     if (res.ok) {
       setToast('Account provisioned successfully');

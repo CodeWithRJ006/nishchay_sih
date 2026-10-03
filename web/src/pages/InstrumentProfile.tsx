@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -22,15 +22,10 @@ export function InstrumentProfile() {
   const [instrument, setInstrument] = useState<Instrument | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch(`/api/instruments/${id}`)
-      .then(r => r.json())
-      .then(data => {
-        setInstrument(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [id]);
+    get(`/api/instruments/${id}`).then(data => {
+      setInstrument(data);
+      setLoading(false);
+    }).catch(() => setLoading(false));
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (!instrument || !('id' in instrument)) return <div className="p-4 text-red-500">Instrument not found.</div>;

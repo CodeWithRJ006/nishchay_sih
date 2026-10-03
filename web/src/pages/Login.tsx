@@ -4,6 +4,7 @@ import { useAuth } from '../AuthContext';
 import { Input } from '../components/ui/Input';
 import { Field } from '../components/ui/Field';
 import { Button } from '../components/ui/Button';
+import { post } from '../lib/api';
 
 export const Login = () => {
   const [email, setEmail] = useState('');
@@ -17,11 +18,7 @@ export const Login = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
+    const res = await post('/api/auth/login', { email, password });
     if (res.ok) {
       await refresh();
       navigate('/dashboard');

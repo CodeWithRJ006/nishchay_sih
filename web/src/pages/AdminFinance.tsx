@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
+import { get } from '../lib/api';
 
 export function AdminGateBlocks() {
   const [gateBlocks, setGateBlocks] = useState(0);
 
   useEffect(() => {
-    fetch('/api/admin/gate-blocks')
-      .then(r => r.json())
+    get('/api/admin/gate-blocks')
       .then(d => setGateBlocks(d.count));
   }, []);
 
@@ -22,7 +22,7 @@ export function AdminPayments() {
   const [payments, setPayments] = useState<{id: string, application_id: string, amount: number, status: string}[]>([]);
 
   useEffect(() => {
-    fetch('/api/admin/payments').then(r => r.json()).then(setPayments);
+    get('/api/admin/payments').then(setPayments);
   }, []);
 
   return (
@@ -56,7 +56,7 @@ export function AdminReceipts() {
   const [receipts, setReceipts] = useState<{id: string, application_id: string, amount: number}[]>([]);
 
   useEffect(() => {
-    fetch('/api/admin/receipts').then(r => r.json()).then(setReceipts);
+    get('/api/admin/receipts').then(setReceipts);
   }, []);
 
   return (
