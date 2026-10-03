@@ -27,10 +27,11 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
     if (currentRole === 'BUSINESS') {
       return [
         { to: '/dashboard', label: 'Dashboard' },
+        { to: '/dashboard/applications', label: 'Applications' },
         { to: '/dashboard/instruments', label: 'Instruments' },
         { to: '/dashboard/apply', label: 'New application' },
         { to: '/dashboard/profile', label: 'Business profile' },
-        { to: '/dashboard/search', label: 'Certificate Search' },
+        { to: '/dashboard/search', label: 'Certificate search' },
       ];
     }
     if (currentRole === 'LMO' || currentRole === 'GATC') {

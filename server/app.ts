@@ -23,6 +23,7 @@ import { uploadMultipleMiddleware } from './api/uploads.js';
 import { certificateRoutes } from './api/certificates.js';
 import { demoRoutes } from './api/demo.js';
 import { getZones } from './api/zones.js';
+import { getBusinessDashboard } from './api/dashboard.js';
 
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
@@ -74,6 +75,7 @@ export function createApp() {
   app.put('/api/business/profile', updateBusinessProfile);
   app.get('/api/officer/profile', getOfficerProfile);
   app.get('/api/zones', getZones);
+  app.get('/api/dashboard/business', getBusinessDashboard);
   app.post('/api/admin/provision', provisionOfficer);
 
   // Block 4b Routes

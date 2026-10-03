@@ -10,6 +10,9 @@ import { Register } from './pages/Register';
 import { BusinessProfile } from './pages/BusinessProfile';
 import { AdminProvision } from './pages/AdminProvision';
 import { OfficerProfile } from './pages/OfficerProfile';
+import { BusinessDashboard } from './pages/BusinessDashboard';
+import { Applications } from './pages/Applications';
+import { ApplicationDetail } from './pages/ApplicationDetail';
 
 import { Instruments } from './pages/Instruments';
 import { InstrumentProfile } from './pages/InstrumentProfile';
@@ -70,7 +73,7 @@ function AppRoutes() {
             ) : user?.role === 'LMO' || user?.role === 'GATC' ? (
               <OfficerJobs />
             ) : (
-              <Instruments />
+              <BusinessDashboard />
             )
           } 
         />
@@ -80,6 +83,9 @@ function AppRoutes() {
         <Route path="business-profile" element={<BusinessProfile />} />
         <Route path="officer-profile" element={<OfficerProfile />} />
         <Route path="provision" element={<AdminProvision />} />
+        <Route path="applications" element={<Applications />} />
+        <Route path="applications/new" element={<ApplicationWizard />} />
+        <Route path="applications/:id" element={<ApplicationDetail />} />
         <Route path="instruments" element={<Instruments />} />
         <Route path="instruments/:id" element={<InstrumentProfile />} />
         <Route path="apply" element={<ApplicationWizard />} />

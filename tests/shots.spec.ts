@@ -9,6 +9,8 @@ const publicRoutes = [
 ];
 
 const authRoutes = [
+  { path: '/dashboard', name: 'business-dashboard' },
+  { path: '/dashboard/applications', name: 'applications' },
   { path: '/dashboard/business-profile', name: 'business-profile' },
   { path: '/dashboard/instruments', name: 'instruments' },
   { path: '/dashboard/apply', name: 'application-wizard' }

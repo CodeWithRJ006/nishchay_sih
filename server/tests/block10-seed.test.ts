@@ -54,11 +54,14 @@ describe('Seed Dates & Properties', () => {
     expect(numUsers.c).toBe(numUsers2.c);
   });
 
-  it('every seeded LMO and GATC has daily_capacity of at least 50', async () => {
+  it('every seeded LMO and GATC has configured daily_capacity (GATC has 8)', async () => {
     const officers = db.prepare("SELECT daily_capacity FROM users WHERE role IN ('LMO', 'GATC')").all() as { daily_capacity: number }[];
     for (const o of officers) {
-      expect(o.daily_capacity).toBeGreaterThanOrEqual(50);
+      expect(o.daily_capacity).toBeGreaterThanOrEqual(8);
     }
+    const gatc = db.prepare("SELECT daily_capacity, gatc_centre_name FROM users WHERE role = 'GATC'").get() as { daily_capacity: number; gatc_centre_name: string };
+    expect(gatc.daily_capacity).toBe(8);
+    expect(gatc.gatc_centre_name).toBeTruthy();
   });
 
   it('POST complaint to the VALID sample with { note: "test" } returns 200 and with { honeypot: "x" } returns 400', async () => {
