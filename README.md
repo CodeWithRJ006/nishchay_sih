@@ -104,12 +104,14 @@ In accordance with strict hackathon ethics and the SIH26036 project charter, we 
 | **Real Bank Payment Gateways** | **NOT BUILT** | Integration with live UPI/BBPS/Treasury net-banking is out of hackathon prototype scope. |
 | **Biometric Aadhaar Authentication**| **NOT BUILT** | Requires UIDAI certified hardware dongles and government license. |
 | **Physical IoT Scale Telemetry** | **NOT BUILT** | RS-232 / Bluetooth serial scale integration omitted per Section 6.2. |
-| **SMS / Email Push Gateways** | **NOT BUILT** | In-app alerts used instead of commercial SMS gateways (DLT registration required). |
+| **SMS / Email Push Gateways** | **NOT BUILT** | In-app toasts used instead. No external SMS/email gateway, and no notification log table in the database. |
 | **AI Risk Scoring & OCR** | **NOT BUILT** | Excluded to maintain determinism and statutory transparency. |
 
 ### Fundamental Honesty Principles
-1. **The Seal proves immutability, not truth:** The cryptographic seal guarantees that an inspection record has not been altered after capture. It does **not** prove that the officer's initial observations were truthful.
+1. **Tamper-Evident, NOT Tamper-Proof:** The ECDSA cryptographic seal proves whether an inspection or certificate record has been modified after issuance; it does **not** physically prevent database modifications, nor does it guarantee the truthfulness of the officer's initial human observations.
 2. **The Fee-Gate prevents unauthorized issuance:** The fee-gate ensures that no certificate can be issued by any officer without a verified official fee payment recorded in the system. It does **not** stop off-book cash bribes.
+3. **Synthetic Domains Only:** All demo accounts use `@nishchay.example`. No official `.gov.in` domain or government branding is used.
+4. **Port Configuration:** The platform runs on unified port `4000` (serving both Vite web assets and `/api` routes). Port 3000 is never used.
 
 ---
 
@@ -193,9 +195,9 @@ npm run shots
 
 | Role | Email | Password | Responsibilities |
 | :--- | :--- | :--- | :--- |
-| **Merchant** | `biz1@nishchay.example` | `Password123!` | Retail weighing scale applications & certificates |
-| **Officer (LMO)** | `lmo1@nishchay.example` | `Password123!` | Field verification, tolerance readings & photo capture |
-| **Test Centre** | `gatc1@nishchay.example` | `Password123!` | Industrial class scale testing (NAWI Class III) |
-| **Administrator** | `admin@nishchay.example` | `Password123!` | System oversight, fee reconciliation & audit log |
+| **Merchant** | `biz1@nishchay.example` | `demo123` | Retail weighing scale applications & certificates |
+| **Officer (LMO)** | `lmo1@nishchay.example` | `demo123` | Field verification, tolerance readings & photo capture |
+| **Test Centre** | `gatc1@nishchay.example` | `demo123` | Industrial class scale testing (NAWI Class III) |
+| **Administrator** | `admin@nishchay.example` | `demo123` | System oversight, fee reconciliation & audit log |
 
 *(Tip: You can also use the 1-click **Role Switcher** in the top navigation bar at any time!)*

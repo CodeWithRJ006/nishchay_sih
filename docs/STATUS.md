@@ -20,5 +20,13 @@
 - **Block 10a (Judge's Lab & Evaluation Drawer):** DONE - `web/src/components/JudgesLabDrawer.tsx`, `server/api/demo.ts` (`/api/admin/demo/issue-no-payment` 409 GATE_BLOCKED, `/api/admin/demo/tamper` and `undo-tamper`, `/api/demo/progress`), `server/tests/block10-seed.test.ts`.
 - **Field Verification App Audit (Mobile 390x844 & HTTPS):** DONE - `/field`, `/field/job/:id`, `/field/job/:id/inspection` audited at 390x844 (0 errors, touch targets >= 44px, text >= 14px, demo site location bypass, rear/fallback camera support, haversine distance verification).
 - **Certificate PDF & Live QR Scan:** DONE - `server/services/certificatePdfService.ts` authoritative A4 certificate design with official borders, status badge, cryptographic seal panel, and dynamic QR code encoding live host/`PUBLIC_BASE_URL` (`/v/:publicId`). Tested via `server/tests/pdf-qr.test.ts`.
+- **Honesty & Clarity Audit Resolution:** DONE
+  1. **Port Unified:** Single unified port 4000 (Express API + Vite static dist). Port 3000 eliminated.
+  2. **Demo Email Domain:** All demo users use `@nishchay.example`. Zero `.gov.in` addresses exist in git.
+  3. **Payment Labeling:** Sandbox payment checkout (simulated treasury receipt with HMAC verification). Zero occurrences of "Dummy Gateway".
+  4. **Notifications Honest Disclosure:** Notifications are NOT BUILT (no external SMS/email gateway, no notification DB table). In-app state toasts only.
+  5. **Clean Repository:** `PROJECT_SUMMARY.md` deleted, `uploads/` ignored in `.gitignore` (0 tracked files), `cookie.txt` removed from git.
+  6. **Tamper-Evident Pitch:** Accurately termed "tamper-evident", not "tamper-proof". The seal proves whether a record was modified after issuance; it does not prevent DB updates or prove truthfulness of initial observations.
+
 
 

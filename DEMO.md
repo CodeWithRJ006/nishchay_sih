@@ -20,7 +20,7 @@ You do not need to log out and log in repeatedly. Use the **Role Switcher** loca
 - 🔬 **GATC (Test Centre Specialist):** K. V. Raman (`gatc1@nishchay.example`)
 - 🏛️ **ADMIN (State Director):** Admin User (`admin@nishchay.example`)
 
-*(Password for all accounts if logging in manually: `Password123!`)*
+*(Password for all accounts if logging in manually: `demo123`)*
 
 ---
 
