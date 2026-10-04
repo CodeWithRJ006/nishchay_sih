@@ -218,7 +218,7 @@ export function ApplicationWizard() {
                   }`}>
                     {s.label}
                   </div>
-                  <div className="text-[10px] text-slate-400 hidden sm:block">
+                  <div className="text-xs text-slate-400 hidden sm:block">
                     {s.id === 1 ? 'Select unit' : s.id === 2 ? 'Documents & fee' : 'Final review'}
                   </div>
                 </div>
@@ -404,7 +404,7 @@ export function ApplicationWizard() {
                     <CheckCircle2 className="w-4 h-4 text-verified-green" />
                     <span>Attached: <strong className="font-mono">{docName}</strong></span>
                   </div>
-                  <span className="text-[10px] text-emerald-700 font-mono">SHA-256 verified</span>
+                  <span className="text-xs text-emerald-700 font-mono">SHA-256 verified</span>
                 </div>
               )}
             </div>

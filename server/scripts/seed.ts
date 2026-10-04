@@ -11,9 +11,10 @@ import path from 'node:path';
 import { clock } from '../../shared/src/clock.js';
 
 export function seedDemoData() {
-  db.exec("INSERT OR REPLACE INTO counters (id, val) VALUES ('INS', 12), ('APP', 12), ('CRT', 10), ('JOB', 10), ('PAY', 10), ('PHO', 10), ('USR', 10), ('application', 12), ('instrument', 12), ('receipt', 10)");
   const usersCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
   if (usersCount.c > 0) return; // already seeded
+
+  db.exec("INSERT OR REPLACE INTO counters (id, val) VALUES ('INS', 12), ('APP', 12), ('CRT', 10), ('JOB', 10), ('PAY', 10), ('PHO', 10), ('USR', 10), ('application', 12), ('instrument', 12), ('receipt', 10)");
 
   const { privateKey, keyId } = ensureKeys();
   const pwHash = bcrypt.hashSync('demo123', 10);

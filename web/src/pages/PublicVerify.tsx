@@ -413,7 +413,7 @@ export const PublicVerify = () => {
                   </div>
 
                   {/* Measurement tick marks */}
-                  <div className="flex justify-between px-0.5 mt-1 text-[10px] text-gray-400 font-mono select-none">
+                  <div className="flex justify-between px-0.5 mt-1 text-xs text-gray-400 font-mono select-none">
                     <span>|</span>
                     <span>|</span>
                     <span>|</span>
@@ -563,7 +563,7 @@ export const PublicVerify = () => {
                     value={complaintText}
                     onChange={e => setComplaintText(e.target.value)}
                   />
-                  <div className="text-[10px] text-gray-500 text-right">{complaintText.length}/300</div>
+                  <div className="text-xs text-gray-500 text-right">{complaintText.length}/300</div>
                 </div>
 
                 <input 

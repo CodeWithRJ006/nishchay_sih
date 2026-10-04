@@ -26,21 +26,29 @@ export function AdminComplaints() {
   const [filterCategory, setFilterCategory] = useState('ALL');
 
   useEffect(() => {
-    get<ComplaintItem[]>('/api/admin/complaints')
+    get<{ list?: ComplaintItem[]; byBusiness?: unknown[] } | ComplaintItem[]>('/api/admin/complaints')
       .then(res => {
-        setComplaints(res);
+        if (Array.isArray(res)) {
+          setComplaints(res);
+        } else if (res && Array.isArray(res.list)) {
+          setComplaints(res.list);
+        } else {
+          setComplaints([]);
+        }
         setLoading(false);
       })
       .catch(() => {
+        setComplaints([]);
         setLoading(false);
       });
   }, []);
 
-  const categories = ['ALL', ...Array.from(new Set(complaints.map(c => c.category)))];
+  const safeComplaints = Array.isArray(complaints) ? complaints : [];
+  const categories = ['ALL', ...Array.from(new Set(safeComplaints.map(c => c.category)))];
 
   const filtered = filterCategory === 'ALL'
-    ? complaints
-    : complaints.filter(c => c.category === filterCategory);
+    ? safeComplaints
+    : safeComplaints.filter(c => c.category === filterCategory);
 
   return (
     <div className="flex flex-col gap-6 max-w-6xl">

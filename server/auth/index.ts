@@ -23,10 +23,6 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
 };
 
 export const csrfMiddleware = (req: Request, res: Response, next: NextFunction) => {
-  // Bypass CSRF checks in demo mode for easier UI interaction
-  if (process.env.DEMO_MODE === 'true') {
-    return next();
-  }
   if (req.method !== 'GET' && !req.path.startsWith('/api/auth/') && !req.path.startsWith('/api/demo/') && req.path !== '/api/payments/callback') {
     const csrfHeader = req.headers['x-csrf-token'];
     if (!csrfHeader) {
@@ -66,8 +62,9 @@ export function loginRoute(req: Request, res: Response) {
 
   db.prepare('UPDATE users SET failed_attempts = 0, locked_until = NULL WHERE id = ?').run(user.id);
 
-  const token = jwt.sign({ id: user.id, role: user.role, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
-  res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict' });
+  const token = jwt.sign({ id: user.id, role: user.role, name: user.name, email: user.email }, JWT_SECRET, { expiresIn: '1d' });
+  const isSecure = process.env.NODE_ENV === 'production' && (req.secure || req.headers['x-forwarded-proto'] === 'https');
+  res.cookie('token', token, { httpOnly: true, secure: isSecure, sameSite: 'lax' });
   res.json({ id: user.id, role: user.role, name: user.name });
 }
 

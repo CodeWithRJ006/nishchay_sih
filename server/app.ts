@@ -1,3 +1,7 @@
+if (process.env.DEMO_MODE === undefined) {
+  process.env.DEMO_MODE = 'true';
+}
+
 import express from 'express';
 import helmet from 'helmet';
 import pinoHttp from 'pino-http';

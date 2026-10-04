@@ -147,25 +147,26 @@ export const demoLoginAs = (req: Request, res: Response) => {
   if (process.env.DEMO_MODE !== 'true') {
     return res.status(404).json({ error: 'Demo mode disabled' });
   }
-  const role = req.params.role;
-  const user = db.prepare('SELECT id, email, role FROM users WHERE role = ? LIMIT 1').get(role) as { id: string; email: string; role: string } | undefined;
+  const role = (req.params.role || '').toUpperCase();
+  const user = db.prepare('SELECT id, email, role, name FROM users WHERE UPPER(role) = ? LIMIT 1').get(role) as { id: string; email: string; role: string; name: string } | undefined;
   if (!user) {
     return res.status(404).json({ error: 'No demo user found for this role' });
   }
 
   const token = jwt.sign(
-    { id: user.id, role: user.role, email: user.email },
+    { id: user.id, role: user.role, email: user.email, name: user.name },
     jwtSecret(),
     { expiresIn: '1d' }
   );
+  const isSecure = process.env.NODE_ENV === 'production' && (req.secure || req.headers['x-forwarded-proto'] === 'https');
   res.cookie('token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: isSecure,
+    sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000
   });
-  // Respond with the user object directly (contains role field)
-  res.json(user);
+  // Respond with the user object directly (contains role and name fields)
+  res.json({ id: user.id, email: user.email, role: user.role, name: user.name });
 };
 
 // Export routes for registration in app.ts

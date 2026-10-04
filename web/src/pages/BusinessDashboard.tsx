@@ -339,7 +339,7 @@ export function BusinessDashboard() {
                             }`}>
                               {isDone ? '✓' : idx + 1}
                             </div>
-                            <span className={`text-[11px] mt-1 text-center font-medium ${
+                            <span className={`text-xs mt-1 text-center font-medium ${
                               isCurrent ? 'text-calibration-blue font-bold' : isDone ? 'text-slate-800' : 'text-slate-400'
                             }`}>
                               {s.label}
@@ -506,7 +506,7 @@ export function BusinessDashboard() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-semibold text-slate-900">{cert.public_id}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide ${
+                      <span className={`text-xs font-bold px-2 py-0.5 rounded uppercase tracking-wide ${
                         cert.status === 'VALID' 
                           ? 'bg-emerald-100 text-verified-green' 
                           : cert.status === 'EXPIRED' 
@@ -519,7 +519,7 @@ export function BusinessDashboard() {
                     <div className="text-xs text-slate-600 mt-1">
                       {cert.instrument_info} • <span className="font-mono">{cert.instrument_serial}</span>
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
+                    <div className="text-xs text-slate-500 mt-0.5">
                       Valid: {formatDate(cert.valid_from)} – {formatDate(cert.valid_to)}
                     </div>
                   </div>
@@ -581,14 +581,14 @@ export function BusinessDashboard() {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-xs font-semibold text-slate-800">{p.receipt_id}</span>
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-verified-green">
+                      <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-verified-green">
                         PAID
                       </span>
                     </div>
                     <div className="text-xs text-slate-600 mt-1">
                       {p.instrument_info} ({p.instrument_serial})
                     </div>
-                    <div className="text-[11px] text-slate-500 mt-0.5">
+                    <div className="text-xs text-slate-500 mt-0.5">
                       Paid on {formatDate(p.created_at)}
                     </div>
                   </div>

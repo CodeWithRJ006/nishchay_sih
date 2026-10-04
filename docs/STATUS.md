@@ -16,3 +16,4 @@
 - **Gap b (Minimal GATC dashboard):** DONE - `web/src/pages/OfficerJobs.tsx`, `server/tests/profiles.test.ts`
 - **Gap c (Supporting-document upload):** DONE - `server/api/uploads.ts`, `server/tests/block4b.test.ts`
 - **Gap d (Architecture, Security, Deployment docs):** DONE - `ARCHITECTURE.md`, `SECURITY.md`, `DEPLOYMENT.md`
+- **Phase 6 (Visual Audit & End-to-End Proof):** DONE - `tests/shots.spec.ts` (19/19 tests passing across 1440x900 & 390x844), `scripts/smoke.ts` passing, 4-role switcher verified.

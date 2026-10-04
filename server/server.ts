@@ -1,3 +1,7 @@
+if (process.env.DEMO_MODE === undefined) {
+  process.env.DEMO_MODE = 'true';
+}
+
 import { createApp, logger } from './app.js';
 import { runMigrations } from './db/migrate.js';
 import { seedDemoData } from './scripts/seed.js';

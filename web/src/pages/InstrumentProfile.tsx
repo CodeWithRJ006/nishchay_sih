@@ -171,7 +171,7 @@ export function InstrumentProfile() {
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-semibold text-calibration-blue">{app.id}</span>
-                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${
+                        <span className={`text-xs font-bold px-1.5 py-0.5 rounded uppercase tracking-wide ${
                           app.state === 'CERTIFIED' 
                             ? 'bg-emerald-100 text-verified-green' 
                             : 'bg-blue-100 text-blue-800'
@@ -179,7 +179,7 @@ export function InstrumentProfile() {
                           {app.state}
                         </span>
                       </div>
-                      <div className="text-[11px] text-slate-500 mt-0.5">
+                      <div className="text-xs text-slate-500 mt-0.5">
                         Submitted {formatDate(app.created_at)} • Fee: {formatInr(app.fee_amount || 0)}
                       </div>
                     </div>

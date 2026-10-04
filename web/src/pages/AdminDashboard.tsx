@@ -371,7 +371,7 @@ export function AdminDashboard() {
               activityFeed.map(feed => (
                 <div key={feed.id} className="py-2.5 first:pt-0 last:pb-0 text-xs">
                   <p className="text-slate-800 font-medium leading-relaxed">{feed.message}</p>
-                  <span className="text-[11px] font-mono text-slate-400 mt-0.5 block">
+                  <span className="text-xs font-mono text-slate-400 mt-0.5 block">
                     {formatDate(feed.timestamp)}
                   </span>
                 </div>
@@ -402,7 +402,7 @@ export function AdminDashboard() {
                 <ShieldAlert className="w-4 h-4 text-red-600" />
                 Fee-Gate Telemetry: {data.kpis.gateBlocks} issuance attempts blocked
               </div>
-              <p className="text-[11px] text-red-800/80 mt-0.5">
+              <p className="text-xs text-red-800/80 mt-0.5">
                 The fee-gate removes the officer's control over official fee transactions.
               </p>
             </div>
@@ -425,7 +425,7 @@ export function AdminDashboard() {
                     <td className="py-2.5 font-medium text-slate-900">{p.business_name}</td>
                     <td className="py-2.5 font-mono font-bold text-ink">{formatInr(p.amount)}</td>
                     <td className="py-2.5">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-green-100 text-green-800">
+                      <span className="px-2 py-0.5 rounded text-xs font-semibold bg-green-100 text-green-800">
                         {p.status}
                       </span>
                     </td>

@@ -7,6 +7,8 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { PageHeader } from '../components/ui/PageHeader';
 
+import { useAuth } from '../AuthContext';
+
 interface ApplicationItem {
   id: string;
   business_id?: string;
@@ -65,6 +67,7 @@ function getStageIndex(state: string): number {
 
 export function Applications() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [applications, setApplications] = useState<ApplicationItem[]>([]);
   const [instruments, setInstruments] = useState<InstrumentMap>({});
   const [loading, setLoading] = useState(true);
@@ -74,9 +77,13 @@ export function Applications() {
   useEffect(() => {
     setLoading(true);
     const query = selectedState !== 'ALL' ? `?state=${selectedState}` : '';
+    const fetchInstruments = user?.role === 'BUSINESS'
+      ? get<Array<{ id: string; make: string; model: string; serial: string; type_code: string }>>('/api/instruments').catch(() => [])
+      : Promise.resolve([]);
+
     Promise.all([
       get<ApplicationItem[]>(`/api/applications${query}`),
-      get<Array<{ id: string; make: string; model: string; serial: string; type_code: string }>>('/api/instruments').catch(() => []),
+      fetchInstruments,
     ])
       .then(([apps, insts]) => {
         if (Array.isArray(apps)) setApplications(apps);
@@ -91,7 +98,7 @@ export function Applications() {
         setError(err.message || 'Failed to load applications');
         setLoading(false);
       });
-  }, [selectedState]);
+  }, [selectedState, user?.role]);
 
   if (loading) {
     return (
@@ -230,7 +237,7 @@ export function Applications() {
                           }`}>
                             {isDone ? '✓' : idx + 1}
                           </div>
-                          <span className={`text-[11px] mt-1 text-center font-medium ${
+                          <span className={`text-xs mt-1 text-center font-medium ${
                             isCurrent ? 'text-calibration-blue font-bold' : isDone ? 'text-slate-800' : 'text-slate-400'
                           }`}>
                             {s.label}

@@ -86,10 +86,10 @@ export const Login = () => {
           <div className="pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-500 mb-4 text-center">DEMO MODE: Try as</p>
             <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" onClick={() => loginAs('ADMIN')}>Admin</Button>
-              <Button variant="outline" onClick={() => loginAs('LMO')}>LMO</Button>
-              <Button variant="outline" onClick={() => loginAs('GATC')}>GATC</Button>
-              <Button variant="outline" onClick={() => loginAs('BUSINESS')}>Business</Button>
+              <Button data-testid="demo-login-admin" variant="outline" onClick={() => loginAs('ADMIN')}>Admin</Button>
+              <Button data-testid="demo-login-lmo" variant="outline" onClick={() => loginAs('LMO')}>LMO</Button>
+              <Button data-testid="demo-login-gatc" variant="outline" onClick={() => loginAs('GATC')}>GATC</Button>
+              <Button data-testid="demo-login-business" variant="outline" onClick={() => loginAs('BUSINESS')}>Business</Button>
             </div>
           </div>
         )}

@@ -156,19 +156,19 @@ export const AdminProvision = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-xs">
             <div>
-              <span className="text-slate-500 uppercase font-semibold text-[10px] block">Officer Name</span>
+              <span className="text-slate-500 uppercase font-semibold text-xs block">Officer Name</span>
               <span className="font-semibold text-ink text-sm mt-0.5 block">{provisionedCreds.name}</span>
             </div>
             <div>
-              <span className="text-slate-500 uppercase font-semibold text-[10px] block">Role Designation</span>
+              <span className="text-slate-500 uppercase font-semibold text-xs block">Role Designation</span>
               <span className="font-semibold text-ink text-sm mt-0.5 block">{provisionedCreds.role}</span>
             </div>
             <div>
-              <span className="text-slate-500 uppercase font-semibold text-[10px] block">Sign-in Email</span>
+              <span className="text-slate-500 uppercase font-semibold text-xs block">Sign-in Email</span>
               <span className="font-mono text-ink text-sm mt-0.5 block font-semibold">{provisionedCreds.email}</span>
             </div>
             <div>
-              <span className="text-slate-500 uppercase font-semibold text-[10px] block">Demo Default Password</span>
+              <span className="text-slate-500 uppercase font-semibold text-xs block">Demo Default Password</span>
               <span className="font-mono text-verified-green font-bold text-sm mt-0.5 block">{provisionedCreds.defaultPassword}</span>
             </div>
           </div>
@@ -308,7 +308,7 @@ export const AdminProvision = () => {
                   <tr key={o.id} className="hover:bg-slate-50/50">
                     <td className="py-3 font-semibold text-ink">{o.name}</td>
                     <td className="py-3">
-                      <span className={`px-2 py-0.5 rounded font-semibold text-[11px] ${
+                      <span className={`px-2 py-0.5 rounded font-semibold text-xs ${
                         o.role === 'LMO' ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800'
                       }`}>
                         {o.role}

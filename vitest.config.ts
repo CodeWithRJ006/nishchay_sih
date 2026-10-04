@@ -8,5 +8,6 @@ export default defineConfig({
     // Each test file runs in its own worker thread/process in vitest, so the ':memory:' 
     // better-sqlite3 database instantiated in db/index.ts is isolated per test file automatically.
     include: ['server/tests/**/*.test.ts', 'shared/tests/**/*.test.ts'],
+    fileParallelism: false,
   }
 });

@@ -66,9 +66,11 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
     try {
       await post(`/api/demo/login-as/${targetRole}`, {});
       setSwitcherOpen(false);
+      setMobileMenuOpen(false);
       await refresh();
+      window.location.href = '/dashboard';
     } catch {
-      // ignore
+      window.location.href = '/dashboard';
     }
   };
 
@@ -118,6 +120,43 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
               {l.label}
             </Link>
           ))}
+          {DEMO_MODE && (
+            <div className="mt-6 pt-4 border-t border-gray-700 lg:hidden">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-2 px-3">
+                Demo: Switch Role
+              </span>
+              <div className="grid grid-cols-2 gap-2 px-1">
+                <button
+                  type="button"
+                  onClick={() => handleSwitchRole('BUSINESS')}
+                  className={`px-2 py-1.5 rounded text-xs text-left ${currentRole === 'BUSINESS' ? 'bg-calibration-blue text-white font-bold' : 'bg-gray-800 text-gray-200'}`}
+                >
+                  Business
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchRole('LMO')}
+                  className={`px-2 py-1.5 rounded text-xs text-left ${currentRole === 'LMO' ? 'bg-calibration-blue text-white font-bold' : 'bg-gray-800 text-gray-200'}`}
+                >
+                  LMO
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchRole('GATC')}
+                  className={`px-2 py-1.5 rounded text-xs text-left ${currentRole === 'GATC' ? 'bg-calibration-blue text-white font-bold' : 'bg-gray-800 text-gray-200'}`}
+                >
+                  GATC
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchRole('ADMIN')}
+                  className={`px-2 py-1.5 rounded text-xs text-left ${currentRole === 'ADMIN' ? 'bg-calibration-blue text-white font-bold' : 'bg-gray-800 text-gray-200'}`}
+                >
+                  Admin
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
@@ -150,6 +189,7 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
               <div className="relative">
                 <button
                   type="button"
+                  data-testid="switch-role-button"
                   onClick={() => setSwitcherOpen(!switcherOpen)}
                   className="px-2.5 py-1.5 border border-gray-300 rounded text-xs font-semibold bg-gray-50 hover:bg-gray-100 flex items-center gap-1.5 text-gray-800"
                   aria-expanded={switcherOpen}
@@ -159,55 +199,66 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
                   <ChevronDown className="w-3.5 h-3.5" />
                 </button>
                 {switcherOpen && (
-                  <div
-                    className="absolute right-0 mt-1 w-56 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50 text-left"
-                    role="menu"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchRole('BUSINESS')}
-                      className={`w-full px-4 py-2 text-xs text-left hover:bg-gray-50 flex flex-col ${
-                        currentRole === 'BUSINESS' ? 'bg-blue-50 font-bold text-calibration-blue' : 'text-gray-700'
-                      }`}
-                      role="menuitem"
+                  <>
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setSwitcherOpen(false)} 
+                      aria-hidden="true" 
+                    />
+                    <div
+                      className="absolute right-0 mt-1 w-64 bg-white border border-gray-200 rounded-md shadow-lg py-1 z-50 text-left"
+                      role="menu"
                     >
-                      <span>Business</span>
-                      <span className="text-[11px] text-gray-400">biz1@nishchay.example</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchRole('LMO')}
-                      className={`w-full px-4 py-2 text-xs text-left hover:bg-gray-50 flex flex-col ${
-                        currentRole === 'LMO' ? 'bg-blue-50 font-bold text-calibration-blue' : 'text-gray-700'
-                      }`}
-                      role="menuitem"
-                    >
-                      <span>Legal Metrology Officer</span>
-                      <span className="text-[11px] text-gray-400">lmo1@nishchay.example</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchRole('GATC')}
-                      className={`w-full px-4 py-2 text-xs text-left hover:bg-gray-50 flex flex-col ${
-                        currentRole === 'GATC' ? 'bg-blue-50 font-bold text-calibration-blue' : 'text-gray-700'
-                      }`}
-                      role="menuitem"
-                    >
-                      <span>Government Approved Test Centre</span>
-                      <span className="text-[11px] text-gray-400">gatc1@nishchay.example</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleSwitchRole('ADMIN')}
-                      className={`w-full px-4 py-2 text-xs text-left hover:bg-gray-50 flex flex-col ${
-                        currentRole === 'ADMIN' ? 'bg-blue-50 font-bold text-calibration-blue' : 'text-gray-700'
-                      }`}
-                      role="menuitem"
-                    >
-                      <span>Administrator</span>
-                      <span className="text-[11px] text-gray-400">admin@nishchay.example</span>
-                    </button>
-                  </div>
+                      <button
+                        type="button"
+                        data-testid="switch-role-business"
+                        onClick={() => handleSwitchRole('BUSINESS')}
+                        className={`w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex flex-col ${
+                          currentRole === 'BUSINESS' ? 'bg-blue-50 font-bold text-calibration-blue' : 'text-gray-700'
+                        }`}
+                        role="menuitem"
+                      >
+                        <span className="font-semibold text-sm">Business</span>
+                        <span className="text-xs text-gray-500">biz1@nishchay.example</span>
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="switch-role-lmo"
+                        onClick={() => handleSwitchRole('LMO')}
+                        className={`w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex flex-col ${
+                          currentRole === 'LMO' ? 'bg-blue-50 font-bold text-calibration-blue' : 'text-gray-700'
+                        }`}
+                        role="menuitem"
+                      >
+                        <span className="font-semibold text-sm">Legal Metrology Officer</span>
+                        <span className="text-xs text-gray-500">lmo1@nishchay.example</span>
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="switch-role-gatc"
+                        onClick={() => handleSwitchRole('GATC')}
+                        className={`w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex flex-col ${
+                          currentRole === 'GATC' ? 'bg-blue-50 font-bold text-calibration-blue' : 'text-gray-700'
+                        }`}
+                        role="menuitem"
+                      >
+                        <span className="font-semibold text-sm">Government Approved Test Centre</span>
+                        <span className="text-xs text-gray-500">gatc1@nishchay.example</span>
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="switch-role-admin"
+                        onClick={() => handleSwitchRole('ADMIN')}
+                        className={`w-full px-4 py-2.5 text-sm text-left hover:bg-gray-50 flex flex-col ${
+                          currentRole === 'ADMIN' ? 'bg-blue-50 font-bold text-calibration-blue' : 'text-gray-700'
+                        }`}
+                        role="menuitem"
+                      >
+                        <span className="font-semibold text-sm">Administrator</span>
+                        <span className="text-xs text-gray-500">admin@nishchay.example</span>
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             )}

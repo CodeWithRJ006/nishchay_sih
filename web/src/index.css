@@ -24,6 +24,22 @@ body {
   background-color: var(--gauge-steel);
   color: var(--ink);
   font-family: 'Source Sans 3', sans-serif;
+  overflow-x: hidden;
+  max-width: 100vw;
+  font-size: 14px;
+}
+
+html {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Floor all text sizes at 14px to satisfy Phase 6 requirement */
+[class*="text-[10px]"],
+[class*="text-[11px]"],
+[class*="text-[12px]"],
+[class*="text-[13px]"] {
+  font-size: 14px !important;
 }
 
 h1, h2, h3, h4, h5, h6, .font-heading {

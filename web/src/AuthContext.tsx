@@ -18,8 +18,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = async () => {
     try {
-      const data = await get<User>('/api/auth/me').catch(() => null);
-      setUser(data);
+      const data = await get<User | null>('/api/auth/me').catch(() => null);
+      if (data && typeof data === 'object' && 'id' in data && 'role' in data && data.role) {
+        setUser(data as User);
+      } else {
+        setUser(null);
+      }
     } catch {
       setUser(null);
     } finally {
