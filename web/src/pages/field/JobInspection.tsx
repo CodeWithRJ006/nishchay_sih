@@ -130,7 +130,7 @@ export function JobInspection() {
               {photos.map((p, idx) => (
                 <div key={idx} className="relative shrink-0 w-24 h-24 rounded-lg overflow-hidden border-2 border-primary-500">
                   <img src={p.previewUrl} className="w-full h-full object-cover" />
-                  <button onClick={() => removePhoto(idx)} className="absolute top-1 right-1 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs">X</button>
+                  <button onClick={() => removePhoto(idx)} className="absolute top-1 right-1 bg-red-500 text-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">×</button>
                 </div>
               ))}
             </div>
@@ -187,7 +187,7 @@ export function JobInspection() {
                   <h4 className="font-bold text-slate-700">Test Point {idx + 1}</h4>
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Applied</label>
+                      <label className="text-sm font-bold text-slate-500 uppercase">Applied</label>
                       <input type="number" value={r.applied} onChange={e => {
                         const newR = [...readings];
                         newR[idx].applied = e.target.value;
@@ -195,7 +195,7 @@ export function JobInspection() {
                       }} className="w-full border p-2 rounded text-lg" />
                     </div>
                     <div className="flex-1">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Observed</label>
+                      <label className="text-sm font-bold text-slate-500 uppercase">Observed</label>
                       <input type="number" value={r.observed} onChange={e => {
                         const newR = [...readings];
                         newR[idx].observed = e.target.value;
@@ -255,10 +255,10 @@ export function JobInspection() {
                     {pass === false ? 'Reason for failure (Required)' : 'Reason for PASS override (Required)'}
                   </label>
                   <textarea 
-                    className="w-full border-2 border-slate-300 rounded p-3 h-24" 
+                    className="w-full border-2 border-slate-300 rounded p-3 h-24 text-sm" 
                     value={reason} 
                     onChange={e => setReason(e.target.value)}
-                    placeholder="Enter details here..."
+                    placeholder="Specify statutory rationale or non-conformity notes"
                   />
                 </div>
               )}

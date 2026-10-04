@@ -12,7 +12,8 @@
 | Phase 5 | LMO, GATC & Admin | ✅ DONE | Officer dashboard (KPIs, accept/reject modal, today schedule, history link), admin dashboard (bar chart, assign queue, live feed 3s polling), officer profile (avatar, load bar, read-only dl), all sidebar routes resolve, 182 tests green, verify passes. |
 | Phase 6 | Playwright Visual Audit & Smoke Proof | ✅ DONE | 19/19 Playwright tests passing at 1440x900 & 390x844; interactive role switcher working across all roles; smoke trust loop verified; full verify passed. |
 | Block 10a | Judge's Lab & Evaluation Drawer | ✅ DONE | Fee-gate refusal (409 GATE_BLOCKED), tamper demo + undo restoration, trust loop guide, factory reset. 185 tests green. |
-| Verification | Full Suite (Lint/TS/Tests/Build) | ✅ DONE | 185/185 tests green across 30 test files, build clean. Port mismatch fixed (4000). |
+| Field App & PDF QR | Real Phone Field Flow & PDF QR Scan | ✅ DONE | `/field` job detail & inspection audited at 390x844 (0 errors, touch targets >= 44px, text >= 14px, demo site bypass, rear/fallback camera). Certificate PDF professionally designed with dynamic QR encoding live HTTPS/reqBase. 188 tests green. |
+| Verification | Full Suite (Lint/TS/Tests/Build) | ✅ DONE | 188/188 tests green across 31 test files, build clean. Port mismatch fixed (4000). |
 
 ## Next Up
 - **Ready for live deployment on Render.**

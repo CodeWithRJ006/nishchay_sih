@@ -112,12 +112,15 @@ export const searchCertificates = async (req: Request, res: Response) => {
 export const getCertificatePdf = async (req: Request, res: Response) => {
   const { publicId } = req.params;
   try {
-    const pdfBytes = await certificatePdfService.createPdf(publicId);
+    const host = req.get('host');
+    const forwardedProto = req.get('x-forwarded-proto');
+    const protocol = forwardedProto || req.protocol || 'http';
+    const reqBase = host ? `${protocol}://${host}` : undefined;
+    const pdfBytes = await certificatePdfService.createPdf(publicId, reqBase);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="certificate-${publicId}.pdf"`);
     res.send(Buffer.from(pdfBytes));
   } catch {
-
     res.status(500).json({ error: 'Failed to generate PDF' });
   }
 };

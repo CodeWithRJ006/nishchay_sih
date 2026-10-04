@@ -64,7 +64,9 @@ export function JobDetail() {
         userLng = position.coords.longitude;
       }
 
-      const dist = haversine(userLat, userLng, job!.lat, job!.lng);
+      const targetLat = typeof job?.lat === 'number' ? job.lat : 17.3850;
+      const targetLng = typeof job?.lng === 'number' ? job.lng : 78.4867;
+      const dist = haversine(userLat, userLng, targetLat, targetLng);
       setDistance(dist);
 
       if (dist > 300) {
@@ -123,30 +125,30 @@ export function JobDetail() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200 mb-4">
           <div className="flex justify-between items-start mb-4">
             <h2 className="text-xl font-bold font-heading">{job.business_name}</h2>
-            <span className="text-xs font-bold px-2 py-1 bg-slate-100 rounded border uppercase">{job.status}</span>
+            <span className="text-sm font-bold px-2 py-1 bg-slate-100 rounded border uppercase">{job.status}</span>
           </div>
           
           <div className="space-y-3 text-sm">
             <div>
-              <p className="text-slate-500 font-bold text-xs uppercase">Address</p>
+              <p className="text-slate-500 font-bold text-sm uppercase">Address</p>
               <p>{job.address}</p>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-slate-500 font-bold text-xs uppercase">Application</p>
+                <p className="text-slate-500 font-bold text-sm uppercase">Application</p>
                 <p className="font-mono">{job.application_id}</p>
               </div>
               <div>
-                <p className="text-slate-500 font-bold text-xs uppercase">Instrument</p>
+                <p className="text-slate-500 font-bold text-sm uppercase">Instrument</p>
                 <p className="font-mono">{job.instrument_id}</p>
               </div>
               <div>
-                <p className="text-slate-500 font-bold text-xs uppercase">Slot Date</p>
+                <p className="text-slate-500 font-bold text-sm uppercase">Slot Date</p>
                 <p>{job.slot_date}</p>
               </div>
               <div>
-                <p className="text-slate-500 font-bold text-xs uppercase">Slot Time</p>
+                <p className="text-slate-500 font-bold text-sm uppercase">Slot Time</p>
                 <p>{job.slot_time}</p>
               </div>
             </div>
@@ -167,11 +169,11 @@ export function JobDetail() {
             {/* Target marker (simulated premises) */}
             <circle cx="200" cy="100" r="8" fill="#0284c7" stroke="white" strokeWidth="2" />
             <circle cx="200" cy="100" r="24" fill="#0284c7" fillOpacity="0.2" />
-            <text x="215" y="105" fontSize="12" fontWeight="bold" fill="#0f172a">Premises</text>
+            <text x="215" y="105" fontSize="14" fontWeight="bold" fill="#0f172a">Premises</text>
           </svg>
-          <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center text-xs bg-white/90 p-2 rounded shadow">
-            <span>Lat: {job.lat.toFixed(4)}</span>
-            <span>Lng: {job.lng.toFixed(4)}</span>
+          <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center text-sm bg-white/90 p-2 rounded shadow">
+            <span>Lat: {typeof job.lat === 'number' ? job.lat.toFixed(4) : '17.3850'}</span>
+            <span>Lng: {typeof job.lng === 'number' ? job.lng.toFixed(4) : '78.4867'}</span>
           </div>
         </div>
 
@@ -217,10 +219,10 @@ export function JobDetail() {
               <Button 
                 variant="outline" 
                 className="w-full h-11 relative" 
-                onClick={() => handleArrive(job.lat, job.lng)} 
+                onClick={() => handleArrive(typeof job?.lat === 'number' ? job.lat : 17.3850, typeof job?.lng === 'number' ? job.lng : 78.4867)} 
                 disabled={arriving}
               >
-                <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow">DEMO</span>
+                <span className="absolute -top-3 -right-2 bg-amber-500 text-white text-sm font-bold px-2 py-0.5 rounded shadow">DEMO</span>
                 Use demo site location
               </Button>
             )}

@@ -10,12 +10,19 @@ export function CameraCapture({ onCapture }: { onCapture: (blob: Blob, hash: str
   
   const startCamera = async () => {
     try {
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        throw new Error('The camera needs HTTPS');
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        throw new Error('The camera requires HTTPS or localhost');
       }
-      const s = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' }
-      });
+      let s: MediaStream;
+      try {
+        s = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+      } catch {
+        s = await navigator.mediaDevices.getUserMedia({
+          video: true
+        });
+      }
       setStream(s);
       if (videoRef.current) {
         videoRef.current.srcObject = s;
@@ -128,7 +135,7 @@ export function CameraCapture({ onCapture }: { onCapture: (blob: Blob, hash: str
         </Button>
       )}
       
-      <p className="text-xs text-slate-500 text-center px-4">
+      <p className="text-sm text-slate-500 text-center px-4">
         Live capture is enforced by this app. A modified app could upload other pictures. The seal later proves the record was not changed after capture. It does not prove the observations were true.
       </p>
     </div>

@@ -62,8 +62,8 @@ export function JobList() {
               <p className="text-sm text-slate-600 truncate mb-2">{job.address}</p>
               
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-mono bg-slate-100 px-2 py-1 rounded text-slate-700">{job.application_id}</span>
-                <span className="text-xs font-bold text-primary-700 bg-primary-50 px-2 py-1 rounded">
+                <span className="text-sm font-mono bg-slate-100 px-2.5 py-1 rounded text-slate-700">{job.application_id}</span>
+                <span className="text-sm font-bold text-primary-700 bg-primary-50 px-2.5 py-1 rounded">
                   {job.slot_date} {job.slot_time}
                 </span>
               </div>

@@ -43,6 +43,7 @@ describe('Block 9-14 Tests (Certificates, Search, Export, Public Verify, Seal, C
     const res = await request(app).get(`/api/certificates/${publicId}/pdf`);
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toBe('application/pdf');
+    expect(res.body.toString('latin1', 0, 5)).toBe('%PDF-');
   });
 
   it('POST /api/certificates/:publicId/complaint adds a complaint', async () => {

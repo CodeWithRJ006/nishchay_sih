@@ -18,4 +18,7 @@
 - **Gap d (Architecture, Security, Deployment docs):** DONE - `ARCHITECTURE.md`, `SECURITY.md`, `DEPLOYMENT.md`
 - **Phase 6 (Visual Audit & End-to-End Proof):** DONE - `tests/shots.spec.ts` (19/19 tests passing across 1440x900 & 390x844), `scripts/smoke.ts` passing, 4-role switcher verified.
 - **Block 10a (Judge's Lab & Evaluation Drawer):** DONE - `web/src/components/JudgesLabDrawer.tsx`, `server/api/demo.ts` (`/api/admin/demo/issue-no-payment` 409 GATE_BLOCKED, `/api/admin/demo/tamper` and `undo-tamper`, `/api/demo/progress`), `server/tests/block10-seed.test.ts`.
+- **Field Verification App Audit (Mobile 390x844 & HTTPS):** DONE - `/field`, `/field/job/:id`, `/field/job/:id/inspection` audited at 390x844 (0 errors, touch targets >= 44px, text >= 14px, demo site location bypass, rear/fallback camera support, haversine distance verification).
+- **Certificate PDF & Live QR Scan:** DONE - `server/services/certificatePdfService.ts` authoritative A4 certificate design with official borders, status badge, cryptographic seal panel, and dynamic QR code encoding live host/`PUBLIC_BASE_URL` (`/v/:publicId`). Tested via `server/tests/pdf-qr.test.ts`.
+
 

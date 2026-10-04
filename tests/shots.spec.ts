@@ -119,6 +119,8 @@ const roleRoutes = {
     { path: '/dashboard/profile', name: 'lmo-profile' },
     { path: '/dashboard/search', name: 'lmo-search' },
     { path: '/field', name: 'lmo-field' },
+    { path: '/field/job/NSH-A-2026-000009', name: 'lmo-field-job-detail' },
+    { path: '/field/job/NSH-A-2026-000009/inspection', name: 'lmo-field-job-inspection' },
   ],
   GATC: [
     { path: '/dashboard', name: 'gatc-dashboard' },
