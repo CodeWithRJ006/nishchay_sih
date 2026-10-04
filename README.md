@@ -3,6 +3,14 @@
 **Smart India Hackathon 2024 — Problem Statement SIH26036**  
 *Department of Consumer Affairs, Government of India*
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-nishchay--sih.onrender.com-brightgreen?style=for-the-badge&logo=render)](https://nishchay-sih.onrender.com)
+[![Status](https://img.shields.io/badge/System%20Status-Healthy%20200%20OK-blue?style=for-the-badge)](https://nishchay-sih.onrender.com/api/health)
+[![Playwright Tests](https://img.shields.io/badge/Playwright%20Audit-19%2F19%20Pass-success?style=for-the-badge)](https://nishchay-sih.onrender.com)
+
+> 🌐 **Live Application URL:** [https://nishchay-sih.onrender.com](https://nishchay-sih.onrender.com)  
+> 🏥 **Health Check Endpoint:** [https://nishchay-sih.onrender.com/api/health](https://nishchay-sih.onrender.com/api/health)  
+> 🧪 **Live Valid Certificate:** [https://nishchay-sih.onrender.com/v/sample-cert-val1d-0000](https://nishchay-sih.onrender.com/v/sample-cert-val1d-0000)
+
 > **SIH Prototype Notice:**  
 > Prototype built for SIH26036. Not an official government system. No government emblem or official branding is used. All data, merchant profiles, coordinates, fees, and test readings are synthetic.
 
@@ -50,11 +58,11 @@ A dedicated slide-out drawer accessible from any screen (desktop and mobile) tha
 
 Experience the dynamic Verification Plate and selective-disclosure seal across all three statutory states:
 
-| Status | Public Verification URL | Instrument Description | Expected Verification State |
+| Status | Public Verification URL (Live) | Instrument Description | Expected Verification State |
 | :--- | :--- | :--- | :--- |
-| **VALID** | [`/v/sample-cert-val1d-0000`](http://localhost:4000/v/sample-cert-val1d-0000) | Cast Iron Hexagonal Weights 5kg (W-1) | 4 Green Ticks, "Verified in your browser" |
-| **EXPIRED** | [`/v/sample-cert-exp1red-00`](http://localhost:4000/v/sample-cert-exp1red-00) | Counter Machine 20kg (CM-1) | Amber Warning Banner, Expired Status |
-| **REVOKED** | [`/v/sample-cert-rev0ked-00`](http://localhost:4000/v/sample-cert-rev0ked-00) | NAWI Class III 100kg (Industrial) | Red Revocation Banner with Statutory Reason |
+| **VALID** | [Live Certificate](https://nishchay-sih.onrender.com/v/sample-cert-val1d-0000) (`/v/sample-cert-val1d-0000`) | Cast Iron Hexagonal Weights 5kg (W-1) | 4 Green Ticks, "Verified in your browser" |
+| **EXPIRED** | [Live Certificate](https://nishchay-sih.onrender.com/v/sample-cert-exp1red-00) (`/v/sample-cert-exp1red-00`) | Counter Machine 20kg (CM-1) | Amber Warning Banner, Expired Status |
+| **REVOKED** | [Live Certificate](https://nishchay-sih.onrender.com/v/sample-cert-rev0ked-00) (`/v/sample-cert-rev0ked-00`) | NAWI Class III 100kg (Industrial) | Red Revocation Banner with Statutory Reason |
 
 ---
 

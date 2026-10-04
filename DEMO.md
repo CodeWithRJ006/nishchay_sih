@@ -1,6 +1,12 @@
 # NISHCHAY: 5-Minute Evaluation Guide for Hackathon Judges
 **Problem Statement SIH26036 • Legal Metrology Digital Verification Prototype**
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-nishchay--sih.onrender.com-brightgreen?style=for-the-badge&logo=render)](https://nishchay-sih.onrender.com)
+[![Status](https://img.shields.io/badge/System%20Status-Healthy%20200%20OK-blue?style=for-the-badge)](https://nishchay-sih.onrender.com/api/health)
+
+> 🚀 **Live Demo URL:** [https://nishchay-sih.onrender.com](https://nishchay-sih.onrender.com)  
+> 🧪 **Live Sample Certificate:** [https://nishchay-sih.onrender.com/v/sample-cert-val1d-0000](https://nishchay-sih.onrender.com/v/sample-cert-val1d-0000)
+
 This document provides a guided walkthrough for evaluators, jury members, and reviewers. It demonstrates the core trust loop, the tamper-evident cryptographic seal, and the statutory fee-gate in under 5 minutes.
 
 ---
