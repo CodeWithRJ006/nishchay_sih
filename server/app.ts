@@ -34,9 +34,16 @@ import {
   getAdminActivity 
 } from './api/dashboard.js';
 
+import { checkAndRestoreExpiredTampers } from './services/tamperService.js';
+
 export const logger = pino({ level: process.env.LOG_LEVEL || 'info' });
 
 export function createApp() {
+  try {
+    checkAndRestoreExpiredTampers();
+  } catch {
+    // ignore on cold start before migrations
+  }
   const app = express();
   app.set('trust proxy', 1);
 

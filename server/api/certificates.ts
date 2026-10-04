@@ -13,6 +13,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { buildCertificatesQuery, CertificateRow } from '../repositories/certificatesQuery.js';
 import { z } from 'zod';
 import { INSTRUMENT_RULES } from '../../shared/src/rules.js';
+import { checkAndRestoreExpiredTampers } from '../services/tamperService.js';
 
 // Rate limiter for public endpoints (e.g., verify, export, complaint)
 const publicLimiter = rateLimit({
@@ -175,7 +176,8 @@ export const getPublicKeys = async (req: Request, res: Response) => {
 };
 
 export const verifyCertificatePublic = async (req: Request, res: Response) => {
-  const { publicId } = req.params;
+  const publicId = req.params.publicId || req.params.id;
+  checkAndRestoreExpiredTampers(publicId);
   
   const notFoundShape = {
     tradeName: 'Unknown',
@@ -283,7 +285,8 @@ export const verifyCertificatePublic = async (req: Request, res: Response) => {
 };
 
 export const getCertificatePublic = async (req: Request, res: Response) => {
-  const { publicId } = req.params;
+  const publicId = req.params.publicId || req.params.id;
+  checkAndRestoreExpiredTampers(publicId);
   try {
     const cert = await certificateService.getCertificate(publicId);
     let pubRec: Record<string, unknown> = {};

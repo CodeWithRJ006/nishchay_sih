@@ -118,6 +118,8 @@ export const adminIssueNoPayment = async (req: Request, res: Response) => {
   }
 };
 
+import { tamperCertificate, undoTamper, isCertificateTampered } from '../services/tamperService.js';
+
 /**
  * POST /api/admin/demo/tamper
  * Tamper a certificate's public_record to break the seal.
@@ -128,32 +130,10 @@ export const adminTamperCertificate = (req: Request, res: Response) => {
   const { publicId } = req.body as { publicId?: string };
   const targetId = publicId || 'sample-cert-val1d-0000';
 
-  if (!ALLOWED_SAMPLE_IDS.includes(targetId)) {
-    return res.status(400).json({ error: 'Only sample demonstrator certificates can be tampered' });
+  const result = tamperCertificate(targetId);
+  if (!result.success) {
+    return res.status(result.status || 400).json({ error: result.error });
   }
-
-  const cert = db.prepare('SELECT id, public_record FROM certificates WHERE public_id = ?').get(targetId) as { id: string; public_record: string } | undefined;
-  if (!cert) {
-    return res.status(404).json({ error: 'Certificate not found' });
-  }
-
-  let publicRecord: Record<string, unknown>;
-  try {
-    publicRecord = JSON.parse(cert.public_record) as Record<string, unknown>;
-  } catch {
-    return res.status(500).json({ error: 'Corrupt public_record' });
-  }
-  const original = cert.public_record;
-  publicRecord.tampered = true;
-  const tampered = JSON.stringify(publicRecord);
-
-  db.prepare('CREATE TABLE IF NOT EXISTS certificate_tamper_backup (cert_id TEXT, original_record TEXT)').run();
-  const existing = db.prepare('SELECT 1 FROM certificate_tamper_backup WHERE cert_id = ?').get(cert.id);
-  if (!existing) {
-    db.prepare('INSERT INTO certificate_tamper_backup (cert_id, original_record) VALUES (?, ?)').run(cert.id, original);
-  }
-
-  db.prepare('UPDATE certificates SET public_record = ? WHERE id = ?').run(tampered, cert.id);
 
   res.json({ success: true, publicId: targetId, message: 'Certificate tampered. Verification will now report "Seal broken".' });
 };
@@ -172,21 +152,12 @@ export const adminUndoTamperCertificate = (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Only sample demonstrator certificates can be tampered' });
   }
 
-  const cert = db.prepare('SELECT id FROM certificates WHERE public_id = ?').get(targetId) as { id: string } | undefined;
-  if (!cert) {
-    return res.status(404).json({ error: 'Certificate not found' });
+  const result = undoTamper(targetId);
+  if (!result.success) {
+    return res.status(400).json({ error: result.error });
   }
 
-  db.prepare('CREATE TABLE IF NOT EXISTS certificate_tamper_backup (cert_id TEXT, original_record TEXT)').run();
-  const backup = db.prepare('SELECT original_record FROM certificate_tamper_backup WHERE cert_id = ? ORDER BY rowid DESC LIMIT 1').get(cert.id) as { original_record: string } | undefined;
-  if (!backup) {
-    return res.status(400).json({ error: 'No tamper backup found for this certificate' });
-  }
-
-  db.prepare('UPDATE certificates SET public_record = ? WHERE id = ?').run(backup.original_record, cert.id);
-  db.prepare('DELETE FROM certificate_tamper_backup WHERE cert_id = ?').run(cert.id);
-
-  res.json({ success: true, publicId: targetId, message: 'Certificate restored. Seal is valid again.' });
+  res.json({ success: true, publicId: targetId, message: result.message });
 };
 
 /**
@@ -200,9 +171,8 @@ export const getTamperStatus = (req: Request, res: Response) => {
   if (!cert) {
     return res.status(404).json({ error: 'Certificate not found' });
   }
-  db.prepare('CREATE TABLE IF NOT EXISTS certificate_tamper_backup (cert_id TEXT, original_record TEXT)').run();
-  const backup = db.prepare('SELECT 1 FROM certificate_tamper_backup WHERE cert_id = ?').get(cert.id);
-  res.json({ publicId, isTampered: !!backup });
+  const isTampered = isCertificateTampered(publicId);
+  res.json({ publicId, isTampered });
 };
 
 let lastResetTime = 0;
