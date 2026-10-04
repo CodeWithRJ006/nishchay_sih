@@ -28,8 +28,17 @@ export function paymentCallback(req: Request, res: Response) {
   }
 
   const data = schema.parse(req.body);
-  const result = paymentCallbackService(data, signature);
-  res.status(200).json(result);
+  try {
+    const result = paymentCallbackService(data, signature);
+    res.status(200).json(result);
+  } catch (err: unknown) {
+    const error = err as Error & { status?: number; code?: string };
+    const status = error.status || 500;
+    res.status(status).json({
+      code: error.code || 'PAYMENT_CALLBACK_ERROR',
+      message: error.message
+    });
+  }
 }
 
 export function listPayments(req: Request, res: Response) {

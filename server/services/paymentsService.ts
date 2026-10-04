@@ -74,17 +74,28 @@ export function paymentCallbackService(
   const expectedSig = hmac.digest('hex');
   
   try {
-    if (!crypto.timingSafeEqual(Buffer.from(signature, 'utf8'), Buffer.from(expectedSig, 'utf8'))) {
-      throw new Error('Invalid signature');
+    const sigBuf = Buffer.from(signature, 'utf8');
+    const expBuf = Buffer.from(expectedSig, 'utf8');
+    if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
+      const err = new Error('Invalid signature') as Error & { status?: number; code?: string };
+      err.status = 401;
+      err.code = 'INVALID_SIGNATURE';
+      throw err;
     }
-  } catch {
-    throw new Error('Invalid signature');
+  } catch (e: unknown) {
+    const err = e as Error & { status?: number; code?: string };
+    err.status = 401;
+    err.code = 'INVALID_SIGNATURE';
+    throw err;
   }
 
-  // Check timestamp (within 15 minutes)
+  // Check timestamp (within 15 minutes, and not in future by > 60s)
   const now = clock.now();
-  if (Math.abs(now - body.timestamp) > 15 * 60 * 1000) {
-    throw new Error('Timestamp expired');
+  if ((now - body.timestamp) > 15 * 60 * 1000 || (body.timestamp - now) > 60 * 1000) {
+    const err = new Error('Timestamp expired or invalid') as Error & { status?: number; code?: string };
+    err.status = 400;
+    err.code = 'STALE_TIMESTAMP';
+    throw err;
   }
 
   return settlePayment(body);

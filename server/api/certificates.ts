@@ -11,6 +11,8 @@ import { hmacSecret } from '../config/secrets.js';
 import { clock } from '../../shared/src/clock.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { buildCertificatesQuery, CertificateRow } from '../repositories/certificatesQuery.js';
+import { z } from 'zod';
+import { INSTRUMENT_RULES } from '../../shared/src/rules.js';
 
 // Rate limiter for public endpoints (e.g., verify, export, complaint)
 const publicLimiter = rateLimit({
@@ -116,15 +118,32 @@ export const exportCertificatesCsv = async (req: Request, res: Response) => {
  */
 export const submitComplaint = async (req: Request, res: Response) => {
   const { publicId } = req.params;
-  const { note, category = 'Other', honeypot } = req.body as { note?: string; category?: string; honeypot?: string };
+
+  // Check certificate existence
+  const cert = db.prepare('SELECT 1 FROM certificates WHERE public_id = ?').get(publicId);
+  if (!cert) {
+    return res.status(404).json({ error: 'Certificate not found' });
+  }
+
+  const complaintSchema = z.object({
+    category: z.preprocess(
+      (v) => (typeof v === 'string' ? v.toUpperCase() : v),
+      z.enum(['BILLING', 'CALIBRATION', 'TAMPERING', 'OTHER'])
+    ).default('OTHER'),
+    note: z.string().max(300, 'Note must be <= 300 characters').optional().default(''),
+    honeypot: z.string().optional()
+  });
+
+  const parsed = complaintSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.errors[0]?.message || 'Invalid complaint data' });
+  }
+
+  const { category, note, honeypot } = parsed.data;
 
   // Simple honeypot check
   if (honeypot) {
     return res.status(400).json({ error: 'Invalid submission' });
-  }
-
-  if (note && note.length > 300) {
-    return res.status(400).json({ error: 'Note must be <= 300 characters' });
   }
 
   // Insert complaint
@@ -233,9 +252,13 @@ export const verifyCertificatePublic = async (req: Request, res: Response) => {
     // 4. Seal intact
     const sealIntact = isIntact;
 
+    const rawClass = String(publicRecord.instrumentClass || publicRecord.instrumentType || '');
+    const matchedRule = INSTRUMENT_RULES.find(r => r.code === rawClass || r.label === rawClass);
+    const humanInstrumentType = matchedRule ? matchedRule.label : (publicRecord.instrumentType || rawClass || 'Unknown');
+
     res.json({
       tradeName: publicRecord.tradeName || 'Unknown',
-      instrumentType: publicRecord.instrumentType || 'Unknown',
+      instrumentType: humanInstrumentType,
       instrumentClass: publicRecord.instrumentClass || 'Unknown',
       serial: publicRecord.serialNo || 'Unknown',
       status,
@@ -269,11 +292,15 @@ export const getCertificatePublic = async (req: Request, res: Response) => {
     } catch {
       pubRec = {};
     }
+    const rawClass = String(pubRec.instrumentClass || pubRec.instrumentType || '');
+    const matchedRule = INSTRUMENT_RULES.find(r => r.code === rawClass || r.label === rawClass);
+    const humanInstrumentType = matchedRule ? matchedRule.label : (pubRec.instrumentType || rawClass || '');
+
     res.json({
       publicId: cert.public_id,
       public_id: cert.public_id,
       tradeName: pubRec.tradeName ?? '',
-      instrumentType: pubRec.instrumentType ?? '',
+      instrumentType: humanInstrumentType,
       instrumentClass: pubRec.instrumentClass ?? '',
       serial: pubRec.serialNo ?? pubRec.serial ?? '',
       status: cert.status,
