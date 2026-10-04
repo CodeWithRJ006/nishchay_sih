@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShieldCheck, ChevronDown } from 'lucide-react';
+import { Menu, X, ShieldCheck, ChevronDown, FlaskConical } from 'lucide-react';
 import { DemoBadge } from '../components/ui/DemoBadge';
+import { JudgesLabDrawer } from '../components/JudgesLabDrawer';
 import { DEMO_MODE } from '../lib/demo';
 import { post } from '../lib/api';
 import { useAuth } from '../AuthContext';
@@ -16,6 +17,7 @@ const ROLE_LABELS: Record<string, string> = {
 export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; onSignOut?: () => void }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [labOpen, setLabOpen] = useState(false);
   const location = useLocation();
   const { user, refresh } = useAuth();
 
@@ -125,6 +127,20 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
               <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block mb-2 px-3">
                 Demo: Switch Role
               </span>
+            {DEMO_MODE && (
+              <button
+                type="button"
+                data-testid="mobile-judges-lab-button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setLabOpen(true);
+                }}
+                className="w-full mb-3 px-3 py-2 border border-purple-300 bg-purple-50 hover:bg-purple-100 text-purple-900 rounded text-sm font-bold flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+              >
+                <FlaskConical className="w-4 h-4 text-purple-700" />
+                <span>Judge's Lab &amp; Guide</span>
+              </button>
+            )}
               <div className="grid grid-cols-2 gap-2 px-1">
                 <button
                   type="button"
@@ -184,6 +200,18 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
               <ShieldCheck className="w-4 h-4" />
               <span>Verify a certificate</span>
             </Link>
+
+            {DEMO_MODE && (
+              <button
+                type="button"
+                data-testid="judges-lab-button"
+                onClick={() => setLabOpen(true)}
+                className="px-2.5 py-1.5 border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900 rounded text-sm font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+              >
+                <FlaskConical className="w-4 h-4 text-purple-700" />
+                <span>Judge's Lab</span>
+              </button>
+            )}
 
             {DEMO_MODE && (
               <div className="relative">
@@ -281,6 +309,8 @@ export const DesktopShell = ({ role = 'BUSINESS', onSignOut }: { role?: string; 
           </div>
         </main>
       </div>
+
+      <JudgesLabDrawer isOpen={labOpen} onClose={() => setLabOpen(false)} />
     </div>
   );
 };

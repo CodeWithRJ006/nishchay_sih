@@ -25,10 +25,12 @@ export const routeTable: RouteDef[] = [
   { method: 'POST', path: '/api/certificates/:publicId/revoke', roles: ['ADMIN'] },
   { method: 'GET', path: '/api/health', roles: ['PUBLIC'] },
   // Demo mode routes (only active when DEMO_MODE=true)
-  { method: 'GET', path: '/api/demo/progress', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
-  { method: 'POST', path: '/api/admin/demo/issue-no-payment', roles: ['ADMIN'] },
-  { method: 'POST', path: '/api/admin/demo/tamper', roles: ['ADMIN'] },
-  { method: 'POST', path: '/api/admin/demo/reset', roles: ['ADMIN'] },
+  { method: 'GET', path: '/api/demo/progress', roles: ['PUBLIC', 'BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/admin/demo/issue-no-payment', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/admin/demo/tamper', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/admin/demo/undo-tamper', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'GET', path: '/api/admin/demo/tamper-status', roles: ['PUBLIC', 'BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
+  { method: 'POST', path: '/api/admin/demo/reset', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
   // Block 9 Certificate Search & Export
   { method: 'GET', path: '/api/certificates/search', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },
   { method: 'GET', path: '/api/certificates/export', roles: ['BUSINESS', 'LMO', 'GATC', 'ADMIN'] },

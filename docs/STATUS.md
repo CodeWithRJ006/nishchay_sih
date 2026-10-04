@@ -17,3 +17,5 @@
 - **Gap c (Supporting-document upload):** DONE - `server/api/uploads.ts`, `server/tests/block4b.test.ts`
 - **Gap d (Architecture, Security, Deployment docs):** DONE - `ARCHITECTURE.md`, `SECURITY.md`, `DEPLOYMENT.md`
 - **Phase 6 (Visual Audit & End-to-End Proof):** DONE - `tests/shots.spec.ts` (19/19 tests passing across 1440x900 & 390x844), `scripts/smoke.ts` passing, 4-role switcher verified.
+- **Block 10a (Judge's Lab & Evaluation Drawer):** DONE - `web/src/components/JudgesLabDrawer.tsx`, `server/api/demo.ts` (`/api/admin/demo/issue-no-payment` 409 GATE_BLOCKED, `/api/admin/demo/tamper` and `undo-tamper`, `/api/demo/progress`), `server/tests/block10-seed.test.ts`.
+

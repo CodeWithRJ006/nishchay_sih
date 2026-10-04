@@ -11,12 +11,14 @@ import {
   XCircle, 
   Copy, 
   Check, 
-  ArrowLeft 
+  ArrowLeft,
+  FlaskConical
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { formatDate } from '../lib/formatters';
 import { get, post } from '../lib/api';
 import { verifySealResult, SealVerificationState } from '../../../shared/src/seal-browser';
+import { JudgesLabDrawer } from '../components/JudgesLabDrawer';
 
 interface VerifyResponse {
   tradeName: string;
@@ -61,6 +63,7 @@ export const PublicVerify = () => {
   const [complaintError, setComplaintError] = useState('');
   
   const [animStep, setAnimStep] = useState(0);
+  const [labOpen, setLabOpen] = useState(false);
 
   useEffect(() => {
     get<VerifyResponse>(`/api/public/verify/${id}`)
@@ -159,6 +162,15 @@ export const PublicVerify = () => {
           <Link to="/" className="text-gray-600 hover:text-ink transition-colors">Home</Link>
           <Link to={id ? `/v/${id}` : '/'} className="text-calibration-blue font-semibold">Verify</Link>
           <Link to="/login" className="text-gray-600 hover:text-ink transition-colors">Sign in</Link>
+          <button
+            type="button"
+            data-testid="verify-judges-lab-button"
+            onClick={() => setLabOpen(true)}
+            className="px-2.5 py-1 border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900 rounded text-sm font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <FlaskConical className="w-4 h-4 text-purple-700" />
+            <span>Judge's Lab</span>
+          </button>
         </nav>
       </div>
     </header>
@@ -629,6 +641,7 @@ export const PublicVerify = () => {
       </main>
 
       {publicFooter}
+      <JudgesLabDrawer isOpen={labOpen} onClose={() => setLabOpen(false)} />
     </div>
   );
 };

@@ -71,4 +71,64 @@ describe('Seed Dates & Properties', () => {
     const res400 = await request(app).post(`/api/certificates/${DEMO_CERT_VALID}/complaint`).set('x-csrf-token', 'test').send({ honeypot: "x" });
     expect(res400.status).toBe(400);
   });
+
+  it('Judge Lab: issue-no-payment hits fee-gate with 409 and GATE_BLOCKED', async () => {
+    const loginRes = await request(app).post('/api/demo/login-as/ADMIN');
+    const adminCookie = loginRes.headers['set-cookie'];
+
+    const res = await request(app)
+      .post('/api/admin/demo/issue-no-payment')
+      .set('Cookie', adminCookie)
+      .set('x-csrf-token', 'test')
+      .send({});
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('GATE_BLOCKED');
+  });
+
+  it('Judge Lab: tamper alters certificate and undo-tamper restores it', async () => {
+    const loginRes = await request(app).post('/api/demo/login-as/ADMIN');
+    const adminCookie = loginRes.headers['set-cookie'];
+
+    // 1. Tamper certificate
+    const tamperRes = await request(app)
+      .post('/api/admin/demo/tamper')
+      .set('Cookie', adminCookie)
+      .set('x-csrf-token', 'test')
+      .send({ publicId: DEMO_CERT_VALID });
+    expect(tamperRes.status).toBe(200);
+    expect(tamperRes.body.success).toBe(true);
+
+    // 2. Check tamper status
+    const statusRes = await request(app)
+      .get(`/api/admin/demo/tamper-status?publicId=${DEMO_CERT_VALID}`);
+    expect(statusRes.status).toBe(200);
+    expect(statusRes.body.isTampered).toBe(true);
+
+    // 3. Undo tamper
+    const undoRes = await request(app)
+      .post('/api/admin/demo/undo-tamper')
+      .set('Cookie', adminCookie)
+      .set('x-csrf-token', 'test')
+      .send({ publicId: DEMO_CERT_VALID });
+    expect(undoRes.status).toBe(200);
+    expect(undoRes.body.success).toBe(true);
+
+    // 4. Verify restored status
+    const statusRestored = await request(app)
+      .get(`/api/admin/demo/tamper-status?publicId=${DEMO_CERT_VALID}`);
+    expect(statusRestored.body.isTampered).toBe(false);
+  });
+
+  it('Judge Lab: GET /api/demo/progress returns all statutory steps', async () => {
+    const res = await request(app).get('/api/demo/progress');
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveProperty('register');
+    expect(res.body).toHaveProperty('apply');
+    expect(res.body).toHaveProperty('pay');
+    expect(res.body).toHaveProperty('schedule');
+    expect(res.body).toHaveProperty('inspect');
+    expect(res.body).toHaveProperty('certify');
+    expect(res.body).toHaveProperty('verify');
+    expect(res.body).toHaveProperty('rightToCheck');
+  });
 });

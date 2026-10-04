@@ -12,38 +12,36 @@ import { execSync } from 'node:child_process';
  */
 export const getDemoProgress = (req: Request, res: Response) => {
   const user = (req as unknown as Request).user as { id: string; role: string } | undefined;
-  if (!user || user.role !== 'BUSINESS') {
-    return res.status(403).json({ error: 'Business role required' });
-  }
+  const targetUserId = (user && user.role === 'BUSINESS') ? user.id : 'USR-BIZ1';
 
   // Helper to check existence of a query result
   const exists = (sql: string, params?: (string | number)[]) => !!db.prepare(sql).get(...(params || []));
 
-  const hasBusiness = exists('SELECT 1 FROM businesses WHERE owner_id = ?', [user.id]);
-  const hasApplication = exists('SELECT 1 FROM applications WHERE business_id = ?', [user.id]);
+  const hasBusiness = exists('SELECT 1 FROM businesses WHERE owner_id = ?', [targetUserId]);
+  const hasApplication = exists('SELECT 1 FROM applications WHERE business_id = ?', [targetUserId]);
   const hasReceipt = exists(
     `SELECT 1 FROM receipts r
      JOIN applications a ON r.application_id = a.id
      WHERE a.business_id = ?`,
-    [user.id]
+    [targetUserId]
   );
   const hasSchedule = exists(
     `SELECT 1 FROM appointments ap
      JOIN applications a ON ap.application_id = a.id
      WHERE a.business_id = ?`,
-    [user.id]
+    [targetUserId]
   );
   const hasInspectionPass = exists(
     `SELECT 1 FROM inspections i
      JOIN applications a ON i.application_id = a.id
      WHERE a.business_id = ? AND i.pass = 1`,
-    [user.id]
+    [targetUserId]
   );
   const hasCertificate = exists(
     `SELECT 1 FROM certificates c
      JOIN applications a ON c.application_id = a.id
      WHERE a.business_id = ?`,
-    [user.id]
+    [targetUserId]
   );
 
   res.json({
@@ -84,7 +82,7 @@ export const adminIssueNoPayment = async (req: Request, res: Response) => {
     const err = e as { statusCode?: number; message?: string };
     const status = typeof err.statusCode === 'number' ? err.statusCode : 409;
     const message = err.message ?? 'Fee gate blocked issuance';
-    return res.status(status).json({ error: message });
+    return res.status(status).json({ error: message, code: 'GATE_BLOCKED' });
   }
 };
 
@@ -95,11 +93,9 @@ export const adminIssueNoPayment = async (req: Request, res: Response) => {
  */
 export const adminTamperCertificate = (req: Request, res: Response) => {
   const { publicId } = req.body as { publicId?: string };
-  if (!publicId) {
-    return res.status(400).json({ error: 'publicId required' });
-  }
+  const targetId = publicId || 'sample-cert-val1d-0000';
 
-  const cert = db.prepare('SELECT id, public_record FROM certificates WHERE public_id = ?').get(publicId) as { id: string; public_record: string } | undefined;
+  const cert = db.prepare('SELECT id, public_record FROM certificates WHERE public_id = ?').get(targetId) as { id: string; public_record: string } | undefined;
   if (!cert) {
     return res.status(404).json({ error: 'Certificate not found' });
   }
@@ -111,17 +107,61 @@ export const adminTamperCertificate = (req: Request, res: Response) => {
   } catch {
     return res.status(500).json({ error: 'Corrupt public_record' });
   }
-  const original = JSON.stringify(publicRecord);
+  const original = cert.public_record;
   publicRecord.tampered = true;
   const tampered = JSON.stringify(publicRecord);
 
   // Store original for undo in a temporary table
-  db.prepare('CREATE TABLE IF NOT EXISTS certificate_tamper_backup (cert_id INTEGER, original_record TEXT)').run();
-  db.prepare('INSERT INTO certificate_tamper_backup (cert_id, original_record) VALUES (?, ?)').run(cert.id, original);
+  db.prepare('CREATE TABLE IF NOT EXISTS certificate_tamper_backup (cert_id TEXT, original_record TEXT)').run();
+  const existing = db.prepare('SELECT 1 FROM certificate_tamper_backup WHERE cert_id = ?').get(cert.id);
+  if (!existing) {
+    db.prepare('INSERT INTO certificate_tamper_backup (cert_id, original_record) VALUES (?, ?)').run(cert.id, original);
+  }
 
   db.prepare('UPDATE certificates SET public_record = ? WHERE id = ?').run(tampered, cert.id);
 
-  res.json({ success: true, message: 'Certificate tampered. Verification will now report "Seal broken".' });
+  res.json({ success: true, publicId: targetId, message: 'Certificate tampered. Verification will now report "Seal broken".' });
+};
+
+/**
+ * POST /api/admin/demo/undo-tamper
+ * Restores a tampered certificate's original public_record.
+ * Body: { publicId }
+ */
+export const adminUndoTamperCertificate = (req: Request, res: Response) => {
+  const { publicId } = req.body as { publicId?: string };
+  const targetId = publicId || 'sample-cert-val1d-0000';
+
+  const cert = db.prepare('SELECT id FROM certificates WHERE public_id = ?').get(targetId) as { id: string } | undefined;
+  if (!cert) {
+    return res.status(404).json({ error: 'Certificate not found' });
+  }
+
+  db.prepare('CREATE TABLE IF NOT EXISTS certificate_tamper_backup (cert_id TEXT, original_record TEXT)').run();
+  const backup = db.prepare('SELECT original_record FROM certificate_tamper_backup WHERE cert_id = ? ORDER BY rowid DESC LIMIT 1').get(cert.id) as { original_record: string } | undefined;
+  if (!backup) {
+    return res.status(400).json({ error: 'No tamper backup found for this certificate' });
+  }
+
+  db.prepare('UPDATE certificates SET public_record = ? WHERE id = ?').run(backup.original_record, cert.id);
+  db.prepare('DELETE FROM certificate_tamper_backup WHERE cert_id = ?').run(cert.id);
+
+  res.json({ success: true, publicId: targetId, message: 'Certificate restored. Seal is valid again.' });
+};
+
+/**
+ * GET /api/admin/demo/tamper-status
+ * Checks if a certificate is currently tampered.
+ */
+export const getTamperStatus = (req: Request, res: Response) => {
+  const publicId = (req.query.publicId as string) || 'sample-cert-val1d-0000';
+  const cert = db.prepare('SELECT id FROM certificates WHERE public_id = ?').get(publicId) as { id: string } | undefined;
+  if (!cert) {
+    return res.status(404).json({ error: 'Certificate not found' });
+  }
+  db.prepare('CREATE TABLE IF NOT EXISTS certificate_tamper_backup (cert_id TEXT, original_record TEXT)').run();
+  const backup = db.prepare('SELECT 1 FROM certificate_tamper_backup WHERE cert_id = ?').get(cert.id);
+  res.json({ publicId, isTampered: !!backup });
 };
 
 /**
@@ -175,5 +215,7 @@ export const demoRoutes = [
   { method: 'POST', path: '/api/demo/login-as/:role', handler: [demoLoginAs] },
   { method: 'POST', path: '/api/admin/demo/issue-no-payment', handler: [adminIssueNoPayment] },
   { method: 'POST', path: '/api/admin/demo/tamper', handler: [adminTamperCertificate] },
+  { method: 'POST', path: '/api/admin/demo/undo-tamper', handler: [adminUndoTamperCertificate] },
+  { method: 'GET', path: '/api/admin/demo/tamper-status', handler: [getTamperStatus] },
   { method: 'POST', path: '/api/admin/demo/reset', handler: [adminResetDemo] },
 ];

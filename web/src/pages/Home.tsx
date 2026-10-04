@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   UserCheck,
   Building2,
-  CheckCircle2
+  CheckCircle2,
+  FlaskConical
 } from 'lucide-react';
 import QrScanner from 'qr-scanner';
 import { 
@@ -23,6 +24,7 @@ import {
   parseVerifyInput 
 } from '../../../shared/index.js';
 import { get, post } from '../lib/api';
+import { JudgesLabDrawer } from '../components/JudgesLabDrawer';
 import { useAuth } from '../AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -58,6 +60,7 @@ export const Home = () => {
 
   // FAQ open states
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [labOpen, setLabOpen] = useState(false);
 
   useEffect(() => {
     // Fetch system configuration
@@ -295,6 +298,17 @@ export const Home = () => {
             >
               FAQ
             </button>
+            {demoMode && (
+              <button
+                type="button"
+                data-testid="home-judges-lab-button"
+                onClick={() => setLabOpen(true)}
+                className="px-3 py-1.5 border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-900 rounded text-sm font-semibold flex items-center gap-1.5 transition-colors shadow-sm"
+              >
+                <FlaskConical className="w-4 h-4 text-purple-700" />
+                <span>Judge's Lab</span>
+              </button>
+            )}
             <Link to="/login">
               <Button variant="outline" size="sm">Sign in</Button>
             </Link>
@@ -317,6 +331,19 @@ export const Home = () => {
         {/* Mobile Dropdown */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-white border-b border-gray-200 px-4 pt-2 pb-4 space-y-2">
+            {demoMode && (
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  setLabOpen(true);
+                }}
+                className="w-full text-left py-2 px-3 text-purple-900 bg-purple-50 hover:bg-purple-100 rounded text-sm font-bold flex items-center gap-2 mb-1"
+              >
+                <FlaskConical className="w-4 h-4 text-purple-700" />
+                <span>Judge's Lab &amp; Guide</span>
+              </button>
+            )}
             <button 
               type="button"
               onClick={() => scrollToSection('how-it-works')} 
@@ -915,6 +942,7 @@ export const Home = () => {
         </div>
       </footer>
 
+      <JudgesLabDrawer isOpen={labOpen} onClose={() => setLabOpen(false)} />
     </div>
   );
 };
