@@ -170,10 +170,25 @@ npm run demo:reset
 # 3. Build production web bundle
 npm run build
 
-# 4. Start production server
+# 4a. Run in Local Demo Mode (default demo credentials, automatic seeding)
+npm run start:demo
+
+# 4b. Or Run Development Server (live reload on port 5173 proxying to 4000)
+npm run dev
+
+# 4c. Or Run in Strict Production Mode (requires JWT_SECRET and HMAC_SECRET in .env; DEMO_MODE=false)
 npm start
 ```
-The application will be live at `http://localhost:4000`.
+The application will be live at `http://localhost:4000` (or `http://localhost:5173` in development mode).
+
+### Production & Render Deployment Configuration
+The application is pre-configured for deployment (e.g. on Render via `render.yaml`). Required environment variables:
+- `DEMO_MODE`: Set to `'true'` for prototype evaluation (enables 1-click role switcher and sandbox reset) or `'false'` for production.
+- `JWT_SECRET`: High-entropy 32+ character secret for signing user session cookies. (Required when `DEMO_MODE=false`).
+- `HMAC_SECRET`: High-entropy secret for signing and verifying statutory payment receipts. (Required when `DEMO_MODE=false`).
+- `STORAGE_DIR`: Persistent storage directory for inspection photos and uploads (e.g., `storage/uploads`).
+- `PUBLIC_BASE_URL`: Public HTTPS URL (e.g., `https://nishchay-sih.onrender.com`) for QR code generation and public verification redirects.
+
 
 ### Complete Verification Suite
 Run the exact commands used in continuous integration:

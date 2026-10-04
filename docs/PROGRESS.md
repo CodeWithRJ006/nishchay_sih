@@ -2,18 +2,17 @@
 
 | Phase | Module | Status | Notes |
 | :--- | :--- | :--- | :--- |
-| Phase 1a | API Client & CSRF | ✅ DONE | Raw fetch eradicated outside api.ts, CSRF enforced, 403 verified. |
-| Phase 1b | Form UX & Zones API | ✅ DONE | Toast variants (role=alert, 6s), unique IDs/autoComplete, /api/zones, demo prefill. |
-| Phase 1c | Shell, Navigation & A11y | ✅ DONE | Sidebars per role, human labels, role switcher, responsive under 1024px, AA badge. |
-| Phase 1d | Typography & Formatters | ✅ DONE | formatDate (en-IN), formatInr, non-clipping TickScale, max-w-7xl left-aligned layout. |
+| Phase 1 | Foundation & UX | ✅ DONE | CSRF, API client, toasts, sidebars, A11y, formatters, TickScale. |
 | Phase 2 | Public Verification Page | ✅ DONE | In-browser ECDSA verification, 4 states, data-driven ticks, timeline, Right to Check. |
 | Phase 3 | Landing & Home Page | ✅ DONE | Sticky nav, verify card, camera QR modal, 6-step timeline, seal honesty, role panels, FAQ. |
 | Phase 4 | Realistic Data & Business Role | ✅ DONE | Realistic seed data (Hyderabad), business dashboard, next-step banner, wizard stepper, apps/instruments. |
-| Phase 5 | LMO, GATC & Admin | ✅ DONE | Officer dashboard (KPIs, accept/reject modal, today schedule, history link), admin dashboard (bar chart, assign queue, live feed 3s polling), officer profile (avatar, load bar, read-only dl), all sidebar routes resolve, 182 tests green, verify passes. |
-| Phase 6 | Playwright Visual Audit & Smoke Proof | ✅ DONE | 19/19 Playwright tests passing at 1440x900 & 390x844; interactive role switcher working across all roles; smoke trust loop verified; full verify passed. |
-| Block 10a | Judge's Lab & Evaluation Drawer | ✅ DONE | Fee-gate refusal (409 GATE_BLOCKED), tamper demo + undo restoration, trust loop guide, factory reset. 185 tests green. |
-| Field App & PDF QR | Real Phone Field Flow & PDF QR Scan | ✅ DONE | `/field` job detail & inspection audited at 390x844 (0 errors, touch targets >= 44px, text >= 14px, demo site bypass, rear/fallback camera). Certificate PDF professionally designed with dynamic QR encoding live HTTPS/reqBase. 188 tests green. |
-| Verification | Full Suite (Lint/TS/Tests/Build) | ✅ DONE | 188/188 tests green across 31 test files, build clean. Port mismatch fixed (4000). |
+| Phase 5 & 6 | Dashboards & Playwright | ✅ DONE | Officer/Admin screens, 19/19 visual tests at 1440x900 & 390x844. |
+| Field & PDF | Mobile Inspection & QR | ✅ DONE | Real phone field verification, vector PDF certificates with dynamic QR. |
+| Audit Block A | Crash Guard & SQLi | ✅ DONE | AsyncHandler on all routes, query builder allowlist, Zod integer bounds. |
+| Audit Block B | Auth, RBAC & Exposure | ✅ DONE | Admin-only demo routes, in-process reset (30s limit), lazy secrets, lockout. |
+| Audit Block C | Field Integrity & Seal | ✅ DONE | Unified storageDir, Haversine GPS checks, atomic cert issuance, seal verified. |
+| Audit Block D | Minor Defect Hardening | ✅ DONE | Payment sig/timestamp checks, complaint validation, 100% route coverage test. |
+| Audit Block E | Docs & Finish Probes | ✅ DONE | Updated SECURITY/ARCHITECTURE/STATUS/README, live server probes verified. |
 
 ## Next Up
-- **Ready for live deployment on Render.**
+- **Ready for evaluation and live deployment.**
