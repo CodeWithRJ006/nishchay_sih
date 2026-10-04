@@ -17,3 +17,5 @@ services:
         generateValue: true
       - key: HMAC_SECRET
         generateValue: true
+      - key: STORAGE_DIR
+        value: "storage/uploads"

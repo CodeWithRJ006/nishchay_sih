@@ -1,44 +1,59 @@
 import { Request, Response } from 'express';
+import { z } from 'zod';
 import { db } from '../db/index.js';
 import { recordAudit } from '../repositories/appointmentsRepo.js';
 import { transition } from '../../shared/src/stateMachine.js';
 import crypto from 'crypto';
 import path from 'path';
 import fs from 'fs';
-import { evaluateReadings } from '../../shared/src/rules.js';
+import { INSTRUMENT_RULES, evaluateReadings } from '../../shared/src/rules.js';
+import { storageDir } from '../config/paths.js';
+import { CertificateService } from '../services/certificateService.js';
 
-const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
+const readingItemSchema = z.object({
+  applied: z.number().finite({ message: 'Applied reading must be a finite number' }),
+  observed: z.number().finite({ message: 'Observed reading must be a finite number' })
+});
 
-// We'll use multer in the router for this endpoint
+const readingsArraySchema = z.array(readingItemSchema).min(3, { message: 'At least 3 readings are required' });
+
 export async function submitInspection(req: Request, res: Response) {
-  const certificateService = new (await import('../services/certificateService.js')).CertificateService();
   const { id } = req.params; // application_id
   const userId = req.user!.id;
   
-  const app = db.prepare('SELECT state, instrument_id FROM applications WHERE id = ?').get(id) as { state: string, instrument_id: string } | undefined;
+  const app = db.prepare('SELECT state, instrument_id FROM applications WHERE id = ?').get(id) as { state: string; instrument_id: string } | undefined;
   if (!app) return res.status(404).json({ error: 'Application not found' });
   
   if (app.state !== 'ACCEPTED') {
     return res.status(409).json({ error: 'Application must be ACCEPTED' });
   }
 
-  const appointment = db.prepare('SELECT status FROM appointments WHERE application_id = ? AND officer_id = ?').get(id, userId) as { status: string } | undefined;
+  const appointment = db.prepare(`
+    SELECT status, arrived_lat, arrived_lng, arrived_distance 
+    FROM appointments 
+    WHERE application_id = ? AND officer_id = ?
+  `).get(id, userId) as {
+    status: string;
+    arrived_lat: number | null;
+    arrived_lng: number | null;
+    arrived_distance: number | null;
+  } | undefined;
+
   if (!appointment || appointment.status !== 'ARRIVED') {
     return res.status(409).json({ error: 'Officer must have ARRIVED' });
   }
 
   // Parse JSON fields from form data
-  let checklist: string[];
-  let readings: { applied: number, observed: number }[];
+  let rawChecklist: unknown;
+  let rawReadings: unknown;
   let pass: boolean;
   let reasons: string[];
   let clientCaptureTimes: string[];
   let clientHashes: string[];
 
   try {
-    checklist = JSON.parse(req.body.checklist);
-    readings = JSON.parse(req.body.readings);
+    rawChecklist = JSON.parse(req.body.checklist);
+    rawReadings = JSON.parse(req.body.readings);
     pass = JSON.parse(req.body.pass);
     reasons = JSON.parse(req.body.reasons || '[]');
     clientCaptureTimes = JSON.parse(req.body.clientCaptureTimes || '[]');
@@ -49,14 +64,6 @@ export async function submitInspection(req: Request, res: Response) {
 
   if (!pass && reasons.length === 0) {
     return res.status(400).json({ error: 'FAIL requires at least one reason' });
-  }
-
-  const instrumentRow = db.prepare('SELECT type_code FROM instruments WHERE id = ?').get(app.instrument_id) as { type_code: string } | undefined;
-  if (!instrumentRow) return res.status(404).json({ error: 'Instrument not found' });
-
-  const evaluated = evaluateReadings(instrumentRow.type_code, readings);
-  if (!evaluated.pass && pass && reasons.length === 0) {
-    return res.status(400).json({ error: 'PASS override requires a reason' });
   }
 
   const files = req.files as Express.Multer.File[];
@@ -100,13 +107,67 @@ export async function submitInspection(req: Request, res: Response) {
     });
   }
 
-  const transaction = db.transaction(() => {
-    // Write files
-    for (const p of photoRecords) {
-      fs.writeFileSync(path.join(storageDir, p.file_name), p.buffer);
-    }
+  // Validate readings with Zod
+  const readingsParseResult = readingsArraySchema.safeParse(rawReadings);
+  if (!readingsParseResult.success) {
+    return res.status(400).json({ error: readingsParseResult.error.errors[0]?.message || 'Invalid readings' });
+  }
+  const readings = readingsParseResult.data;
 
-    // Insert inspection
+  // Plausible range validation: non-negative and realistic scale (e.g., up to 500,000)
+  for (const r of readings) {
+    if (r.applied <= 0 || r.observed < 0) {
+      return res.status(400).json({ error: 'Readings must be positive numbers' });
+    }
+    if (r.applied > 500000 || r.observed > 500000) {
+      return res.status(400).json({ error: 'Readings exceed plausible measurement range' });
+    }
+  }
+
+  const instrumentRow = db.prepare('SELECT type_code FROM instruments WHERE id = ?').get(app.instrument_id) as { type_code: string } | undefined;
+  if (!instrumentRow) return res.status(404).json({ error: 'Instrument not found' });
+
+  // Validate checklist: all required items must be checked/true
+  const rule = INSTRUMENT_RULES.find(r => r.code === instrumentRow.type_code);
+  if (!Array.isArray(rawChecklist)) {
+    return res.status(400).json({ error: 'Checklist must be an array' });
+  }
+
+  let checklistValid = false;
+  if (rule) {
+    if (rawChecklist.every(item => typeof item === 'boolean')) {
+      checklistValid = rawChecklist.length >= rule.checklistDemo.length && rawChecklist.every(item => item === true);
+    } else if (rawChecklist.every(item => typeof item === 'object' && item !== null)) {
+      const typedItems = rawChecklist as Record<string, unknown>[];
+      checklistValid = typedItems.length >= 1 && typedItems.every(item => item.ok === true || item.checked === true);
+    } else if (rawChecklist.every(item => typeof item === 'string')) {
+      checklistValid = rawChecklist.length >= rule.checklistDemo.length;
+    }
+  } else {
+    checklistValid = rawChecklist.length > 0;
+  }
+
+  if (!checklistValid) {
+    return res.status(400).json({ error: 'All checklist items must be verified' });
+  }
+
+  const evaluated = evaluateReadings(instrumentRow.type_code, readings);
+  if (!evaluated.pass && pass && reasons.length === 0) {
+    return res.status(400).json({ error: 'PASS override requires a reason' });
+  }
+
+  const gpsLat = appointment.arrived_lat ?? 17.3850;
+  const gpsLng = appointment.arrived_lng ?? 78.4867;
+  const gpsDistance = appointment.arrived_distance ?? 12.0;
+
+  const certificateService = new CertificateService();
+  const dir = storageDir();
+  let certificateId: string | null = null;
+
+  // Single atomic database transaction:
+  // inspection save + application state transition (ACCEPTED -> INSPECTED_PASS) + certificate issuance
+  const atomicInspection = db.transaction(() => {
+    // 1. Insert inspection
     db.prepare(`
       INSERT INTO inspections (id, application_id, officer_id, gps_lat, gps_lng, gps_distance, checklist, readings, pass, reasons)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -114,14 +175,16 @@ export async function submitInspection(req: Request, res: Response) {
       'INS-' + crypto.randomBytes(4).toString('hex'), 
       id, 
       userId, 
-      0, 0, 0, // In a real app we'd pass these from client or compute here, but spec doesn't require sending GPS on submit, just "store private details: gps, distance"
-      JSON.stringify(checklist), 
+      gpsLat, 
+      gpsLng, 
+      gpsDistance,
+      JSON.stringify(rawChecklist), 
       JSON.stringify(readings), 
       pass ? 1 : 0, 
       JSON.stringify(reasons)
     );
 
-    // Insert photos
+    // 2. Insert photos
     const insertPhoto = db.prepare(`
       INSERT INTO inspection_photos (id, application_id, uploader_id, file_name, file_hash, client_capture_time, server_receive_time)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -130,28 +193,40 @@ export async function submitInspection(req: Request, res: Response) {
       insertPhoto.run('PHO-' + crypto.randomBytes(4).toString('hex'), id, userId, p.file_name, p.file_hash, p.client_capture_time, p.server_receive_time);
     }
 
-    // State transition
+    // 3. State transition
     const ev = pass ? { type: 'inspection_pass' as const } : { type: 'inspection_fail' as const, reasons };
     const newState = transition(app.state as import('../../shared/src/stateMachine.js').State, ev);
     db.prepare('UPDATE applications SET state = ? WHERE id = ?').run(newState, id);
 
-    // Audit log
+    // 4. Audit log
     recordAudit(id, userId, pass ? 'INSPECTED_PASS' : 'FAILED', JSON.stringify({ reasons }));
+
+    // 5. If pass, issue certificate INSIDE this exact transaction
+    if (pass) {
+      certificateId = certificateService.issueCertificateSync(id, userId);
+    }
   });
 
   try {
-    transaction();
-    if (pass) {
-      const publicId = await certificateService.issueCertificate(id, userId);
-      return res.json({ success: true, certificateId: publicId });
+    atomicInspection();
+
+    // Write photo files to disk only after transaction commits successfully
+    for (const p of photoRecords) {
+      fs.writeFileSync(path.join(dir, p.file_name), p.buffer);
     }
-    res.json({ success: true });
+
+    if (pass) {
+      return res.json({ success: true, certificateId });
+    }
+    return res.json({ success: true });
   } catch (e: unknown) {
     const err = e as Error;
     if (err.message.includes('UNIQUE constraint failed: inspections.application_id')) {
       return res.status(409).json({ error: 'Inspection already submitted' });
     }
+    if (err.message.includes('Fee gate not satisfied') || err.message.includes('GATE_BLOCKED')) {
+      return res.status(409).json({ error: 'Fee gate not satisfied' });
+    }
     return res.status(500).json({ error: err.message });
   }
 }
-

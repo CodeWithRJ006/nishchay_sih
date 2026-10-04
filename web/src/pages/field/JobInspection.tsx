@@ -52,8 +52,12 @@ export function JobInspection() {
   // Step 2: Checklist
   const [checklistValues, setChecklistValues] = useState<Record<number, boolean>>({});
 
-  // Step 3: Readings
-  const [readings, setReadings] = useState<{applied: string, observed: string}[]>([{applied: '', observed: ''}]);
+  // Step 3: Readings (at least 3 test points required)
+  const [readings, setReadings] = useState<{applied: string, observed: string}[]>([
+    { applied: '', observed: '' },
+    { applied: '', observed: '' },
+    { applied: '', observed: '' }
+  ]);
 
   // Step 4: Verdict
   const [pass, setPass] = useState<boolean | null>(null);
@@ -214,7 +218,9 @@ export function JobInspection() {
 
             <Button variant="outline" className="w-full" onClick={() => setReadings([...readings, {applied: '', observed: ''}])}>+ Add Test Point</Button>
 
-            <Button variant="primary" className="w-full h-12" onClick={() => setStep(4)} disabled={validReadings.length === 0}>Review Verdict</Button>
+            <Button variant="primary" className="w-full h-12" onClick={() => setStep(4)} disabled={validReadings.length < 3}>
+              {validReadings.length < 3 ? `Review Verdict (${validReadings.length}/3 points entered)` : 'Review Verdict'}
+            </Button>
           </div>
         )}
 

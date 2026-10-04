@@ -37,11 +37,20 @@ export function JobDetail() {
       .catch(() => setError('Failed to load job details'));
   }, [id]);
 
-  const handleArrive = async (overrideLat?: number, overrideLng?: number) => {
+  const handleArrive = async (useDemoGps = false) => {
     setArriving(true);
     setError('');
 
     try {
+      if (useDemoGps) {
+        const res = await post<{ success: boolean; arrived_distance?: number }>(`/api/field/jobs/${id}/arrive`, {
+          is_demo_location: true
+        });
+        setDistance(res.arrived_distance ?? 12);
+        setJob({ ...job!, status: 'ARRIVED' });
+        return;
+      }
+
       const getPosition = (): Promise<GeolocationPosition> => {
         return new Promise((resolve, reject) => {
           if (!navigator.geolocation) {
@@ -55,14 +64,9 @@ export function JobDetail() {
         });
       };
 
-      let userLat = overrideLat;
-      let userLng = overrideLng;
-
-      if (userLat === undefined || userLng === undefined) {
-        const position = await getPosition();
-        userLat = position.coords.latitude;
-        userLng = position.coords.longitude;
-      }
+      const position = await getPosition();
+      const userLat = position.coords.latitude;
+      const userLng = position.coords.longitude;
 
       const targetLat = typeof job?.lat === 'number' ? job.lat : 17.3850;
       const targetLng = typeof job?.lng === 'number' ? job.lng : 78.4867;
@@ -73,7 +77,11 @@ export function JobDetail() {
         throw new Error(`You are ${Math.round(dist)}m away. You must be within 300m of the premises to arrive.`);
       }
 
-      await post(`/api/field/jobs/${id}/arrive`, {});
+      await post(`/api/field/jobs/${id}/arrive`, {
+        lat: userLat,
+        lng: userLng,
+        is_demo_location: false
+      });
 
       // Success, update local state
       setJob({ ...job!, status: 'ARRIVED' });
@@ -212,18 +220,20 @@ export function JobDetail() {
           )
         ) : job.status === 'ACCEPTED' ? (
           <div className="w-full flex flex-col gap-2">
-            <Button variant="primary" className="w-full h-11" onClick={() => handleArrive()} disabled={arriving}>
-              {arriving ? 'Locating...' : 'Arrive at Premises'}
+            <Button variant="primary" className="w-full h-11" onClick={() => handleArrive(false)} disabled={arriving}>
+              {arriving ? 'Locating...' : 'Arrive at Premises (Real GPS)'}
             </Button>
             {isDemo && (
               <Button 
                 variant="outline" 
-                className="w-full h-11 relative" 
-                onClick={() => handleArrive(typeof job?.lat === 'number' ? job.lat : 17.3850, typeof job?.lng === 'number' ? job.lng : 78.4867)} 
+                className="w-full h-11 relative border-amber-500 text-amber-900 bg-amber-50 hover:bg-amber-100" 
+                onClick={() => handleArrive(true)} 
                 disabled={arriving}
               >
-                <span className="absolute -top-3 -right-2 bg-amber-500 text-white text-sm font-bold px-2 py-0.5 rounded shadow">DEMO</span>
-                Use demo site location
+                <span className="absolute -top-3 -right-2 bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow tracking-wide">
+                  DEMO GPS (12m)
+                </span>
+                Use Demo GPS
               </Button>
             )}
           </div>

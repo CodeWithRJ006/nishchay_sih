@@ -141,8 +141,12 @@ async function run() {
     const dummyPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
     const hash = crypto.createHash('sha256').update(dummyPng).digest('hex');
     const form = new FormData();
-    form.append('checklist', JSON.stringify([{ item: 'Weight', ok: true }]));
-    form.append('readings', JSON.stringify([{ val: 10 }]));
+    form.append('checklist', JSON.stringify([true, true, true]));
+    form.append('readings', JSON.stringify([
+      { applied: 10, observed: 10 },
+      { applied: 20, observed: 20 },
+      { applied: 50, observed: 50 }
+    ]));
     form.append('pass', 'true');
     form.append('clientHashes', JSON.stringify([hash, hash]));
     form.append('clientCaptureTimes', JSON.stringify([new Date().toISOString(), new Date().toISOString()]));
@@ -160,6 +164,14 @@ async function run() {
     const res = await request('GET', `/api/certificates/${publicId}`, undefined, false);
     if (res.status !== 'VALID') {
       throw new Error('Certificate status is not VALID');
+    }
+
+    const verifyRes = await request('GET', `/api/public/verify/${publicId}`, undefined, false);
+    if (verifyRes.status !== 'VALID') {
+      throw new Error(`Public verify returned status ${verifyRes.status}, expected VALID`);
+    }
+    if (verifyRes.integrity !== true) {
+      throw new Error(`Public verify returned integrity ${verifyRes.integrity}, expected true`);
     }
   });
 

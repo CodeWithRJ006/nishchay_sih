@@ -9,6 +9,7 @@ import { hmacSecret } from '../config/secrets.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { clock } from '../../shared/src/clock.js';
+import { storageDir } from '../config/paths.js';
 
 export function seedDemoData() {
   const usersCount = db.prepare('SELECT COUNT(*) as c FROM users').get() as { c: number };
@@ -131,8 +132,7 @@ export function seedDemoData() {
     db.prepare('INSERT INTO instruments (id, business_id, type_code, make, model, capacity, serial, accuracy_class, location) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
       .run(iCancelled, b6, 'NAWI-3', 'WeighCorp', 'Industrial 100', '100kg', 'NW-2026-0444', 'Class III', 'Assembly Line 1');
 
-    const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'storage', 'uploads');
-    if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
+    const uploadDir = storageDir();
 
     const createFullCert = (
       appId: string,
@@ -153,7 +153,7 @@ export function seedDemoData() {
       const photoName = `seal-photo-${publicId}.png`;
       const photoContent = `photo-data-for-${publicId}`;
       const photoHash = crypto.createHash('sha256').update(photoContent).digest('hex');
-      fs.writeFileSync(path.join(storageDir, photoName), Buffer.from(photoContent));
+      fs.writeFileSync(path.join(uploadDir, photoName), Buffer.from(photoContent));
 
       const privateDetails = {
         officerId: 'USR-LMO1',

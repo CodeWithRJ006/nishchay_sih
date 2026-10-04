@@ -138,13 +138,17 @@ describe('Block 6b Tests', () => {
     const fakeJpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
     const hash = crypto.createHash('sha256').update(fakeJpeg).digest('hex');
     // Instrument is NAWI-3 (or W-1 from seed). We inserted NSH-I-000001 which is W-1 (tolerance 5).
-    const readings = [{ applied: 100, observed: 151 }]; // Error 51 > 50 -> Fail
+    const readings = [
+      { applied: 100, observed: 151 },
+      { applied: 200, observed: 200 },
+      { applied: 300, observed: 300 }
+    ]; // Error 51 > 50 -> Fail
 
     const res = await request(app)
       .post(`/api/field/jobs/${testAppId}/inspection`)
       .set('Cookie', [`token=${lmoToken}`])
       .set('x-csrf-token', 'dummy')
-      .field('checklist', '[]')
+      .field('checklist', JSON.stringify([true, true, true]))
       .field('readings', JSON.stringify(readings))
       .field('pass', 'true')
       .field('clientHashes', JSON.stringify([hash, hash]))
@@ -158,7 +162,11 @@ describe('Block 6b Tests', () => {
   it('submits successfully', async () => {
     const fakeJpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0]);
     const hash = crypto.createHash('sha256').update(fakeJpeg).digest('hex');
-    const readings = [{ applied: 100, observed: 101 }]; // Error 1 < 5 -> Pass
+    const readings = [
+      { applied: 100, observed: 101 },
+      { applied: 200, observed: 201 },
+      { applied: 300, observed: 302 }
+    ]; // Error <= 2 < 5 -> Pass
 
     const res = await request(app)
       .post(`/api/field/jobs/${testAppId}/inspection`)

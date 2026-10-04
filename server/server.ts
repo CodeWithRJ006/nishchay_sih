@@ -6,6 +6,7 @@ import { createApp, logger } from './app.js';
 import { runMigrations } from './db/migrate.js';
 import { seedDemoData } from './scripts/seed.js';
 import { ensureKeys } from './seal/index.js';
+import { storageDir } from './config/paths.js';
 
 if (parseInt(process.versions.node.split('.')[0], 10) < 22) {
     process.exit(1);
@@ -25,6 +26,7 @@ if (process.env.DEMO_MODE !== 'true') {
 runMigrations();
 
 ensureKeys();
+storageDir();
 
 if (process.env.DEMO_MODE === 'true') {
   seedDemoData();

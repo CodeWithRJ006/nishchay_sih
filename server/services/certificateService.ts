@@ -5,6 +5,7 @@ import { generateId } from '../../shared/src/ids.js';
 import crypto from 'node:crypto';
 import { recordAudit } from '../repositories/auditRepo.js';
 import { ensureKeys, signHash } from '../seal/index.js';
+import { checkFeeGate } from '../services/paymentsService.js';
 
 export interface PrivateDetails {
   officerId: string;
@@ -17,8 +18,7 @@ export interface PrivateDetails {
 }
 
 export class CertificateService {
-  async issueCertificate(applicationId: string, officerId: string): Promise<string> {
-    const { checkFeeGate } = await import('../services/paymentsService.js');
+  issueCertificateSync(applicationId: string, officerId: string): string {
     if (!checkFeeGate(applicationId, officerId)) throw new Error('Fee gate not satisfied');
 
     const app = db.prepare('SELECT id, instrument_id, fee_amount, state FROM applications WHERE id = ?').get(applicationId) as { id: string; instrument_id: string; fee_amount: number; state: string } | undefined;
@@ -90,6 +90,10 @@ export class CertificateService {
     });
 
     return publicId;
+  }
+
+  async issueCertificate(applicationId: string, officerId: string): Promise<string> {
+    return this.issueCertificateSync(applicationId, officerId);
   }
 
   async getCertificate(publicId: string) {

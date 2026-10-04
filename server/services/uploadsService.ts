@@ -3,8 +3,7 @@ import { findApplicationByDocumentUrl } from '../repositories/uploadsRepo.js';
 import path from 'node:path';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
-
-const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'storage', 'uploads');
+import { storageDir } from '../config/paths.js';
 
 export function saveUploadService(buf: Buffer) {
   let ext = '';
@@ -20,9 +19,9 @@ export function saveUploadService(buf: Buffer) {
 
   const fileHash = crypto.createHash('sha256').update(buf).digest('hex');
   const fileName = `${crypto.randomBytes(16).toString('hex')}${ext}`;
-  const filePath = path.join(storageDir, fileName);
+  const dir = storageDir();
+  const filePath = path.join(dir, fileName);
   
-  if (!fs.existsSync(storageDir)) fs.mkdirSync(storageDir, { recursive: true });
   fs.writeFileSync(filePath, buf);
 
   return { fileName, fileHash };
@@ -41,7 +40,7 @@ export function authorizeDownloadService(user: Express.Request['user'], fileName
     if (!biz || app.business_id !== biz.id) throw new Error('Forbidden');
   }
   
-  const filePath = path.join(storageDir, fileName);
+  const filePath = path.join(storageDir(), fileName);
   if (!fs.existsSync(filePath)) throw new Error('Not found on disk');
 
   return filePath;

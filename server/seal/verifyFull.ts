@@ -4,6 +4,7 @@ import path from 'node:path';
 import { db } from '../db/index.js';
 import { canonicalJson } from '../../shared/src/canonicalJson.js';
 import { ensureKeys } from './keys.js';
+import { storageDir } from '../config/paths.js';
 
 export function verifyFullSeal(publicId: string): boolean {
   // 1. Get certificate
@@ -34,9 +35,9 @@ export function verifyFullSeal(publicId: string): boolean {
   const photos = db.prepare('SELECT file_name, file_hash FROM inspection_photos WHERE application_id = ?').all(cert.application_id) as Record<string, string>[];
 
   // 5. Verify photo hashes by reading files
-  const storageDir = process.env.STORAGE_DIR || path.join(process.cwd(), 'storage', 'uploads');
+  const dir = storageDir();
   for (const p of photos) {
-    const filePath = path.join(storageDir, p.file_name);
+    const filePath = path.join(dir, p.file_name);
     try {
       const buf = fs.readFileSync(filePath);
       const actualHash = crypto.createHash('sha256').update(buf).digest('hex');

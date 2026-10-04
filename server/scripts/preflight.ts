@@ -4,6 +4,7 @@ import { execSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
+import { storageDir } from '../config/paths.js';
 
 process.stdout.write(String('✈️  Starting Preflight Checks...\n') + '\n');
 
@@ -29,7 +30,7 @@ try {
 
   // 3. Storage Check
   process.stdout.write(String('\n[3/7] Checking Storage...') + '\n');
-  const uploadDir = process.env.STORAGE_DIR || path.resolve(process.cwd(), 'storage', 'uploads');
+  const uploadDir = storageDir();
   if (fs.existsSync(uploadDir)) {
     process.stdout.write(String('✅ Uploads directory exists.') + '\n');
   } else {
