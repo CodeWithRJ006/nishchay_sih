@@ -22,7 +22,7 @@ describe('Block 9-14 Tests (Certificates, Search, Export, Public Verify, Seal, C
     const resAdmin = await request(app).post('/api/auth/login').send({ email: 'admin@nishchay.example', password: 'demo123' });
     adminCookie = resAdmin.headers['set-cookie']![0];
 
-    const resBiz = await request(app).post('/api/auth/login').send({ email: 'biz1@nishchay.example', password: 'demo123' });
+    const resBiz = await request(app).post('/api/auth/login').send({ email: 'biz3@nishchay.example', password: 'demo123' });
     bizCookie = resBiz.headers['set-cookie']![0];
 
     const app4Id = 'NSH-A-2025-000004';

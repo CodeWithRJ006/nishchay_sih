@@ -9,6 +9,8 @@ import { verifyFullSeal } from '../seal/verifyFull.js';
 import { ensureKeys } from '../seal/keys.js';
 import { hmacSecret } from '../config/secrets.js';
 import { clock } from '../../shared/src/clock.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { buildCertificatesQuery, CertificateRow } from '../repositories/certificatesQuery.js';
 
 // Rate limiter for public endpoints (e.g., verify, export, complaint)
 const publicLimiter = rateLimit({
@@ -43,66 +45,10 @@ const complaintCertLimiter = rateLimit({
  * Query parameters: instrumentId, businessName, startDate, endDate, class, status, sort, order, page, pageSize
  */
 export const searchCertificates = async (req: Request, res: Response) => {
-  const {
-    instrumentId,
-    businessName,
-    startDate,
-    endDate,
-    class: instrumentClass,
-    status,
-    sort = 'valid_to',
-    order = 'DESC',
-    page = '1',
-    pageSize = '25',
-  } = req.query as Record<string, string>;
-
-  const offset = (Number(page) - 1) * Number(pageSize);
-  const limit = Number(pageSize);
-
-  // Build WHERE clauses safely using parameters
-  const conditions: string[] = [];
-  const params: (string | number)[] = []; // concrete types for query parameters
-
-  if (instrumentId) {
-    conditions.push('c.instrument_id = ?');
-    params.push(instrumentId);
-  }
-  if (instrumentClass) {
-    conditions.push('i.type_code = ?');
-    params.push(instrumentClass);
-  }
-  if (status) {
-    conditions.push('c.status = ?');
-    params.push(status);
-  }
-  if (businessName) {
-    conditions.push('b.name LIKE ?');
-    params.push(`%${businessName}%`);
-  }
-  if (startDate) {
-    conditions.push('c.valid_from >= ?');
-    params.push(startDate);
-  }
-  if (endDate) {
-    conditions.push('c.valid_to <= ?');
-    params.push(endDate);
-  }
-
-  const whereClause = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-
-  const sql = `
-    SELECT c.id, c.public_id, c.instrument_id, i.type_code as instrument_class, c.status,
-           c.valid_from, c.valid_to, b.name as business_name
-    FROM certificates c
-    JOIN instruments i ON c.instrument_id = i.id
-    JOIN businesses b ON i.business_id = b.id
-    ${whereClause}
-    ORDER BY ${sort} ${order}
-    LIMIT ? OFFSET ?
-  `;
-
-  const rows = db.prepare(sql).all(...params, limit, offset);
-  res.json({ results: rows, page: Number(page), pageSize: limit });
+  const { baseSelect, params, page, pageSize, offset } = buildCertificatesQuery(req.query, req.user);
+  const sql = `${baseSelect} LIMIT ? OFFSET ?`;
+  const rows = db.prepare(sql).all(...params, pageSize, offset);
+  res.json({ results: rows, page, pageSize });
 };
 
 /**
@@ -130,41 +76,8 @@ export const getCertificatePdf = async (req: Request, res: Response) => {
  * Exports the current filtered view as CSV.
  */
 export const exportCertificatesCsv = async (req: Request, res: Response) => {
-  // Reuse search logic without pagination
-  const {
-    instrumentId,
-    businessName,
-    startDate,
-    endDate,
-    class: instrumentClass,
-    status,
-    sort = 'valid_to',
-    order = 'DESC',
-  } = req.query as Record<string, string>;
-
-  const conditions: string[] = [];
-  const params: (string | number)[] = [];
-
-  if (instrumentId) { conditions.push('c.instrument_id = ?'); params.push(instrumentId); }
-  if (instrumentClass) { conditions.push('i.type_code = ?'); params.push(instrumentClass); }
-  if (status) { conditions.push('c.status = ?'); params.push(status); }
-  if (businessName) { conditions.push('b.name LIKE ?'); params.push(`%${businessName}%`); }
-  if (startDate) { conditions.push('c.valid_from >= ?'); params.push(startDate); }
-  if (endDate) { conditions.push('c.valid_to <= ?'); params.push(endDate); }
-
-  const whereClause = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
-
-  const sql = `
-    SELECT c.public_id, c.instrument_id, i.type_code as instrument_class, c.status,
-           c.valid_from, c.valid_to, b.name as business_name
-    FROM certificates c
-    JOIN instruments i ON c.instrument_id = i.id
-    JOIN businesses b ON i.business_id = b.id
-    ${whereClause}
-    ORDER BY ${sort} ${order}
-  `;
-
-  const rows = db.prepare(sql).all(...params) as { public_id: string; instrument_id: string; instrument_class: string; status: string; valid_from: string; valid_to: string; business_name: string }[];
+  const { baseSelect, params } = buildCertificatesQuery(req.query, req.user);
+  const rows = db.prepare(baseSelect).all(...params) as CertificateRow[];
 
   // CSV header
   const header = ['Public ID', 'Instrument ID', 'Class', 'Status', 'Valid From', 'Valid To', 'Business Name'];
@@ -374,16 +287,16 @@ export const revokeCertificate = async (req: Request, res: Response) => {
 };
 
 export const certificateRoutes = [
-  { method: 'GET', path: '/api/certificates/search', handler: [publicLimiter, searchCertificates] },
-  { method: 'GET', path: '/api/certificates/export', handler: [publicLimiter, exportCertificatesCsv] },
-  { method: 'GET', path: '/api/certificates/:publicId', handler: [publicLimiter, getCertificatePublic] },
-  { method: 'POST', path: '/api/certificates/:publicId/revoke', handler: [revokeCertificate] },
-  { method: 'GET', path: '/api/certificates/:publicId/pdf', handler: [publicLimiter, getCertificatePdf] },
+  { method: 'GET', path: '/api/certificates/search', handler: [publicLimiter, asyncHandler(searchCertificates)] },
+  { method: 'GET', path: '/api/certificates/export', handler: [publicLimiter, asyncHandler(exportCertificatesCsv)] },
+  { method: 'GET', path: '/api/certificates/:publicId', handler: [publicLimiter, asyncHandler(getCertificatePublic)] },
+  { method: 'POST', path: '/api/certificates/:publicId/revoke', handler: [asyncHandler(revokeCertificate)] },
+  { method: 'GET', path: '/api/certificates/:publicId/pdf', handler: [publicLimiter, asyncHandler(getCertificatePdf)] },
   
-  { method: 'GET', path: '/api/public/keys', handler: [publicLimiter, getPublicKeys] },
-  { method: 'GET', path: '/api/public/verify/:publicId', handler: [publicLimiter, verifyCertificatePublic] },
-  { method: 'POST', path: '/api/public/certificates/:publicId/complaints', handler: [publicLimiter, complaintClientLimiter, complaintCertLimiter, submitComplaint] },
+  { method: 'GET', path: '/api/public/keys', handler: [publicLimiter, asyncHandler(getPublicKeys)] },
+  { method: 'GET', path: '/api/public/verify/:publicId', handler: [publicLimiter, asyncHandler(verifyCertificatePublic)] },
+  { method: 'POST', path: '/api/public/certificates/:publicId/complaints', handler: [publicLimiter, complaintClientLimiter, complaintCertLimiter, asyncHandler(submitComplaint)] },
   
   // Kept for backward compatibility
-  { method: 'POST', path: '/api/certificates/:publicId/complaint', handler: [publicLimiter, submitComplaint] },
+  { method: 'POST', path: '/api/certificates/:publicId/complaint', handler: [publicLimiter, asyncHandler(submitComplaint)] },
 ];

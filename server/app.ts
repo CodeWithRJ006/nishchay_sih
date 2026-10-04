@@ -22,6 +22,7 @@ import { getSlots, schedule, accept, reject, getMyJobs, listUnassigned, assignMa
 import { arriveAtJob } from './api/field.js';
 import { submitInspection } from './api/fieldInspection.js';
 import { uploadMultipleMiddleware } from './api/uploads.js';
+import { asyncHandler } from './utils/asyncHandler.js';
 import { certificateRoutes } from './api/certificates.js';
 import { demoRoutes } from './api/demo.js';
 import { getZones } from './api/zones.js';
@@ -120,7 +121,7 @@ export function createApp() {
   app.get('/api/admin/officers', listOfficers);
 
   app.post('/api/field/jobs/:id/arrive', arriveAtJob);
-  app.post('/api/field/jobs/:id/inspection', uploadMultipleMiddleware, submitInspection);
+  app.post('/api/field/jobs/:id/inspection', uploadMultipleMiddleware, asyncHandler(submitInspection));
 
   // Demo login route handled via demoRoutes (removed duplicate)
 
@@ -181,6 +182,14 @@ demoRoutes.forEach(r => (app as unknown as Record<string, (...args: unknown[]) =
       return res.status(409).json({
         code: 'CONFLICT',
         message: 'A duplicate record already exists.',
+        requestId
+      });
+    }
+    if (err && (err.status || err.code === 'BAD_REQUEST')) {
+      const statusCode = typeof err.status === 'number' ? err.status : 400;
+      return res.status(statusCode).json({
+        code: err.code || 'BAD_REQUEST',
+        message: err.message || 'Bad Request',
         requestId
       });
     }

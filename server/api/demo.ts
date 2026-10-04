@@ -5,6 +5,7 @@ import { db } from '../db/index.js';
 import { jwtSecret } from '../config/secrets.js';
 import { certificateService } from '../services/certificateService.js';
 import { execSync } from 'node:child_process';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 /**
  * GET /api/demo/progress
@@ -213,7 +214,7 @@ export const demoLoginAs = (req: Request, res: Response) => {
 export const demoRoutes = [
   { method: 'GET', path: '/api/demo/progress', handler: [getDemoProgress] },
   { method: 'POST', path: '/api/demo/login-as/:role', handler: [demoLoginAs] },
-  { method: 'POST', path: '/api/admin/demo/issue-no-payment', handler: [adminIssueNoPayment] },
+  { method: 'POST', path: '/api/admin/demo/issue-no-payment', handler: [asyncHandler(adminIssueNoPayment)] },
   { method: 'POST', path: '/api/admin/demo/tamper', handler: [adminTamperCertificate] },
   { method: 'POST', path: '/api/admin/demo/undo-tamper', handler: [adminUndoTamperCertificate] },
   { method: 'GET', path: '/api/admin/demo/tamper-status', handler: [getTamperStatus] },
