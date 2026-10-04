@@ -1,5 +1,5 @@
 if (process.env.DEMO_MODE === undefined) {
-  process.env.DEMO_MODE = 'true';
+  process.env.DEMO_MODE = 'false';
 }
 
 import express from 'express';
@@ -11,7 +11,7 @@ import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import { db } from './db/index.js';
 import { demoPayService } from './services/paymentsService.js';
-import { authMiddleware, csrfMiddleware, loginRoute, registerRoute, logoutRoute, meRoute } from './auth/index.js';
+import { authMiddleware, csrfMiddleware, loginRoute, registerRoute, logoutRoute, meRoute, loginLimiter, registerLimiter } from './auth/index.js';
 import { rbacMiddleware } from './rbac/routeTable.js';
 import { getBusinessProfile, updateBusinessProfile, getOfficerProfile, provisionOfficer } from './api/profiles.js';
 import { registerInstrument, listInstruments, getInstrument } from './api/instruments.js';
@@ -44,9 +44,9 @@ export function createApp() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
-        fontSrc: ["'self'", "fonts.gstatic.com", "data:"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        fontSrc: ["'self'", "data:"],
         imgSrc: ["'self'", "data:", "blob:"],
         connectSrc: ["'self'"],
       },
@@ -68,9 +68,16 @@ export function createApp() {
   });
 
   app.get('/api/config', (req, res) => {
-    // Default to demo mode unless explicitly disabled
-    const demoMode = process.env.DEMO_MODE !== 'false';
+    const demoMode = process.env.DEMO_MODE === 'true';
     res.json({ demoMode });
+  });
+
+  app.use((req, res, next) => {
+    if ((req.path.startsWith('/api/demo') || req.path.startsWith('/api/admin/demo')) && process.env.DEMO_MODE !== 'true') {
+      res.status(404).json({ code: 'NOT_FOUND', message: 'Not found' });
+      return;
+    }
+    next();
   });
 
   app.use(csrfMiddleware);
@@ -78,8 +85,8 @@ export function createApp() {
   // Exclude some static routes from RBAC or list them in table
   app.use(rbacMiddleware);
 
-  app.post('/api/auth/register', registerRoute);
-  app.post('/api/auth/login', loginRoute);
+  app.post('/api/auth/register', registerLimiter, registerRoute);
+  app.post('/api/auth/login', loginLimiter, loginRoute);
   app.post('/api/auth/logout', logoutRoute);
   app.get('/api/auth/me', meRoute);
   app.get('/api/business/profile', getBusinessProfile);

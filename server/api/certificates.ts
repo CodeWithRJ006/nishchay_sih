@@ -263,10 +263,64 @@ export const getCertificatePublic = async (req: Request, res: Response) => {
   const { publicId } = req.params;
   try {
     const cert = await certificateService.getCertificate(publicId);
-    res.json(cert);
+    let pubRec: Record<string, unknown> = {};
+    try {
+      pubRec = typeof cert.public_record === 'string' ? JSON.parse(cert.public_record) : (cert.public_record as Record<string, unknown>);
+    } catch {
+      pubRec = {};
+    }
+    res.json({
+      publicId: cert.public_id,
+      public_id: cert.public_id,
+      tradeName: pubRec.tradeName ?? '',
+      instrumentType: pubRec.instrumentType ?? '',
+      instrumentClass: pubRec.instrumentClass ?? '',
+      serial: pubRec.serialNo ?? pubRec.serial ?? '',
+      status: cert.status,
+      validFrom: cert.valid_from,
+      validTo: cert.valid_to,
+      authorityName: pubRec.authorityName ?? '',
+      publicRecord: pubRec,
+      public_record: typeof cert.public_record === 'string' ? cert.public_record : JSON.stringify(cert.public_record),
+      signature: cert.signature,
+      keyId: cert.key_id
+    });
   } catch {
     res.status(404).json({ error: 'Certificate not found' });
   }
+};
+
+export const getCertificateDetail = async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const cert = db.prepare(`
+    SELECT c.*, a.business_id, b.name as business_name, b.owner_id
+    FROM certificates c
+    JOIN applications a ON c.application_id = a.id
+    JOIN businesses b ON a.business_id = b.id
+    WHERE c.id = ? OR c.public_id = ?
+  `).get(id, id) as Record<string, unknown> | undefined;
+
+  if (!cert) {
+    return res.status(404).json({ error: 'Certificate not found' });
+  }
+
+  const user = req.user as { id: string; role: string } | undefined;
+  if (!user) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  if (user.role === 'BUSINESS' && cert.owner_id !== user.id) {
+    return res.status(403).json({ error: 'Access denied' });
+  }
+
+  const inspection = db.prepare('SELECT * FROM inspections WHERE application_id = ?').get(cert.application_id);
+  const photos = db.prepare('SELECT * FROM inspection_photos WHERE application_id = ?').all(cert.application_id);
+
+  res.json({
+    certificate: cert,
+    inspection,
+    photos
+  });
 };
 
 export const revokeCertificate = async (req: Request, res: Response) => {
@@ -289,6 +343,7 @@ export const revokeCertificate = async (req: Request, res: Response) => {
 export const certificateRoutes = [
   { method: 'GET', path: '/api/certificates/search', handler: [publicLimiter, asyncHandler(searchCertificates)] },
   { method: 'GET', path: '/api/certificates/export', handler: [publicLimiter, asyncHandler(exportCertificatesCsv)] },
+  { method: 'GET', path: '/api/certificates/:id/detail', handler: [publicLimiter, asyncHandler(getCertificateDetail)] },
   { method: 'GET', path: '/api/certificates/:publicId', handler: [publicLimiter, asyncHandler(getCertificatePublic)] },
   { method: 'POST', path: '/api/certificates/:publicId/revoke', handler: [asyncHandler(revokeCertificate)] },
   { method: 'GET', path: '/api/certificates/:publicId/pdf', handler: [publicLimiter, asyncHandler(getCertificatePdf)] },

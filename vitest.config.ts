@@ -9,5 +9,8 @@ export default defineConfig({
     // better-sqlite3 database instantiated in db/index.ts is isolated per test file automatically.
     include: ['server/tests/**/*.test.ts', 'shared/tests/**/*.test.ts'],
     fileParallelism: false,
+    env: {
+      DEMO_MODE: 'true'
+    }
   }
 });

@@ -5,10 +5,12 @@ import { createApp } from '../app.js';
 import { db } from '../db/index.js';
 import { runMigrations } from '../db/migrate.js';
 import { seedDemoData } from '../scripts/seed.js';
+import { resetLockouts } from '../auth/index.js';
 
 let app: express.Express;
 
 beforeEach(() => {
+  resetLockouts();
   db.exec('PRAGMA foreign_keys = OFF');
   const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as Record<string, unknown>[];
   for (const table of tables) {
@@ -60,7 +62,7 @@ describe('Auth Flow', () => {
     }
     const res = await request(app).post('/api/auth/login').send({ email: 'admin@nishchay.example', password: 'demo123' });
     expect(res.status).toBe(401);
-    expect(res.body.message).toBe('Account locked');
+    expect(res.body.message).toBe('Invalid email or password');
   });
 
   it('login-as returns 404 when DEMO_MODE is off', async () => {

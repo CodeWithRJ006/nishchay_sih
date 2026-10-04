@@ -1,18 +1,34 @@
-// Demo API handlers (Block 10)
+// Demo API handlers (Block 10 & Block B fixes)
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { db } from '../db/index.js';
 import { jwtSecret } from '../config/secrets.js';
 import { certificateService } from '../services/certificateService.js';
-import { execSync } from 'node:child_process';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { seedDemoData } from '../scripts/seed.js';
+import { rateLimit } from 'express-rate-limit';
+
+function isDemoActive(res: Response): boolean {
+  if (process.env.DEMO_MODE !== 'true') {
+    res.status(404).json({ code: 'NOT_FOUND', error: 'Not found' });
+    return false;
+  }
+  return true;
+}
+
+const ALLOWED_SAMPLE_IDS = [
+  'sample-cert-val1d-0000',
+  'sample-cert-exp1red-00',
+  'sample-cert-rev0ked-00'
+];
 
 /**
  * GET /api/demo/progress
  * Returns boolean flags for each step of the trust loop for the signed‑in demo business.
  */
 export const getDemoProgress = (req: Request, res: Response) => {
-  const user = (req as unknown as Request).user as { id: string; role: string } | undefined;
+  if (!isDemoActive(res)) return;
+  const user = req.user;
   const targetUserId = (user && user.role === 'BUSINESS') ? user.id : 'USR-BIZ1';
 
   // Helper to check existence of a query result
@@ -52,7 +68,7 @@ export const getDemoProgress = (req: Request, res: Response) => {
     schedule: !!hasSchedule,
     inspect: !!hasInspectionPass,
     certify: !!hasCertificate,
-    verify: !!hasCertificate, // verification is always possible when a certificate exists
+    verify: !!hasCertificate,
     rightToCheck: !!hasCertificate,
   });
 };
@@ -62,21 +78,36 @@ export const getDemoProgress = (req: Request, res: Response) => {
  * Attempts to issue a certificate without a payment. Expected to hit fee‑gate (409).
  */
 export const adminIssueNoPayment = async (req: Request, res: Response) => {
-  // Find a demo business that has an application but no receipt
-  const appRow = db
+  if (!isDemoActive(res)) return;
+  // Find a demo application that is in INSPECTED_PASS but has NO payment
+  // (or update one for demonstration if needed)
+  let appRow = db
     .prepare(
       `SELECT a.id as appId, b.id as businessId FROM applications a
        JOIN businesses b ON a.business_id = b.id
-       WHERE NOT EXISTS (SELECT 1 FROM receipts r WHERE r.application_id = a.id)
+       WHERE a.state = 'INSPECTED_PASS' AND NOT EXISTS (SELECT 1 FROM receipts r WHERE r.application_id = a.id)
        LIMIT 1`
     )
     .get() as { appId: string; businessId: string } | undefined;
+
+  if (!appRow) {
+    // If none in INSPECTED_PASS, look for an application without receipt
+    appRow = db
+      .prepare(
+        `SELECT a.id as appId, b.id as businessId FROM applications a
+         JOIN businesses b ON a.business_id = b.id
+         WHERE NOT EXISTS (SELECT 1 FROM receipts r WHERE r.application_id = a.id)
+         LIMIT 1`
+      )
+      .get() as { appId: string; businessId: string } | undefined;
+  }
+
   if (!appRow) {
     return res.status(400).json({ error: 'No suitable demo application without payment found' });
   }
 
   try {
-    // This will throw because fee‑gate will fail (no receipt)
+    // This will throw because fee‑gate will fail
     await certificateService.issueCertificate(appRow.appId, 'demo-admin');
     return res.json({ success: true, message: 'Unexpectedly issued' });
   } catch (e: unknown) {
@@ -93,15 +124,19 @@ export const adminIssueNoPayment = async (req: Request, res: Response) => {
  * Body: { publicId }
  */
 export const adminTamperCertificate = (req: Request, res: Response) => {
+  if (!isDemoActive(res)) return;
   const { publicId } = req.body as { publicId?: string };
   const targetId = publicId || 'sample-cert-val1d-0000';
+
+  if (!ALLOWED_SAMPLE_IDS.includes(targetId)) {
+    return res.status(400).json({ error: 'Only sample demonstrator certificates can be tampered' });
+  }
 
   const cert = db.prepare('SELECT id, public_record FROM certificates WHERE public_id = ?').get(targetId) as { id: string; public_record: string } | undefined;
   if (!cert) {
     return res.status(404).json({ error: 'Certificate not found' });
   }
 
-  // Simple tamper: append a bogus field to the JSON record
   let publicRecord: Record<string, unknown>;
   try {
     publicRecord = JSON.parse(cert.public_record) as Record<string, unknown>;
@@ -112,7 +147,6 @@ export const adminTamperCertificate = (req: Request, res: Response) => {
   publicRecord.tampered = true;
   const tampered = JSON.stringify(publicRecord);
 
-  // Store original for undo in a temporary table
   db.prepare('CREATE TABLE IF NOT EXISTS certificate_tamper_backup (cert_id TEXT, original_record TEXT)').run();
   const existing = db.prepare('SELECT 1 FROM certificate_tamper_backup WHERE cert_id = ?').get(cert.id);
   if (!existing) {
@@ -130,8 +164,13 @@ export const adminTamperCertificate = (req: Request, res: Response) => {
  * Body: { publicId }
  */
 export const adminUndoTamperCertificate = (req: Request, res: Response) => {
+  if (!isDemoActive(res)) return;
   const { publicId } = req.body as { publicId?: string };
   const targetId = publicId || 'sample-cert-val1d-0000';
+
+  if (!ALLOWED_SAMPLE_IDS.includes(targetId)) {
+    return res.status(400).json({ error: 'Only sample demonstrator certificates can be tampered' });
+  }
 
   const cert = db.prepare('SELECT id FROM certificates WHERE public_id = ?').get(targetId) as { id: string } | undefined;
   if (!cert) {
@@ -155,6 +194,7 @@ export const adminUndoTamperCertificate = (req: Request, res: Response) => {
  * Checks if a certificate is currently tampered.
  */
 export const getTamperStatus = (req: Request, res: Response) => {
+  if (!isDemoActive(res)) return;
   const publicId = (req.query.publicId as string) || 'sample-cert-val1d-0000';
   const cert = db.prepare('SELECT id FROM certificates WHERE public_id = ?').get(publicId) as { id: string } | undefined;
   if (!cert) {
@@ -165,29 +205,57 @@ export const getTamperStatus = (req: Request, res: Response) => {
   res.json({ publicId, isTampered: !!backup });
 };
 
+let lastResetTime = 0;
 /**
  * POST /api/admin/demo/reset
- * Runs the demo seed script to reset all demo data.
+ * Runs the demo seed script to reset all demo data in-process without child process.
  */
 export const adminResetDemo = (req: Request, res: Response) => {
+  if (!isDemoActive(res)) return;
+  const now = Date.now();
+  if (now - lastResetTime < 30000) {
+    return res.status(429).json({ code: 'TOO_MANY_REQUESTS', error: 'Reset rate limit exceeded. Please wait 30 seconds.' });
+  }
+  lastResetTime = now;
   try {
-    // Use npm script defined in package.json (demo:reset) – synchronous for simplicity
-    execSync('npm run demo:reset', { stdio: 'ignore' });
+    db.exec(`
+      DELETE FROM certificate_complaints;
+      DELETE FROM officer_rejections;
+      DELETE FROM appointments;
+      DELETE FROM application_documents;
+      DELETE FROM inspection_photos;
+      DELETE FROM inspections;
+      DELETE FROM certificates;
+      DELETE FROM receipts;
+      DELETE FROM payments;
+      DELETE FROM applications;
+      DELETE FROM instruments;
+      DELETE FROM businesses;
+      DELETE FROM zones;
+      DELETE FROM users;
+      DELETE FROM counters;
+    `);
+    seedDemoData();
     res.json({ success: true, message: 'Demo data reset' });
   } catch {
     res.status(500).json({ error: 'Failed to reset demo data' });
   }
 };
 
+export const demoLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 'TOO_MANY_REQUESTS', message: 'Too many demo login requests.' }
+});
+
 /**
  * POST /api/demo/login-as/:role
  * Generates a JWT for the first seeded user of the given role.
  */
 export const demoLoginAs = (req: Request, res: Response) => {
-  // Demo login is only available when DEMO_MODE is enabled
-  if (process.env.DEMO_MODE !== 'true') {
-    return res.status(404).json({ error: 'Demo mode disabled' });
-  }
+  if (!isDemoActive(res)) return;
   const role = (req.params.role || '').toUpperCase();
   const user = db.prepare('SELECT id, email, role, name FROM users WHERE UPPER(role) = ? LIMIT 1').get(role) as { id: string; email: string; role: string; name: string } | undefined;
   if (!user) {
@@ -206,14 +274,14 @@ export const demoLoginAs = (req: Request, res: Response) => {
     sameSite: 'lax',
     maxAge: 24 * 60 * 60 * 1000
   });
-  // Respond with the user object directly (contains role and name fields)
+
   res.json({ id: user.id, email: user.email, role: user.role, name: user.name });
 };
 
 // Export routes for registration in app.ts
 export const demoRoutes = [
   { method: 'GET', path: '/api/demo/progress', handler: [getDemoProgress] },
-  { method: 'POST', path: '/api/demo/login-as/:role', handler: [demoLoginAs] },
+  { method: 'POST', path: '/api/demo/login-as/:role', handler: [demoLoginLimiter, demoLoginAs] },
   { method: 'POST', path: '/api/admin/demo/issue-no-payment', handler: [asyncHandler(adminIssueNoPayment)] },
   { method: 'POST', path: '/api/admin/demo/tamper', handler: [adminTamperCertificate] },
   { method: 'POST', path: '/api/admin/demo/undo-tamper', handler: [adminUndoTamperCertificate] },

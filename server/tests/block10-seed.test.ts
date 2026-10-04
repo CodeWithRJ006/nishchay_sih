@@ -100,7 +100,8 @@ describe('Seed Dates & Properties', () => {
 
     // 2. Check tamper status
     const statusRes = await request(app)
-      .get(`/api/admin/demo/tamper-status?publicId=${DEMO_CERT_VALID}`);
+      .get(`/api/admin/demo/tamper-status?publicId=${DEMO_CERT_VALID}`)
+      .set('Cookie', adminCookie);
     expect(statusRes.status).toBe(200);
     expect(statusRes.body.isTampered).toBe(true);
 
@@ -115,7 +116,8 @@ describe('Seed Dates & Properties', () => {
 
     // 4. Verify restored status
     const statusRestored = await request(app)
-      .get(`/api/admin/demo/tamper-status?publicId=${DEMO_CERT_VALID}`);
+      .get(`/api/admin/demo/tamper-status?publicId=${DEMO_CERT_VALID}`)
+      .set('Cookie', adminCookie);
     expect(statusRestored.body.isTampered).toBe(false);
   });
 
