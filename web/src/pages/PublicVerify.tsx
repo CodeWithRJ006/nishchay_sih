@@ -296,56 +296,142 @@ export const PublicVerify = () => {
             </h1>
             <p className="mt-1 opacity-90 font-mono text-sm tracking-wide">{id}</p>
             
-            {/* 4 Ticks derived from real data with sequential lighting */}
-            <div className="mt-6 w-full text-left space-y-3 bg-black/25 p-4 rounded-lg text-sm">
-              <div className={`flex items-start gap-3 transition-opacity duration-300 ${animStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
-                {data.ticks.feeReceipt ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <div className="font-semibold">Fee receipt</div>
-                  <div className="text-xs text-white/80">Official fee paid and cryptographically signed before scheduling.</div>
+            {/* Contextual Status Plate Details */}
+            {isRevoked ? (
+              <div className="mt-6 w-full text-left space-y-3 bg-black/30 p-4 rounded-lg text-sm border border-red-400/30">
+                <div className="flex items-start gap-3">
+                  <Ban className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white">Statutory Revocation Order</div>
+                    <div className="text-xs text-white/90">
+                      Certificate revoked by order of Legal Metrology Authority on {data.revokedAt ? formatDate(data.revokedAt) : 'record date'}.
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className={`flex items-start gap-3 transition-opacity duration-300 ${animStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
-                {data.ticks.officerOnSite ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
-                ) : (
+                <div className="flex items-start gap-3">
                   <XCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <div className="font-semibold">Officer on site</div>
-                  <div className="text-xs text-white/80">Officer GPS coordinates recorded within verified premises radius.</div>
+                  <div>
+                    <div className="font-semibold text-white">Commercial Trade Prohibited</div>
+                    <div className="text-xs text-white/90">
+                      Instrument is disqualified from commercial transactions under the Legal Metrology Act.
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className={`flex items-start gap-3 transition-opacity duration-300 ${animStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
-                {data.ticks.checklistRecorded ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <div className="font-semibold">Checklist recorded</div>
-                  <div className="text-xs text-white/80">Physical inspection criteria and metric readings permanently stored.</div>
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white">Enforcement Notice</div>
+                    <div className="text-xs text-white/90">
+                      Using this instrument for trade without fresh verification constitutes a punishable statutory offense.
+                    </div>
+                  </div>
                 </div>
-              </div>
 
-              <div className={`flex items-start gap-3 transition-opacity duration-300 ${animStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
-                {data.ticks.sealIntact ? (
-                  <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
-                ) : (
+                <div className="flex items-start gap-3">
                   <XCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
-                )}
-                <div>
-                  <div className="font-semibold">Seal intact</div>
-                  <div className="text-xs text-white/80">Cryptographic hash matches all inspection records and photos.</div>
+                  <div>
+                    <div className="font-semibold text-white">Certificate Null and Void</div>
+                    <div className="text-xs text-white/90">
+                      Prior inspection certificate is cancelled and cannot be relied upon by citizens or traders.
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : isExpired ? (
+              <div className="mt-6 w-full text-left space-y-3 bg-black/30 p-4 rounded-lg text-sm border border-amber-400/30">
+                <div className="flex items-start gap-3">
+                  <Clock className="w-5 h-5 text-amber-200 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white">Verification Period Expired</div>
+                    <div className="text-xs text-white/90">
+                      Statutory validity expired on {data.validUntil ? formatDate(data.validUntil) : 'expiry date'}.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <XCircle className="w-5 h-5 text-amber-200 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white">Re-Stamping Overdue</div>
+                    <div className="text-xs text-white/90">
+                      Instrument must be re-tested and re-stamped before it may be lawfully used in trade.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-200 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white">Mandatory Renewal Required</div>
+                    <div className="text-xs text-white/90">
+                      Business must submit a renewal application to the Legal Metrology officer immediately.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-white">Historical Inspection Record</div>
+                    <div className="text-xs text-white/90">
+                      Original fee, on-site officer inspection, and initial seal were verified at issuance.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-6 w-full text-left space-y-3 bg-black/25 p-4 rounded-lg text-sm">
+                <div className={`flex items-start gap-3 transition-opacity duration-300 ${animStep >= 1 ? 'opacity-100' : 'opacity-40'}`}>
+                  {data.ticks.feeReceipt ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-semibold">Fee receipt</div>
+                    <div className="text-xs text-white/80">Official fee paid and cryptographically signed before scheduling.</div>
+                  </div>
+                </div>
+
+                <div className={`flex items-start gap-3 transition-opacity duration-300 ${animStep >= 2 ? 'opacity-100' : 'opacity-40'}`}>
+                  {data.ticks.officerOnSite ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-semibold">Officer on site</div>
+                    <div className="text-xs text-white/80">Officer GPS coordinates recorded within verified premises radius.</div>
+                  </div>
+                </div>
+
+                <div className={`flex items-start gap-3 transition-opacity duration-300 ${animStep >= 3 ? 'opacity-100' : 'opacity-40'}`}>
+                  {data.ticks.checklistRecorded ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-semibold">Checklist recorded</div>
+                    <div className="text-xs text-white/80">Physical inspection criteria and metric readings permanently stored.</div>
+                  </div>
+                </div>
+
+                <div className={`flex items-start gap-3 transition-opacity duration-300 ${animStep >= 4 ? 'opacity-100' : 'opacity-40'}`}>
+                  {data.ticks.sealIntact ? (
+                    <CheckCircle2 className="w-5 h-5 text-emerald-300 shrink-0 mt-0.5" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-300 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <div className="font-semibold">Seal intact</div>
+                    <div className="text-xs text-white/80">Cryptographic hash matches all inspection records and photos.</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Status Banner Message */}
