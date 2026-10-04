@@ -1,11 +1,7 @@
 # NISHCHAY (निश्चय)
 ### Digital Verification & Certification Platform for India's Legal Metrology Regime
-**Smart India Hackathon 2024 — Problem Statement SIH26036**  
+**Smart India Hackathon 2026 — Problem Statement SIH26036**  
 *Department of Consumer Affairs, Government of India*
-
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-nishchay--sih.onrender.com-brightgreen?style=for-the-badge&logo=render)](https://nishchay-sih.onrender.com)
-[![Status](https://img.shields.io/badge/System%20Status-Healthy%20200%20OK-blue?style=for-the-badge)](https://nishchay-sih.onrender.com/api/health)
-[![Playwright Tests](https://img.shields.io/badge/Playwright%20Audit-19%2F19%20Pass-success?style=for-the-badge)](https://nishchay-sih.onrender.com)
 
 > 🌐 **Live Application URL:** [https://nishchay-sih.onrender.com](https://nishchay-sih.onrender.com)  
 > 🏥 **Health Check Endpoint:** [https://nishchay-sih.onrender.com/api/health](https://nishchay-sih.onrender.com/api/health)  
@@ -50,7 +46,7 @@ A dedicated slide-out drawer accessible from any screen (desktop and mobile) tha
 ### 🛡️ Dual-Verification Cryptographic Seal
 - **Public Record (Signed):** Canonical JSON containing certificate number, instrument ID, merchant name, serial, validity window, issuing authority, and cryptographic digests.
 - **Private Inspection Details (Hashed):** Officer identity, GPS coordinates, premises radius distance, inspection checklist answers, calibration load readings, and SHA-256 digests of all captured photos.
-- **Browser-Side WebCrypto Validation:** Digital signatures are generated using **ECDSA P-256** with IEEE P1363 curve encoding. When any citizen or judge opens a certificate page, their web browser re-hashes the canonical record and verifies the signature locally in WebCrypto using the public key at `/api/public/keys`—no trust in our web server required!
+- **Browser-Side WebCrypto Validation:** Digital signatures are generated using **ECDSA P-256** with IEEE P1363 curve encoding. When any citizen or reviewer opens a certificate page, their web browser re-hashes the canonical record and verifies the signature locally in WebCrypto using the public key at `/api/public/keys`. (Note: In this prototype, the record, signature, and public key all originate from the application server, proving internal consistency and detecting unauthorized alteration rather than establishing third-party PKI root authority).
 
 ---
 

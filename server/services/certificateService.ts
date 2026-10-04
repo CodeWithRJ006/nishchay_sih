@@ -6,6 +6,7 @@ import crypto from 'node:crypto';
 import { recordAudit } from '../repositories/auditRepo.js';
 import { ensureKeys, signHash } from '../seal/index.js';
 import { checkFeeGate } from '../services/paymentsService.js';
+import { computeValidTo, INSTRUMENT_RULES } from '../../shared/src/rules.js';
 
 export interface PrivateDetails {
   officerId: string;
@@ -49,6 +50,29 @@ export class CertificateService {
     const certSeq = nextSequence(`certificate-${year}`);
     const certificateNo = generateId.certificate(year, certSeq);
 
+    const rule = INSTRUMENT_RULES.find(r => r.code === instrument.type_code);
+    const validityMonths = rule?.validityMonths ?? 12;
+    const validFromDate = new Date(clock.now());
+    const validToDate = computeValidTo(validFromDate, validityMonths);
+
+    const officerRow = db.prepare(`
+      SELECT u.name, u.role, u.gatc_centre_name, z.name as zone_name
+      FROM users u
+      LEFT JOIN zones z ON u.zone_id = z.id
+      WHERE u.id = ?
+    `).get(officerId) as { name?: string; role?: string; gatc_centre_name?: string; zone_name?: string } | undefined;
+
+    let authorityName = 'Legal Metrology Department';
+    if (officerRow) {
+      if (officerRow.role === 'GATC') {
+        authorityName = officerRow.gatc_centre_name || officerRow.name || 'Government Approved Test Centre';
+      } else if (officerRow.zone_name) {
+        authorityName = `Legal Metrology Office (${officerRow.zone_name})`;
+      } else if (officerRow.name) {
+        authorityName = `Legal Metrology Office - ${officerRow.name}`;
+      }
+    }
+
     const publicRecord = {
       v: 1,
       certificateNo,
@@ -56,9 +80,9 @@ export class CertificateService {
       tradeName: businessData.trade_name,
       instrumentClass: instrument.type_code,
       serialNo: instrument.serial,
-      validFrom: new Date(clock.now()).toISOString(),
-      validTo: new Date(clock.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-      authorityName: 'LMO Demo',
+      validFrom: validFromDate.toISOString(),
+      validTo: validToDate.toISOString(),
+      authorityName,
       receiptDigest: crypto.createHash('sha256').update(JSON.stringify({ id: receipt.id, amount: receipt.amount })).digest('hex'),
       detailsDigest: crypto.createHash('sha256').update(canonicalJson(privateDetails as unknown as Record<string, unknown>)).digest('hex')
     };

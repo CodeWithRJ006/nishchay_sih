@@ -41,15 +41,15 @@ flowchart TD
 
 | Module (Scope 6.1) | Backend Implementation | Frontend Implementation |
 | :--- | :--- | :--- |
-| **Auth & Registration (Mod 1)** | `server/auth/index.ts`, `server/api/auth.ts` | `web/src/pages/Register.tsx`, `web/src/pages/Login.tsx` |
-| **Instrument Profiles (Mod 6)** | `server/api/instruments.ts`, `server/repositories/instrumentsRepo.ts` | `web/src/pages/Instruments.tsx`, `web/src/pages/InstrumentForm.tsx` |
+| **Auth & Registration (Mod 1)** | `server/auth/index.ts` | `web/src/pages/Register.tsx`, `web/src/pages/Login.tsx` |
+| **Instrument Profiles (Mod 6)** | `server/api/instruments.ts`, `server/repositories/instrumentsRepo.ts` | `web/src/pages/Instruments.tsx` |
 | **Verification Workflow (Mod 7)**| `server/api/applications.ts`, `shared/src/stateMachine.ts` | `web/src/pages/Applications.tsx`, `web/src/pages/ApplicationWizard.tsx` |
-| **Fee Payment Gate (Mod 8)** | `server/services/paymentsService.ts`, `server/api/payments.ts` | `web/src/pages/SandboxCheckout.tsx`, `web/src/pages/ReceiptView.tsx` |
+| **Fee Payment Gate (Mod 8)** | `server/services/paymentsService.ts`, `server/api/payments.ts` | `web/src/pages/SandboxCheckout.tsx`, `web/src/pages/ApplicationDetail.tsx` |
 | **Field Verification (Mod 9)** | `server/api/field.ts`, `server/api/fieldInspection.ts` | `web/src/pages/field/JobDetail.tsx`, `web/src/pages/field/JobInspection.tsx` |
-| **Certificate Engine (Mod 10)** | `server/services/certificateService.ts`, `server/services/certificatePdfService.ts` | `web/src/pages/Certificates.tsx` |
+| **Certificate Engine (Mod 10)** | `server/services/certificateService.ts`, `server/services/certificatePdfService.ts` | `web/src/pages/BusinessDashboard.tsx`, `web/src/pages/CertificateSearch.tsx` |
 | **QR Verification (Mod 11/12)** | `server/api/certificates.ts`, `server/seal/verifyFull.ts` | `web/src/pages/PublicVerify.tsx` |
 | **Search & CSV Export (Mod 13/14)**| `server/repositories/certificatesQuery.ts`, `server/api/certificates.ts` | `web/src/pages/CertificateSearch.tsx` |
-| **Role Dashboards (Mod 20)** | `server/api/profiles.ts` | `web/src/pages/OfficerJobs.tsx`, `web/src/pages/AdminDashboard.tsx` |
+| **Role Dashboards (Mod 20)** | `server/api/dashboard.ts`, `server/api/profiles.ts` | `web/src/pages/BusinessDashboard.tsx`, `web/src/pages/OfficerDashboard.tsx`, `web/src/pages/AdminDashboard.tsx` |
 | **Cryptographic Seal (Mod 21)** | `server/seal/index.ts`, `shared/src/canonicalJson.ts` | `shared/src/seal-browser.ts`, `web/src/pages/PublicVerify.tsx` |
 
 ---
@@ -57,6 +57,10 @@ flowchart TD
 ## Unified Storage Architecture (`storageDir()`)
 
 All binary files (supporting application documents, inspection evidence photos, and seal validation assets) are managed by a single centralized helper in `server/config/paths.ts`:
+
+- Ingested inspection photos written via `server/api/fieldInspection.ts` and documents in `server/api/uploads.ts`.
+- Verification re-hashing in `server/seal/verifyFull.ts`.
+- Sample seed asset initialization in `server/scripts/seed.ts` and environment preflight in `server/scripts/preflight.ts`.
 
 - **Path Resolution:** Checks `process.env.STORAGE_DIR`; if relative or unset, resolves to `<cwd>/storage/uploads`.
 - **Automatic Directory Provisioning:** Creates `<cwd>/storage/uploads` recursively on server startup.

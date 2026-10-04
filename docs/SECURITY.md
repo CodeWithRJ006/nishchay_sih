@@ -11,7 +11,7 @@ NISHCHAY implements a defense-in-depth security posture designed to eliminate me
 | **Unauthorized Visitor / Client** | Invoking demo administration or privilege escalation | **Restricted Demo Mode & RBAC (Block B):** `/api/admin/demo/*` routes are strictly restricted to `ADMIN` role only and return HTTP 404 whenever `DEMO_MODE !== 'true'`. One-click role login (`/api/demo/login-as/:role`) also returns 404 in non-demo mode. |
 | **Adversary / Competitor** | Tampering with real production certificates via demo tools | **Strict Allowlist for Tamper Demo (Block B):** The tamper and undo-tamper endpoints only permit modification of the three seeded demo certificates (`sample-cert-val1d-0000`, `sample-cert-exp1r-0000`, `sample-cert-rev0k-0000`). All other certificates reject tampering with HTTP 400. |
 | **Unauthenticated Attacker** | Account enumeration & brute-force credential stuffing | **Lockout & Rate Limiting (Block B):** Rate-limited to 30 requests/15m on login and 10 requests/1h on register. Accounts lock after 5 consecutive failures per `(email, client_ip)` with generic timing-safe responses preventing user enumeration. |
-| **Malicious Web Page** | Cross-Site Request Forgery (CSRF) | **Double Submit Cookie CSRF (Block B):** Mutating HTTP requests (POST, PUT, DELETE) require a custom `x-csrf-token` header matching the HttpOnly/Lax `csrf` cookie. |
+| **Malicious Web Page** | Cross-Site Request Forgery (CSRF) | **Double Submit Cookie CSRF (Block B):** Mutating HTTP requests (POST, PUT, DELETE) require a custom `x-csrf-token` header matching the client-readable SameSite=Lax `csrf` cookie. |
 | **Malicious Querier** | SQL Injection via Sort / Filters | **Column Allowlist Query Builder (Block A):** Search and CSV export queries strictly map sort parameters to a static dictionary of validated column identifiers. Order is clamped to `ASC` or `DESC`. Pagination and filter parameters are validated with Zod. |
 | **Malicious Payload** | Denial of Service via unhandled async exceptions | **Global Async Error Handling (Block A):** All async Express route handlers are wrapped with `asyncHandler`, piping errors to a centralized error middleware returning `{ code, message, requestId }` without crashing Node. |
 | **Corrupted Callback / Replay** | Fee payment fraud or forged treasury callbacks | **HMAC-SHA256 & Timestamp Verification (Block 5/D):** Treasury payment callbacks require a valid HMAC signature over payment payload (returns 401 on mismatch) and reject stale timestamps (> 15m) or future timestamps (> 60s) with HTTP 400. |
@@ -64,5 +64,24 @@ All endpoints are declared in `server/rbac/routeTable.ts` with explicit role per
 - The demo tamper tool modifies the `public_record` JSON column in SQLite to visually prove that the cryptographic seal detects unauthorized changes.
 - To prevent abuse during evaluations:
   1. Only `ADMIN` role can invoke tamper or undo-tamper endpoints.
-  2. The endpoint rejects any certificate ID outside `ALLOWED_SAMPLE_IDS` (`sample-cert-val1d-0000`, `sample-cert-exp1r-0000`, `sample-cert-rev0k-0000`) with HTTP 400. Real or newly issued certificates cannot be altered by the demo tamper endpoint.
+  2. The endpoint rejects any certificate ID outside `ALLOWED_SAMPLE_IDS` (`sample-cert-val1d-0000`, `sample-cert-exp1red-00`, `sample-cert-rev0ked-00`) with HTTP 400. Real or newly issued certificates cannot be altered by the demo tamper endpoint.
   3. Original records are backed up in a `certificate_tamper_backup` table to allow clean atomic restoration via `/api/admin/demo/undo-tamper`.
+
+## Demo Mode Exposure & Security Isolation
+
+- **Demo Route Lockdown:** `/api/demo/*` and `/api/admin/demo/*` endpoints are completely disabled when `DEMO_MODE !== 'true'`, returning HTTP 404 Not Found before route dispatch.
+- **Administrative Demo Restrictions:** In demo mode, administrative demo endpoints (`/api/admin/demo/tamper`, `/api/admin/demo/undo-tamper`, `/api/admin/demo/reset`, `/api/admin/demo/issue-no-payment`) strictly require authenticated `ADMIN` role.
+- **Tamper Allowlist:** The tamper demonstrator tool accepts only 3 pre-seeded sample certificate IDs (`sample-cert-val1d-0000`, `sample-cert-exp1red-00`, `sample-cert-rev0ked-00`). All other certificates (including newly issued ones) reject tamper attempts with HTTP 400.
+- **In-Process Reset Rate Limiting:** Demo factory reset runs in-process without child process execution and is throttled to 1 invocation per 30 seconds.
+- **Environment Secrets Fallback:** When `DEMO_MODE=true`, lazy fallback demonstrator keys are used to permit zero-config review. In contrast, in production (`NODE_ENV === 'production'` and `DEMO_MODE !== 'true'`), the server strictly refuses to boot if `JWT_SECRET` or `HMAC_SECRET` is unset.
+
+## Content Security Policy (CSP) & Directives
+
+Configured via Express `helmet` middleware:
+- `default-src 'self'`
+- `script-src 'self' 'unsafe-inline'` (`'unsafe-eval'` is strictly forbidden and eliminated)
+- `style-src 'self' 'unsafe-inline'` (`'unsafe-inline'` is present to support Vite and React runtime styling)
+- `font-src 'self' data:` (All fonts are self-hosted via `@fontsource`; external Google Fonts CDN is eliminated)
+- `img-src 'self' data: blob:`
+- `connect-src 'self'`
+

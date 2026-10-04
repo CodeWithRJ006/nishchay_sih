@@ -32,7 +32,7 @@
 - **Module 6 (Instrument profile):** DONE - `web/src/pages/Instruments.tsx`, `server/tests/block4b.test.ts`
 - **Module 7 (Verification workflow):** DONE - `web/src/pages/field/JobInspection.tsx`, `server/tests/block6a.test.ts`
 - **Module 8 (Fee payment):** DONE - `web/src/pages/SandboxCheckout.tsx`, `server/tests/block5a.test.ts`
-- **Module 9 (Geo-tagged field verification):** DONE - `web/src/pages/field/CameraCapture.tsx`, `server/tests/block6b.test.ts`, `server/tests/blockC-field-integrity.test.ts`
+- **Module 9 (Geo-tagged field verification):** BUILT & AUDITED - `web/src/pages/field/CameraCapture.tsx`, `server/tests/block6b.test.ts`, `server/tests/blockC-field-integrity.test.ts` (Mobile web view with real Haversine distance validation, dual photo capture, magic-byte checks, and photo SHA-256 digests. Geolocation uses browser API with a labeled demo location bypass for reviewers).
 - **Module 10 (Certificate generation):** DONE - `server/api/certificates.ts`, `server/tests/block9.test.ts`
 - **Module 11 (QR public verification):** DONE - `web/src/pages/PublicVerify.tsx`, `server/tests/block9.test.ts`
 - **Module 12 (Right to Check):** DONE - `web/src/pages/PublicVerify.tsx`, `server/tests/block9.test.ts`

@@ -162,7 +162,7 @@ export function rbacMiddleware(req: Request, res: Response, next: NextFunction) 
     ? ((req as unknown as Record<string, unknown>).user as Record<string, unknown>).role as Role 
     : 'PUBLIC';
   
-  if (!match.roles.includes(userRole) && !match.roles.includes('HMAC')) {
+  if (!match.roles.includes('PUBLIC') && !match.roles.includes(userRole) && !match.roles.includes('HMAC')) {
     res.status(403).json({ code: 'FORBIDDEN', message: 'Access denied' });
     return;
   }
